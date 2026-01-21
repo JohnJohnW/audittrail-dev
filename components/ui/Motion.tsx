@@ -277,20 +277,12 @@ export function CountUp({
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
+      transition={{ duration }}
     >
-      <motion.span initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-        {prefix}
-        <motion.span
-          initial={{ count: 0 }}
-          whileInView={{ count: value }}
-          viewport={{ once: true }}
-          transition={{ duration, ease: "easeOut" }}
-        >
-          {/* Note: For actual count animation, use a library like react-countup */}
-          {value}
-        </motion.span>
-        {suffix}
-      </motion.span>
+      {/* Note: For actual count animation, use a library like react-countup */}
+      {prefix}
+      {value}
+      {suffix}
     </motion.span>
   );
 }
