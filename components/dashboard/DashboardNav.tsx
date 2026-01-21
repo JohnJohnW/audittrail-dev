@@ -59,10 +59,10 @@ export function DashboardNav({ user }: DashboardNavProps) {
       )}
     >
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 overflow-hidden">
-        <div className="flex items-center justify-between h-14 sm:h-16">
+        <div className="flex items-center justify-between h-16">
           <div className="flex items-center min-w-0 shrink-0">
             <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
-              <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-200 shrink-0">
+              <div className="relative w-8 h-8 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-200 shrink-0">
                 <Image
                   src="/icon.svg"
                   alt="AuditTrail.dev"
@@ -72,7 +72,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   priority
                 />
               </div>
-              <span className="hidden sm:inline text-sm font-semibold text-gray-900 whitespace-nowrap">
+              <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                 AuditTrail<span className="text-accent">.dev</span>
               </span>
             </Link>
@@ -155,7 +155,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                 <motion.svg
                   animate={{ rotate: userMenuOpen ? 180 : 0 }}
                   transition={{ duration: 0.2 }}
-                  className="w-4 h-4 text-gray-400 hidden sm:block"
+                  className="w-4 h-4 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -178,7 +178,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-56 sm:w-60 bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50 overflow-hidden"
+                      className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50 overflow-hidden"
                     >
                       <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
                         <p className="text-sm font-semibold text-gray-900 truncate">
@@ -229,7 +229,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
               transition={{ duration: 0.2 }}
               className="lg:hidden overflow-hidden"
             >
-              <div className="py-2 sm:py-3 border-t border-gray-100">
+              <div className="py-3 border-t border-gray-100">
                 <div className="flex flex-col gap-0.5">
                   {navigation.map((item) => {
                     const Icon = item.icon;
