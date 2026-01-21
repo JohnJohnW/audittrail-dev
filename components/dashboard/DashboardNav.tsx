@@ -52,13 +52,13 @@ export function DashboardNav({ user }: DashboardNavProps) {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "sticky top-0 z-50 w-full max-w-full overflow-hidden transition-all duration-300",
+        "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled
           ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200/50"
           : "bg-white border-b border-gray-200"
       )}
     >
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center min-w-0 shrink-0">
             <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
