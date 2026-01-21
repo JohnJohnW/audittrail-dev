@@ -2,12 +2,20 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error("Dashboard layout auth error:", error);
+    redirect("/auth/signin");
+  }
 
   if (!session?.user) {
     redirect("/auth/signin");

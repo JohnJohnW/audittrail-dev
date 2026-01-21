@@ -4,8 +4,17 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SyncButton } from "@/components/dashboard/SyncButton";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function DashboardPage() {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error("Auth error:", error);
+    redirect("/auth/signin");
+  }
 
   if (!session?.user) {
     redirect("/auth/signin");
@@ -31,31 +40,37 @@ export default async function DashboardPage() {
     );
   }
 
-  const [
-    githubConnection,
-    repositories,
-    subscription,
-    recentExports,
-  ] = await Promise.all([
-    db.gitHubConnection.findUnique({ where: { orgId } }),
-    db.repository.findMany({
-      where: { orgId, isActive: true },
-      include: {
-        _count: {
-          select: {
-            commits: true,
-            pullRequests: true,
+  // Fetch data with error handling
+  let githubConnection = null;
+  let repositories: Awaited<ReturnType<typeof db.repository.findMany>> = [];
+  let subscription = null;
+  let recentExports: Awaited<ReturnType<typeof db.export.findMany>> = [];
+
+  try {
+    [githubConnection, repositories, subscription, recentExports] = await Promise.all([
+      db.gitHubConnection.findUnique({ where: { orgId } }).catch(() => null),
+      db.repository.findMany({
+        where: { orgId, isActive: true },
+        include: {
+          _count: {
+            select: {
+              commits: true,
+              pullRequests: true,
+            },
           },
         },
-      },
-    }),
-    db.subscription.findUnique({ where: { orgId } }),
-    db.export.findMany({
-      where: { orgId },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-  ]);
+      }).catch(() => []),
+      db.subscription.findUnique({ where: { orgId } }).catch(() => null),
+      db.export.findMany({
+        where: { orgId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }).catch(() => []),
+    ]);
+  } catch (error) {
+    console.error("Dashboard data fetch error:", error);
+    // Continue with empty data rather than crashing
+  }
 
   const totalCommits = repositories.reduce((sum, r) => sum + r._count.commits, 0);
   const totalPRs = repositories.reduce((sum, r) => sum + r._count.pullRequests, 0);
