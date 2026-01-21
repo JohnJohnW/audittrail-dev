@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -61,21 +62,19 @@ export function DashboardNav({ user }: DashboardNavProps) {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200">
-                <svg
-                  className="w-4.5 h-4.5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
-              </div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="relative w-8 h-8 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-200"
+              >
+                <Image
+                  src="/icon.svg"
+                  alt="AuditTrail.dev"
+                  width={32}
+                  height={32}
+                  className="rounded-lg"
+                  priority
+                />
+              </motion.div>
               <span className="text-base font-semibold text-gray-900">
                 AuditTrail<span className="text-accent">.dev</span>
               </span>
