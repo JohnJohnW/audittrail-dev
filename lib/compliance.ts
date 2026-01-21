@@ -88,6 +88,46 @@ const TEST_PATTERNS = [
   /\bcoverage\b/i,
 ];
 
+// Patterns to detect CI/CD security tools (for A.8.29 Security Testing)
+const CICD_SECURITY_PATTERNS = [
+  /\bsnyk\b/i,
+  /\bsonarqube\b/i,
+  /\bsonar\b/i,
+  /\bcodeql\b/i,
+  /\bsemgrep\b/i,
+  /\btrivy\b/i,
+  /\baquasec\b/i,
+  /\bsast\b/i,
+  /\bdast\b/i,
+  /\bsecurity.?scan/i,
+  /\bvulnerability.?scan/i,
+  /\bdependency.?check/i,
+  /\bowasp\b/i,
+  /\bfortify\b/i,
+  /\bveracode\b/i,
+  /\bcheckmarx\b/i,
+  /\bbandit\b/i,
+  /\bbrakeman\b/i,
+  /\bgosec\b/i,
+  /\bnpm.?audit\b/i,
+  /\byarn.?audit\b/i,
+  /\bpip.?audit\b/i,
+  /\bgithub.?actions.?security/i,
+  /\bworkflows.*security/i,
+  /\bci.*security/i,
+];
+
+// Patterns to detect automated dependency updates (Dependabot, Renovate)
+const AUTOMATED_DEPENDENCY_PATTERNS = [
+  /\bdependabot\b/i,
+  /\brenovate\b/i,
+  /\bbump\s+[\w@\/.-]+\s+from\s+[\d.]+\s+to\s+[\d.]+/i,
+  /\bchore\(deps\)/i,
+  /\bchore\(deps-dev\)/i,
+  /\bupdate\s+dependency\b/i,
+  /\bauto.?merge/i,
+];
+
 function matchesPatterns(text: string, patterns: RegExp[]): boolean {
   return patterns.some((p) => p.test(text));
 }
@@ -96,30 +136,38 @@ function getCommitRelevance(
   message: string,
   controlCode: string
 ): "high" | "medium" | "low" {
-  const lowerMessage = message.toLowerCase();
-
   // Patching controls (E8-PA, E8-PO, A.8.8)
   if (["E8-PA", "E8-PO", "A.8.8"].includes(controlCode)) {
+    if (matchesPatterns(message, AUTOMATED_DEPENDENCY_PATTERNS)) return "high";
     if (matchesPatterns(message, DEPENDENCY_PATTERNS)) return "high";
     if (matchesPatterns(message, INFRASTRUCTURE_PATTERNS)) return "medium";
     return "low";
   }
 
-  // Security controls
-  if (["A.8.28", "A.8.26", "A.8.29"].includes(controlCode)) {
+  // Security testing control (A.8.29)
+  if (controlCode === "A.8.29") {
+    if (matchesPatterns(message, CICD_SECURITY_PATTERNS)) return "high";
+    if (matchesPatterns(message, TEST_PATTERNS)) return "high";
+    if (matchesPatterns(message, SECURITY_PATTERNS)) return "medium";
+    return "low";
+  }
+
+  // Security controls (A.8.28, A.8.26)
+  if (["A.8.28", "A.8.26"].includes(controlCode)) {
     if (matchesPatterns(message, SECURITY_PATTERNS)) return "high";
     if (matchesPatterns(message, TEST_PATTERNS)) return "medium";
     return "low";
   }
 
-  // Testing controls
-  if (["A.8.29", "A.8.33"].includes(controlCode)) {
+  // Testing controls (A.8.33)
+  if (controlCode === "A.8.33") {
     if (matchesPatterns(message, TEST_PATTERNS)) return "high";
     return "low";
   }
 
   // Outsourced development / third-party (A.8.30)
   if (controlCode === "A.8.30") {
+    if (matchesPatterns(message, AUTOMATED_DEPENDENCY_PATTERNS)) return "high";
     if (matchesPatterns(message, DEPENDENCY_PATTERNS)) return "high";
     return "low";
   }
@@ -211,6 +259,16 @@ export async function getComplianceEvidence(
   const testCommits = allCommits.filter((c) =>
     matchesPatterns(c.message, TEST_PATTERNS)
   );
+  // Signed commits provide strong evidence for authentication controls
+  const signedCommits = allCommits.filter((c) => c.verified === true);
+  // CI/CD security tool commits for security testing evidence
+  const cicdSecurityCommits = allCommits.filter((c) =>
+    matchesPatterns(c.message, CICD_SECURITY_PATTERNS)
+  );
+  // Automated dependency updates (Dependabot/Renovate)
+  const automatedDependencyCommits = allCommits.filter((c) =>
+    matchesPatterns(c.message, AUTOMATED_DEPENDENCY_PATTERNS)
+  );
 
   // Controls that have limited Git evidence
   const LIMITED_EVIDENCE_CONTROLS = ["E8-MM", "E8-UAH"];
@@ -239,8 +297,13 @@ export async function getComplianceEvidence(
 
           // Use more specific commits for certain controls
           if (["E8-PA", "A.8.8", "A.8.30"].includes(control.code)) {
+            // Prioritize automated dependency updates (Dependabot/Renovate) then manual dependency updates
             relevantCommits =
-              dependencyCommits.length > 0 ? dependencyCommits : allCommits;
+              automatedDependencyCommits.length > 0
+                ? [...automatedDependencyCommits, ...dependencyCommits]
+                : dependencyCommits.length > 0
+                  ? dependencyCommits
+                  : allCommits;
           } else if (control.code === "E8-PO") {
             relevantCommits =
               infrastructureCommits.length > 0
@@ -251,7 +314,13 @@ export async function getComplianceEvidence(
               securityCommits.length > 0
                 ? [...securityCommits, ...allCommits.slice(0, 10)]
                 : allCommits;
-          } else if (["A.8.29", "A.8.33"].includes(control.code)) {
+          } else if (control.code === "A.8.29") {
+            // Security testing - prioritize CI/CD security commits and test commits
+            relevantCommits =
+              cicdSecurityCommits.length > 0 || testCommits.length > 0
+                ? [...cicdSecurityCommits, ...testCommits, ...allCommits.slice(0, 10)]
+                : allCommits;
+          } else if (control.code === "A.8.33") {
             relevantCommits =
               testCommits.length > 0
                 ? [...testCommits, ...allCommits.slice(0, 10)]
@@ -260,17 +329,29 @@ export async function getComplianceEvidence(
 
           // Build evidence items
           for (const commit of relevantCommits.slice(0, 30)) {
-            const relevance = getCommitRelevance(commit.message, control.code);
+            let relevance = getCommitRelevance(commit.message, control.code);
+            
+            // Signed commits are high relevance for auth controls
+            if (["A.5.17", "E8-MFA"].includes(control.code) && commit.verified) {
+              relevance = "high";
+            }
+            
+            const signedNote = commit.verified 
+              ? ` [Signed: ${commit.verificationReason || "verified"}]` 
+              : "";
+            
             evidence.push({
               type: "commit",
-              title: `Commit: ${commit.sha.slice(0, 7)}`,
-              description: commit.message.split("\n")[0].slice(0, 100),
+              title: `Commit: ${commit.sha.slice(0, 7)}${commit.verified ? " ✓" : ""}`,
+              description: commit.message.split("\n")[0].slice(0, 100) + signedNote,
               timestamp: commit.committedAt,
               url: commit.url || undefined,
               metadata: {
                 sha: commit.sha,
                 author: commit.authorName,
                 email: commit.authorEmail,
+                verified: commit.verified,
+                verificationReason: commit.verificationReason,
               },
               relevance,
             });
@@ -298,10 +379,31 @@ export async function getComplianceEvidence(
           const approvedPRs = allPRs.filter((pr) => pr.reviews.length > 0);
 
           for (const pr of approvedPRs.slice(0, 30)) {
+            // Detect automated dependency PRs (Dependabot, Renovate)
+            const isAutomatedDependency = 
+              pr.authorLogin.includes("dependabot") ||
+              pr.authorLogin.includes("renovate") ||
+              pr.authorLogin === "dependabot[bot]" ||
+              pr.authorLogin === "renovate[bot]" ||
+              matchesPatterns(pr.title, AUTOMATED_DEPENDENCY_PATTERNS);
+            
+            // Determine relevance
+            let relevance: "high" | "medium" | "low" = 
+              pr.baseBranch === "main" || pr.baseBranch === "master"
+                ? "high"
+                : "medium";
+            
+            // Automated dependency PRs are highly relevant for certain controls
+            if (isAutomatedDependency) {
+              relevance = "high";
+            }
+            
+            const automatedNote = isAutomatedDependency ? " [Automated]" : "";
+            
             evidence.push({
               type: "pr",
               title: `PR #${pr.number}: ${pr.title.slice(0, 60)}`,
-              description: `Approved by ${pr.reviews.map((r) => r.reviewerLogin).join(", ")}`,
+              description: `Approved by ${pr.reviews.map((r) => r.reviewerLogin).join(", ")}${automatedNote}`,
               timestamp: pr.mergedAt || pr.createdAt,
               url: pr.url || undefined,
               metadata: {
@@ -309,11 +411,9 @@ export async function getComplianceEvidence(
                 author: pr.authorLogin,
                 approvers: pr.reviews.map((r) => r.reviewerLogin),
                 baseBranch: pr.baseBranch,
+                isAutomatedDependency,
               },
-              relevance:
-                pr.baseBranch === "main" || pr.baseBranch === "master"
-                  ? "high"
-                  : "medium",
+              relevance,
             });
           }
 

@@ -5,6 +5,16 @@ import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { ExportPDF } from "@/lib/pdf";
 
+// Helper to escape CSV values
+function escapeCSV(value: string): string {
+  if (!value) return "";
+  // If value contains comma, quote, or newline, wrap in quotes and escape internal quotes
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -101,56 +111,119 @@ export async function POST(request: NextRequest) {
     let buffer: Buffer;
     let contentType: string;
 
-    if (format === "pdf") {
-      // Generate PDF
-      buffer = await renderToBuffer(
-        <ExportPDF
-          orgName={org?.name || "Organization"}
-          frameworkName={frameworkName}
-          generatedAt={now}
-          summary={summary}
-          controls={controls}
-        />
-      );
-      contentType = "application/pdf";
-    } else {
-      // Generate CSV
-      const csvRows = [
-        [
+    try {
+      // Get repository names for the report
+      const selectedRepoNames = repositoryIds?.length
+        ? await db.repository
+            .findMany({
+              where: { id: { in: repositoryIds } },
+              select: { fullName: true },
+            })
+            .then((repos) => repos.map((r) => r.fullName))
+        : undefined;
+
+      if (format === "pdf") {
+        // Generate PDF with date range and repository info
+        buffer = await renderToBuffer(
+          <ExportPDF
+            orgName={org?.name || "Organization"}
+            frameworkName={frameworkName}
+            generatedAt={now}
+            summary={summary}
+            controls={controls}
+            dateRange={{
+              from: dateFrom ? new Date(dateFrom) : undefined,
+              to: dateTo ? new Date(dateTo) : undefined,
+            }}
+            repositories={selectedRepoNames}
+          />
+        );
+        contentType = "application/pdf";
+      } else {
+        // Generate comprehensive CSV with evidence details
+        const csvRows: string[] = [];
+        
+        // Header row
+        csvRows.push([
           "Control Code",
           "Control Title",
           "Framework",
           "Status",
           "Evidence Count",
           "Evidence Type",
-        ].join(","),
-        ...controls.map((control) =>
-          [
-            control.controlCode,
-            `"${control.controlTitle.replace(/"/g, '""')}"`,
-            control.frameworkName,
-            control.status,
-            control.evidenceCount,
-            control.evidenceType,
-          ].join(",")
-        ),
-      ];
-      buffer = Buffer.from(csvRows.join("\n"), "utf-8");
-      contentType = "text/csv";
+          "Evidence Title",
+          "Evidence Description",
+          "Evidence Timestamp",
+          "Evidence URL",
+          "Evidence Relevance",
+        ].join(","));
+
+        // Data rows - one row per evidence item (or one row for controls with no evidence)
+        for (const control of controls) {
+          if (control.evidence.length === 0) {
+            // No evidence - still output the control
+            csvRows.push([
+              escapeCSV(control.controlCode),
+              escapeCSV(control.controlTitle),
+              escapeCSV(control.frameworkName),
+              escapeCSV(control.status),
+              "0",
+              escapeCSV(control.evidenceType),
+              "",
+              "",
+              "",
+              "",
+              "",
+            ].join(","));
+          } else {
+            // Output one row per evidence item
+            for (const item of control.evidence) {
+              csvRows.push([
+                escapeCSV(control.controlCode),
+                escapeCSV(control.controlTitle),
+                escapeCSV(control.frameworkName),
+                escapeCSV(control.status),
+                String(control.evidenceCount),
+                escapeCSV(control.evidenceType),
+                escapeCSV(item.title),
+                escapeCSV(item.description),
+                new Date(item.timestamp).toISOString(),
+                escapeCSV(item.url || ""),
+                escapeCSV((item as { relevance?: string }).relevance || ""),
+              ].join(","));
+            }
+          }
+        }
+
+        buffer = Buffer.from(csvRows.join("\n"), "utf-8");
+        contentType = "text/csv";
+      }
+
+      // Update export record to completed
+      await db.export.update({
+        where: { id: exportRecord.id },
+        data: { status: "completed" },
+      });
+
+      return new NextResponse(new Uint8Array(buffer), {
+        headers: {
+          "Content-Type": contentType,
+          "Content-Disposition": `attachment; filename="${fileName}"`,
+        },
+      });
+    } catch (generateError) {
+      // Update export record to failed
+      console.error("Export generation error:", generateError);
+      await db.export.update({
+        where: { id: exportRecord.id },
+        data: { status: "failed" },
+      });
+      
+      return NextResponse.json(
+        { error: "Failed to generate export", details: generateError instanceof Error ? generateError.message : "Unknown error" },
+        { status: 500 }
+      );
     }
-
-    // Update export record
-    await db.export.update({
-      where: { id: exportRecord.id },
-      data: { status: "completed" },
-    });
-
-    return new NextResponse(new Uint8Array(buffer), {
-      headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${fileName}"`,
-      },
-    });
   } catch (error) {
     console.error("Export error:", error);
     return NextResponse.json(

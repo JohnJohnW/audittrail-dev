@@ -17,13 +17,22 @@ interface Framework {
   controlCount: number;
 }
 
+interface Repository {
+  id: string;
+  fullName: string;
+}
+
 export default function ExportsPage() {
   const [exports, setExports] = useState<ExportRecord[]>([]);
   const [canExport, setCanExport] = useState(false);
   const [frameworks, setFrameworks] = useState<Framework[]>([]);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [selectedFramework, setSelectedFramework] = useState<string>("");
+  const [selectedRepositories, setSelectedRepositories] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [exportFormat, setExportFormat] = useState<"pdf" | "csv">("pdf");
 
   useEffect(() => {
@@ -32,22 +41,38 @@ export default function ExportsPage() {
 
   const fetchData = async () => {
     try {
-      const [exportsRes, evidenceRes] = await Promise.all([
+      const [exportsRes, evidenceRes, reposRes] = await Promise.all([
         fetch("/api/exports"),
         fetch("/api/evidence"),
+        fetch("/api/github/repositories"),
       ]);
 
       const exportsData = await exportsRes.json();
       const evidenceData = await evidenceRes.json();
+      const reposData = await reposRes.json();
 
       setExports(exportsData.exports || []);
       setCanExport(exportsData.canExport);
       setFrameworks(evidenceData.frameworks || []);
+      setRepositories(
+        (reposData.tracked || []).map((r: { id: string; full_name: string }) => ({
+          id: r.id,
+          fullName: r.full_name,
+        }))
+      );
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleRepository = (repoId: string) => {
+    setSelectedRepositories((prev) =>
+      prev.includes(repoId)
+        ? prev.filter((id) => id !== repoId)
+        : [...prev, repoId]
+    );
   };
 
   const handleExport = async () => {
@@ -61,6 +86,9 @@ export default function ExportsPage() {
         body: JSON.stringify({
           format: exportFormat,
           frameworkId: selectedFramework || undefined,
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+          repositoryIds: selectedRepositories.length > 0 ? selectedRepositories : undefined,
         }),
       });
 
@@ -155,67 +183,128 @@ export default function ExportsPage() {
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Framework
-            </label>
-            <select
-              value={selectedFramework}
-              onChange={(e) => setSelectedFramework(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-              disabled={!canExport}
-            >
-              <option value="">All Frameworks</option>
-              {frameworks.map((fw) => (
-                <option key={fw.id} value={fw.id}>
-                  {fw.name} ({fw.controlCount} controls)
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="space-y-6">
+          {/* Row 1: Framework, Format, Export Button */}
+          <div className="grid md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Framework
+              </label>
+              <select
+                value={selectedFramework}
+                onChange={(e) => setSelectedFramework(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                disabled={!canExport}
+              >
+                <option value="">All Frameworks</option>
+                {frameworks.map((fw) => (
+                  <option key={fw.id} value={fw.id}>
+                    {fw.name} ({fw.controlCount} controls)
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Format
-            </label>
-            <div className="flex space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="format"
-                  value="pdf"
-                  checked={exportFormat === "pdf"}
-                  onChange={() => setExportFormat("pdf")}
-                  disabled={!canExport}
-                  className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
-                />
-                <span className="ml-2 text-gray-700">PDF</span>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Format
               </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="format"
-                  value="csv"
-                  checked={exportFormat === "csv"}
-                  onChange={() => setExportFormat("csv")}
-                  disabled={!canExport}
-                  className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
-                />
-                <span className="ml-2 text-gray-700">CSV</span>
-              </label>
+              <div className="flex space-x-4 pt-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="format"
+                    value="pdf"
+                    checked={exportFormat === "pdf"}
+                    onChange={() => setExportFormat("pdf")}
+                    disabled={!canExport}
+                    className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-gray-700">PDF</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="format"
+                    value="csv"
+                    checked={exportFormat === "csv"}
+                    onChange={() => setExportFormat("csv")}
+                    disabled={!canExport}
+                    className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-gray-700">CSV</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-end">
+              <button
+                onClick={handleExport}
+                disabled={!canExport || exporting}
+                className="w-full bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {exporting ? "Generating..." : "Generate Export"}
+              </button>
             </div>
           </div>
 
-          <div className="flex items-end">
-            <button
-              onClick={handleExport}
-              disabled={!canExport || exporting}
-              className="w-full bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {exporting ? "Generating..." : "Generate Export"}
-            </button>
+          {/* Row 2: Date Range */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                From Date (optional)
+              </label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                disabled={!canExport}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                To Date (optional)
+              </label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                disabled={!canExport}
+              />
+            </div>
           </div>
+
+          {/* Row 3: Repository Filter */}
+          {repositories.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Repositories (optional - leave empty for all)
+              </label>
+              <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50 max-h-32 overflow-y-auto">
+                {repositories.map((repo) => (
+                  <button
+                    key={repo.id}
+                    onClick={() => toggleRepository(repo.id)}
+                    disabled={!canExport}
+                    className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                      selectedRepositories.includes(repo.id)
+                        ? "bg-primary-600 text-white"
+                        : "bg-white border border-gray-300 text-gray-700 hover:border-primary-500"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {repo.fullName}
+                  </button>
+                ))}
+              </div>
+              {selectedRepositories.length > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {selectedRepositories.length} repository(s) selected
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

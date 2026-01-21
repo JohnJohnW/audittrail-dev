@@ -80,11 +80,12 @@ model Organization {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  memberships      OrgMembership[]
-  githubConnection GitHubConnection?
-  repositories     Repository[]
-  subscription     Subscription?
-  exports          Export[]
+  memberships          OrgMembership[]
+  githubConnection     GitHubConnection?
+  repositories         Repository[]
+  subscription         Subscription?
+  exports              Export[]
+  complianceSnapshots  ComplianceSnapshot[]
 
   @@map("organizations")
 }
@@ -147,15 +148,17 @@ model Repository {
 }
 
 model Commit {
-  id          String   @id @default(cuid())
-  repoId      String   @map("repo_id")
-  sha         String
-  message     String   @db.Text
-  authorName  String   @map("author_name")
-  authorEmail String   @map("author_email")
-  committedAt DateTime @map("committed_at")
-  url         String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id                 String   @id @default(cuid())
+  repoId             String   @map("repo_id")
+  sha                String
+  message            String   @db.Text
+  authorName         String   @map("author_name")
+  authorEmail        String   @map("author_email")
+  committedAt        DateTime @map("committed_at")
+  url                String?
+  verified           Boolean  @default(false)
+  verificationReason String?  @map("verification_reason")
+  createdAt          DateTime @default(now()) @map("created_at")
 
   repository Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
 
@@ -251,6 +254,25 @@ model ComplianceControl {
 
   @@unique([frameworkId, code])
   @@map("compliance_controls")
+}
+
+model ComplianceSnapshot {
+  id              String   @id @default(cuid())
+  orgId           String   @map("org_id")
+  snapshotDate    DateTime @map("snapshot_date") @db.Date
+  overallScore    Int      @map("overall_score")
+  totalControls   Int      @map("total_controls")
+  withEvidence    Int      @map("with_evidence")
+  partial         Int
+  limited         Int      @default(0)
+  noEvidence      Int      @map("no_evidence")
+  frameworkScores Json?    @map("framework_scores")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, snapshotDate])
+  @@map("compliance_snapshots")
 }
 
 // ============================================

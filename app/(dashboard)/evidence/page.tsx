@@ -37,10 +37,14 @@ interface EvidenceData {
   };
 }
 
+type StatusFilter = "all" | "has_evidence" | "partial" | "limited" | "no_evidence";
+
 export default function EvidencePage() {
   const [data, setData] = useState<EvidenceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [expandedControl, setExpandedControl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -75,9 +79,28 @@ export default function EvidencePage() {
     );
   }
 
-  const filteredControls = selectedFramework
-    ? data.controls.filter((c) => c.frameworkName === selectedFramework)
-    : data.controls;
+  // Apply all filters
+  const filteredControls = data.controls.filter((control) => {
+    // Framework filter
+    if (selectedFramework && control.frameworkName !== selectedFramework) {
+      return false;
+    }
+    // Status filter
+    if (selectedStatus !== "all" && control.status !== selectedStatus) {
+      return false;
+    }
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesCode = control.controlCode.toLowerCase().includes(query);
+      const matchesTitle = control.controlTitle.toLowerCase().includes(query);
+      const matchesDescription = control.controlDescription?.toLowerCase().includes(query) || false;
+      if (!matchesCode && !matchesTitle && !matchesDescription) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   return (
     <div>
@@ -120,33 +143,106 @@ export default function EvidencePage() {
         </div>
       </div>
 
-      {/* Framework Filter */}
-      <div className="flex items-center space-x-4 mb-6">
-        <span className="text-sm font-medium text-gray-700">Filter by framework:</span>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setSelectedFramework(null)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              selectedFramework === null
-                ? "bg-primary-100 text-primary-700"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            All
-          </button>
-          {data.frameworks.map((framework) => (
-            <button
-              key={framework.id}
-              onClick={() => setSelectedFramework(framework.name)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                selectedFramework === framework.name
-                  ? "bg-primary-100 text-primary-700"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+      {/* Search and Filters */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 space-y-4">
+        {/* Search Input */}
+        <div>
+          <div className="relative">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              {framework.name} ({framework.controlCount})
-            </button>
-          ))}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search controls by code, title, or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Row */}
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Framework Filter */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Framework:</span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedFramework(null)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  selectedFramework === null
+                    ? "bg-primary-100 text-primary-700"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                All
+              </button>
+              {data.frameworks.map((framework) => (
+                <button
+                  key={framework.id}
+                  onClick={() => setSelectedFramework(framework.name)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    selectedFramework === framework.name
+                      ? "bg-primary-100 text-primary-700"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {framework.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Status:</span>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: "all", label: "All", color: "bg-gray-100 text-gray-600" },
+                { value: "has_evidence", label: "Has Evidence", color: "bg-green-100 text-green-700" },
+                { value: "partial", label: "Partial", color: "bg-yellow-100 text-yellow-700" },
+                { value: "limited", label: "Limited", color: "bg-blue-100 text-blue-700" },
+                { value: "no_evidence", label: "Missing", color: "bg-red-100 text-red-700" },
+              ].map((status) => (
+                <button
+                  key={status.value}
+                  onClick={() => setSelectedStatus(status.value as StatusFilter)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    selectedStatus === status.value
+                      ? status.color
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {status.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Results count */}
+        <div className="text-sm text-gray-500">
+          Showing {filteredControls.length} of {data.controls.length} controls
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { format, subDays, startOfDay } from "date-fns";
+import { subDays, startOfDay } from "date-fns";
 import { handleApiError } from "@/lib/error-handler";
 
 export async function GET(request: NextRequest) {
@@ -39,11 +39,26 @@ export async function GET(request: NextRequest) {
 
     const repoIds = repositories.map((r) => r.id);
 
+    // Get stored compliance snapshots for the date range
+    const snapshots = await db.complianceSnapshot.findMany({
+      where: {
+        orgId,
+        snapshotDate: { gte: startDate },
+      },
+      orderBy: { snapshotDate: "asc" },
+    });
+
+    // Create a map of date -> snapshot for quick lookup
+    const snapshotMap = new Map(
+      snapshots.map((s) => [s.snapshotDate.toISOString().split("T")[0], s])
+    );
+
     // Aggregate data by date
     for (const dateStr of dates) {
       const date = new Date(dateStr);
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
+      const dateKey = date.toISOString().split("T")[0];
 
       // Commits for this day
       const dayCommits = await db.commit.count({
@@ -69,28 +84,36 @@ export async function GET(request: NextRequest) {
       });
       pullRequests.push(dayPRs);
 
-      // For compliance score and evidence, we'll use a simplified calculation
-      // In production, you'd want to store daily snapshots
-      const allCommits = await db.commit.count({
-        where: {
-          repoId: { in: repoIds },
-          committedAt: { lte: nextDate },
-        },
-      });
-      const allPRs = await db.pullRequest.count({
-        where: {
-          repoId: { in: repoIds },
-          mergedAt: { lte: nextDate },
-        },
-      });
+      // Use stored snapshot if available, otherwise calculate
+      const snapshot = snapshotMap.get(dateKey);
+      if (snapshot) {
+        complianceScores.push(snapshot.overallScore);
+        evidenceCounts.push(
+          snapshot.withEvidence + snapshot.partial + snapshot.limited
+        );
+      } else {
+        // Fallback: estimate based on cumulative activity
+        const allCommits = await db.commit.count({
+          where: {
+            repoId: { in: repoIds },
+            committedAt: { lte: nextDate },
+          },
+        });
+        const allPRs = await db.pullRequest.count({
+          where: {
+            repoId: { in: repoIds },
+            mergedAt: { lte: nextDate },
+          },
+        });
 
-      // Simplified compliance score (based on activity)
-      const activityScore = Math.min(
-        100,
-        Math.round((allCommits + allPRs * 2) / 10)
-      );
-      complianceScores.push(activityScore);
-      evidenceCounts.push(allCommits + allPRs);
+        // Simplified compliance score (based on activity) - used as fallback
+        const activityScore = Math.min(
+          100,
+          Math.round((allCommits + allPRs * 2) / 10)
+        );
+        complianceScores.push(activityScore);
+        evidenceCounts.push(allCommits + allPRs);
+      }
     }
 
     return NextResponse.json({

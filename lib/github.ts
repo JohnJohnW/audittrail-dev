@@ -23,6 +23,12 @@ export interface GitHubCommit {
       email: string;
       date: string;
     };
+    verification?: {
+      verified: boolean;
+      reason: string;
+      signature: string | null;
+      payload: string | null;
+    };
   };
   html_url: string;
   author: {
@@ -95,10 +101,38 @@ export class GitHubClient {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("GitHub token is invalid or expired. Please reconnect your GitHub account.");
+      }
+      if (response.status === 403) {
+        const rateLimitRemaining = response.headers.get("X-RateLimit-Remaining");
+        if (rateLimitRemaining === "0") {
+          const resetTime = response.headers.get("X-RateLimit-Reset");
+          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : null;
+          throw new Error(`GitHub API rate limit exceeded. Resets at ${resetDate?.toLocaleString() || "unknown"}`);
+        }
+        throw new Error("GitHub API access forbidden. Check token scopes.");
+      }
       throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
     }
 
     return response.json();
+  }
+
+  /**
+   * Validates the token by making a lightweight API call
+   * Returns user info if valid, throws if invalid
+   */
+  async validateToken(): Promise<{ valid: boolean; login?: string; error?: string }> {
+    try {
+      const user = await this.getUser();
+      return { valid: true, login: user.login };
+    } catch (error) {
+      return { 
+        valid: false, 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      };
+    }
   }
 
   async getUser(): Promise<{ id: number; login: string; type: string }> {
@@ -159,5 +193,43 @@ export async function getGitHubClientForOrg(orgId: string): Promise<GitHubClient
     return null;
   }
 
+  // Check if token is known to be expired
+  if (connection.tokenExpiresAt && connection.tokenExpiresAt < new Date()) {
+    console.warn(`GitHub token for org ${orgId} has expired (expired at ${connection.tokenExpiresAt.toISOString()})`);
+    // Token is expired - could implement refresh logic here
+    // For now, still return the client and let it fail with a clear error
+  }
+
   return new GitHubClient(connection.accessToken);
+}
+
+/**
+ * Validates the GitHub connection for an organization
+ * Returns validation result with details
+ */
+export async function validateGitHubConnection(orgId: string): Promise<{
+  connected: boolean;
+  valid: boolean;
+  login?: string;
+  error?: string;
+  expiresAt?: Date;
+}> {
+  const connection = await db.gitHubConnection.findUnique({
+    where: { orgId },
+  });
+
+  if (!connection) {
+    return { connected: false, valid: false, error: "No GitHub connection found" };
+  }
+
+  const client = new GitHubClient(connection.accessToken);
+  const validation = await client.validateToken();
+
+  return {
+    connected: true,
+    valid: validation.valid,
+    login: validation.login,
+    error: validation.error,
+    expiresAt: connection.tokenExpiresAt || undefined,
+  };
 }

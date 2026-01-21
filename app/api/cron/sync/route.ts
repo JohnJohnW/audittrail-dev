@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getGitHubClientForOrg, GitHubClient } from "@/lib/github";
+import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
 
 // Cron job endpoint for automatic syncing
 // Protected by CRON_SECRET to prevent unauthorized access
@@ -40,6 +41,12 @@ export async function GET(request: NextRequest) {
       include: {
         repositories: {
           where: { isActive: true },
+          select: {
+            id: true,
+            fullName: true,
+            defaultBranch: true,
+            lastSyncedAt: true,
+          },
         },
       },
     });
@@ -87,6 +94,15 @@ export async function GET(request: NextRequest) {
             // Sync pull requests
             await syncPRsForCron(client, repo.id, owner, repoName);
 
+            // Sync branch protection
+            await syncBranchProtectionForCron(
+              client,
+              repo.id,
+              owner,
+              repoName,
+              repo.defaultBranch
+            );
+
             // Update last synced timestamp
             await db.repository.update({
               where: { id: repo.id },
@@ -98,6 +114,9 @@ export async function GET(request: NextRequest) {
             console.error(`Error syncing repo ${repo.fullName}:`, error);
           }
         }
+
+        // Store daily compliance snapshot after sync
+        await storeComplianceSnapshot(org.id);
 
         results.push({
           orgId: org.id,
@@ -155,7 +174,10 @@ async function syncCommitsForCron(
           where: {
             repoId_sha: { repoId, sha: commit.sha },
           },
-          update: {},
+          update: {
+            verified: commit.commit.verification?.verified || false,
+            verificationReason: commit.commit.verification?.reason || null,
+          },
           create: {
             repoId,
             sha: commit.sha,
@@ -164,6 +186,8 @@ async function syncCommitsForCron(
             authorEmail: commit.commit.author.email,
             committedAt: new Date(commit.commit.author.date),
             url: commit.html_url,
+            verified: commit.commit.verification?.verified || false,
+            verificationReason: commit.commit.verification?.reason || null,
           },
         });
       } catch (error) {
@@ -247,6 +271,125 @@ async function syncPRsForCron(
     }
 
     if (prs.length < 100) break;
+  }
+}
+
+async function syncBranchProtectionForCron(
+  client: GitHubClient,
+  repoId: string,
+  owner: string,
+  repoName: string,
+  branch: string
+) {
+  try {
+    const protection = await client.getBranchProtection(owner, repoName, branch);
+    if (!protection) return null;
+
+    const snapshotAt = new Date();
+    await db.branchProtection.upsert({
+      where: {
+        repoId_branch_snapshotAt: {
+          repoId,
+          branch,
+          snapshotAt,
+        },
+      },
+      update: {
+        requirePullRequest: !!protection.required_pull_request_reviews,
+        requiredApprovals:
+          protection.required_pull_request_reviews
+            ?.required_approving_review_count || 0,
+        dismissStaleReviews:
+          protection.required_pull_request_reviews?.dismiss_stale_reviews ||
+          false,
+        requireCodeOwners:
+          protection.required_pull_request_reviews?.require_code_owner_reviews ||
+          false,
+        enforceAdmins: protection.enforce_admins?.enabled || false,
+        requireStatusChecks: !!protection.required_status_checks,
+      },
+      create: {
+        repoId,
+        branch,
+        requirePullRequest: !!protection.required_pull_request_reviews,
+        requiredApprovals:
+          protection.required_pull_request_reviews
+            ?.required_approving_review_count || 0,
+        dismissStaleReviews:
+          protection.required_pull_request_reviews?.dismiss_stale_reviews ||
+          false,
+        requireCodeOwners:
+          protection.required_pull_request_reviews?.require_code_owner_reviews ||
+          false,
+        enforceAdmins: protection.enforce_admins?.enabled || false,
+        requireStatusChecks: !!protection.required_status_checks,
+        snapshotAt,
+      },
+    });
+
+    return protection;
+  } catch (error) {
+    // Branch protection not configured or no access - this is okay
+    return null;
+  }
+}
+
+async function storeComplianceSnapshot(orgId: string) {
+  try {
+    const evidence = await getComplianceEvidence(orgId);
+    const summary = getEvidenceSummary(evidence.controls);
+
+    // Calculate per-framework scores
+    const frameworkScores: Record<string, { score: number; total: number; withEvidence: number }> = {};
+    for (const framework of evidence.frameworks) {
+      const frameworkControls = evidence.controls.filter(
+        (c) => c.frameworkName === framework.name
+      );
+      const frameworkSummary = getEvidenceSummary(frameworkControls);
+      frameworkScores[framework.name] = {
+        score: frameworkSummary.score,
+        total: frameworkSummary.total,
+        withEvidence: frameworkSummary.withEvidence,
+      };
+    }
+
+    // Use today's date for the snapshot (UTC)
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    await db.complianceSnapshot.upsert({
+      where: {
+        orgId_snapshotDate: {
+          orgId,
+          snapshotDate: today,
+        },
+      },
+      update: {
+        overallScore: summary.score,
+        totalControls: summary.total,
+        withEvidence: summary.withEvidence,
+        partial: summary.partial,
+        limited: summary.limited,
+        noEvidence: summary.noEvidence,
+        frameworkScores,
+      },
+      create: {
+        orgId,
+        snapshotDate: today,
+        overallScore: summary.score,
+        totalControls: summary.total,
+        withEvidence: summary.withEvidence,
+        partial: summary.partial,
+        limited: summary.limited,
+        noEvidence: summary.noEvidence,
+        frameworkScores,
+      },
+    });
+
+    console.log(`Stored compliance snapshot for org ${orgId}: ${summary.score}%`);
+  } catch (error) {
+    console.error(`Error storing compliance snapshot for org ${orgId}:`, error);
+    // Don't throw - snapshot storage failure shouldn't fail the sync
   }
 }
 

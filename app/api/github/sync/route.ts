@@ -146,7 +146,10 @@ async function syncCommits(
               sha: commit.sha,
             },
           },
-          update: {},
+          update: {
+            verified: commit.commit.verification?.verified || false,
+            verificationReason: commit.commit.verification?.reason || null,
+          },
           create: {
             repoId,
             sha: commit.sha,
@@ -155,6 +158,8 @@ async function syncCommits(
             authorEmail: commit.commit.author.email,
             committedAt: new Date(commit.commit.author.date),
             url: commit.html_url,
+            verified: commit.commit.verification?.verified || false,
+            verificationReason: commit.commit.verification?.reason || null,
           },
         });
         count++;
