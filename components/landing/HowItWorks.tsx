@@ -52,25 +52,28 @@ export function HowItWorks() {
         </FadeIn>
 
         <div className="relative">
-          {/* Connecting line */}
-          <div className="hidden md:block absolute top-10 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-gray-200 via-accent/30 to-gray-200" />
+          {/* Connecting line - positioned between icons on desktop */}
+          <div className="hidden md:block absolute top-6 left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] h-0.5 bg-gradient-to-r from-accent/40 via-accent/20 to-accent/40" />
           
           <StaggerChildren
             className="grid md:grid-cols-3 gap-8"
             staggerDelay={0.15}
           >
-            {steps.map((step, index) => (
-              <div key={step.number} className="relative text-center md:text-left">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white border-2 border-accent text-accent mb-4 mx-auto md:mx-0 group-hover:bg-accent group-hover:text-white transition-colors shadow-sm">
-                  {step.icon}
-                </div>
-                <div className="absolute -top-1 -left-1 md:left-auto md:-top-1 md:-right-1 w-6 h-6 rounded-full bg-accent text-white text-xs font-medium flex items-center justify-center hidden md:flex">
-                  {step.number}
+            {steps.map((step) => (
+              <div key={step.number} className="text-center">
+                {/* Icon with number badge */}
+                <div className="relative inline-flex mb-4">
+                  <div className="w-12 h-12 rounded-full bg-white border-2 border-accent text-accent flex items-center justify-center shadow-sm">
+                    {step.icon}
+                  </div>
+                  <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-accent text-white text-xs font-medium flex items-center justify-center shadow-sm">
+                    {step.number}
+                  </span>
                 </div>
                 <h3 className="text-base font-medium text-gray-900 mb-2">
                   {step.title}
                 </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
+                <p className="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto">
                   {step.description}
                 </p>
               </div>
