@@ -76,8 +76,7 @@ async function main() {
     {
       code: "A.8.28",
       title: "Secure Coding",
-      description:
-        "Secure coding principles shall be applied to software development.",
+      description: "Secure coding principles shall be applied to software development.",
       evidenceType: "pr_approvals",
     },
     {

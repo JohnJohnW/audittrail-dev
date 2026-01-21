@@ -8,9 +8,7 @@ export function Pricing() {
     <section id="pricing" className="py-20 bg-gray-50 px-6">
       <div className="max-w-4xl mx-auto">
         <FadeIn direction="up" className="text-center mb-12">
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">
-            Pricing
-          </p>
+          <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Pricing</p>
           <h2 className="text-2xl font-semibold text-gray-900">
             Start free, upgrade when you need exports
           </h2>
@@ -36,15 +34,35 @@ export function Pricing() {
                 "Email support",
               ].map((feature, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
-                  <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                   {feature}
                 </li>
               ))}
               <li className="flex items-start gap-3 text-sm text-gray-400">
-                <svg className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
                 No exports
               </li>
@@ -63,7 +81,7 @@ export function Pricing() {
             <div className="absolute -top-3 left-4 px-3 py-0.5 bg-accent text-white text-xs font-medium rounded-full">
               Popular
             </div>
-            
+
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-900 mb-1">Pro</h3>
               <div className="flex items-baseline gap-1">
@@ -82,8 +100,18 @@ export function Pricing() {
                 "Export history & audit log",
               ].map((feature, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
-                  <svg className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-4 h-4 text-accent mt-0.5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                   {feature}
                 </li>

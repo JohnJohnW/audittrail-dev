@@ -1,7 +1,9 @@
 "use client";
 
-import { motion, useInView, Variants } from "framer-motion";
-import { useRef, ReactNode } from "react";
+import type { Variants } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import type { ReactNode } from "react";
+import { useRef } from "react";
 
 type Direction = "up" | "down" | "left" | "right" | "none";
 

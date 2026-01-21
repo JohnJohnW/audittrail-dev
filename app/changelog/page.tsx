@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -37,17 +37,12 @@ export default function ChangelogPage() {
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Changelog</h1>
-          <p className="text-gray-600">
-            Stay up to date with the latest features and improvements
-          </p>
+          <p className="text-gray-600">Stay up to date with the latest features and improvements</p>
         </div>
 
         <div className="space-y-6">
           {changelog.map((entry, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl border border-gray-200 p-6"
-            >
+            <div key={index} className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
@@ -56,13 +51,9 @@ export default function ChangelogPage() {
                     >
                       {entry.type}
                     </span>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {entry.version}
-                    </span>
+                    <span className="text-sm font-semibold text-gray-900">{entry.version}</span>
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    {entry.title}
-                  </h2>
+                  <h2 className="text-xl font-semibold text-gray-900">{entry.title}</h2>
                 </div>
                 <time className="text-sm text-gray-500">{entry.date}</time>
               </div>
@@ -72,10 +63,7 @@ export default function ChangelogPage() {
         </div>
 
         <div className="mt-8 text-center">
-          <Link
-            href="/"
-            className="text-primary-600 hover:text-primary-700 font-medium"
-          >
+          <Link href="/" className="text-primary-600 hover:text-primary-700 font-medium">
             ← Back to Home
           </Link>
         </div>

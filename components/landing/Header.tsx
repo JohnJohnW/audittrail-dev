@@ -17,17 +17,14 @@ export function Header() {
   }, []);
 
   return (
-    <header 
+    <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100' 
-          : 'bg-white/80 backdrop-blur-sm'
+        scrolled
+          ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
+          : "bg-white/80 backdrop-blur-sm"
       }`}
     >
-      <nav
-        className="max-w-5xl mx-auto px-6"
-        aria-label="Main navigation"
-      >
+      <nav className="max-w-5xl mx-auto px-6" aria-label="Main navigation">
         <div className="flex items-center justify-between h-14">
           <Link
             href="/"
@@ -71,12 +68,7 @@ export function Header() {
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {mobileMenuOpen ? (
                 <path
                   strokeLinecap="round"

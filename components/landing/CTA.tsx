@@ -8,14 +8,14 @@ export function CTA() {
     <section className="py-20 px-6 relative overflow-hidden">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent-light/50 via-white to-gray-50 pointer-events-none" />
-      
+
       <FadeIn direction="up" className="max-w-2xl mx-auto text-center relative">
         <h2 className="text-2xl font-semibold text-gray-900 mb-3">
           Stop screenshotting GitHub for auditors
         </h2>
         <p className="text-sm text-gray-500 mb-8 max-w-lg mx-auto">
-          Connect your repositories and generate your first compliance report 
-          in under 10 minutes. Free to start.
+          Connect your repositories and generate your first compliance report in under 10 minutes.
+          Free to start.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link

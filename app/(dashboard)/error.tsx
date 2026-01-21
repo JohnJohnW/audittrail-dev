@@ -17,12 +17,7 @@ export default function DashboardError({
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px]">
       <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
-        <svg
-          className="w-6 h-6 text-red-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+        <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -31,9 +26,7 @@ export default function DashboardError({
           />
         </svg>
       </div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-2">
-        Something went wrong
-      </h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h2>
       <p className="text-sm text-gray-500 mb-4 text-center max-w-sm">
         We couldn&apos;t load this page. Please try again.
       </p>

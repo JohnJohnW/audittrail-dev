@@ -16,13 +16,13 @@ CREATE INDEX IF NOT EXISTS idx_prs_author_login ON pull_requests(author_login);
 -- Index for reviews by reviewer (for reviewer-based queries)
 CREATE INDEX IF NOT EXISTS idx_reviews_reviewer_login ON reviews(reviewer_login);
 
--- Composite index for trends API date grouping queries
-CREATE INDEX IF NOT EXISTS idx_commits_repo_date_grouped 
-ON commits(repo_id, DATE(committed_at));
+-- Composite index for trends API date range queries on commits
+CREATE INDEX IF NOT EXISTS idx_commits_repo_committed_at 
+ON commits(repo_id, committed_at);
 
--- Composite index for PR merge date grouping
-CREATE INDEX IF NOT EXISTS idx_prs_repo_merged_date 
-ON pull_requests(repo_id, DATE(merged_at)) 
+-- Composite index for PR merge date range queries
+CREATE INDEX IF NOT EXISTS idx_prs_repo_merged_at 
+ON pull_requests(repo_id, merged_at) 
 WHERE merged_at IS NOT NULL;
 
 -- Index for compliance snapshots date range queries

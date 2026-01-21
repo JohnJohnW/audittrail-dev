@@ -32,8 +32,7 @@ export async function GET() {
         ? {
             plan: subscription.plan,
             status: subscription.status,
-            currentPeriodEnd:
-              subscription.currentPeriodEnd?.toISOString() || null,
+            currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() || null,
             cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
             hasStripeCustomer: !!subscription.stripeCustomerId,
           }

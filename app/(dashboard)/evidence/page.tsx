@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
+import { cn } from "@/lib/utils";
 
 interface EvidenceItem {
   type: string;
@@ -39,6 +45,20 @@ interface EvidenceData {
 
 type StatusFilter = "all" | "has_evidence" | "partial" | "limited" | "no_evidence";
 
+const statusBadgeVariant = {
+  has_evidence: "success" as const,
+  partial: "warning" as const,
+  limited: "info" as const,
+  no_evidence: "error" as const,
+};
+
+const statusLabels = {
+  has_evidence: "Has Evidence",
+  partial: "Partial",
+  limited: "Limited",
+  no_evidence: "Missing",
+};
+
 export default function EvidencePage() {
   const [data, setData] = useState<EvidenceData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,10 +83,30 @@ export default function EvidencePage() {
     }
   };
 
+  const filteredControls = useMemo(() => {
+    if (!data) return [];
+    return data.controls.filter((control) => {
+      if (selectedFramework && control.frameworkName !== selectedFramework) return false;
+      if (selectedStatus !== "all" && control.status !== selectedStatus) return false;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesCode = control.controlCode.toLowerCase().includes(query);
+        const matchesTitle = control.controlTitle.toLowerCase().includes(query);
+        const matchesDescription =
+          control.controlDescription?.toLowerCase().includes(query) || false;
+        if (!matchesCode && !matchesTitle && !matchesDescription) return false;
+      }
+      return true;
+    });
+  }, [data, selectedFramework, selectedStatus, searchQuery]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-500">Loading evidence...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
+          <p className="text-gray-500">Loading evidence...</p>
+        </div>
       </div>
     );
   }
@@ -79,316 +119,377 @@ export default function EvidencePage() {
     );
   }
 
-  // Apply all filters
-  const filteredControls = data.controls.filter((control) => {
-    // Framework filter
-    if (selectedFramework && control.frameworkName !== selectedFramework) {
-      return false;
-    }
-    // Status filter
-    if (selectedStatus !== "all" && control.status !== selectedStatus) {
-      return false;
-    }
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesCode = control.controlCode.toLowerCase().includes(query);
-      const matchesTitle = control.controlTitle.toLowerCase().includes(query);
-      const matchesDescription = control.controlDescription?.toLowerCase().includes(query) || false;
-      if (!matchesCode && !matchesTitle && !matchesDescription) {
-        return false;
-      }
-    }
-    return true;
-  });
-
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Compliance Evidence</h1>
-          <p className="text-gray-600 mt-1">
-            View how your GitHub activity maps to compliance controls
-          </p>
+      {/* Header */}
+      <FadeIn>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+              Compliance Evidence
+            </h1>
+            <p className="text-gray-500 mt-1">
+              View how your GitHub activity maps to compliance controls
+            </p>
+          </div>
+          <Button variant="accent" href="/exports">
+            Export Report
+          </Button>
         </div>
-        <Link
-          href="/exports"
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors"
-        >
-          Export Report
-        </Link>
-      </div>
+      </FadeIn>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <p className="text-3xl font-bold text-gray-900">{data.summary.score}%</p>
-          <p className="text-sm text-gray-600">Evidence Coverage</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <p className="text-3xl font-bold text-green-600">{data.summary.withEvidence}</p>
-          <p className="text-sm text-gray-600">Full Evidence</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <p className="text-3xl font-bold text-yellow-600">{data.summary.partial}</p>
-          <p className="text-sm text-gray-600">Partial Evidence</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <p className="text-3xl font-bold text-blue-600">{data.summary.limited || 0}</p>
-          <p className="text-sm text-gray-600">Limited (Needs Supplement)</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <p className="text-3xl font-bold text-red-600">{data.summary.noEvidence}</p>
-          <p className="text-sm text-gray-600">Missing Evidence</p>
-        </div>
-      </div>
+      <StaggerContainer className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <StaggerItem>
+          <SummaryCard
+            value={`${data.summary.score}%`}
+            label="Evidence Coverage"
+            variant="accent"
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <SummaryCard value={data.summary.withEvidence} label="Full Evidence" variant="success" />
+        </StaggerItem>
+        <StaggerItem>
+          <SummaryCard value={data.summary.partial} label="Partial Evidence" variant="warning" />
+        </StaggerItem>
+        <StaggerItem>
+          <SummaryCard value={data.summary.limited || 0} label="Limited" variant="info" />
+        </StaggerItem>
+        <StaggerItem>
+          <SummaryCard value={data.summary.noEvidence} label="Missing Evidence" variant="error" />
+        </StaggerItem>
+      </StaggerContainer>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 space-y-4">
-        {/* Search Input */}
-        <div>
-          <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
+      <FadeIn delay={0.2}>
+        <Card className="mb-6">
+          <CardContent className="space-y-4">
+            {/* Search Input */}
+            <Input
               placeholder="Search controls by code, title, or description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+              icon={<SearchIcon />}
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
 
-        {/* Filter Row */}
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Framework Filter */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700">Framework:</span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedFramework(null)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  selectedFramework === null
-                    ? "bg-primary-100 text-primary-700"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                All
-              </button>
-              {data.frameworks.map((framework) => (
-                <button
-                  key={framework.id}
-                  onClick={() => setSelectedFramework(framework.name)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    selectedFramework === framework.name
-                      ? "bg-primary-100 text-primary-700"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {framework.name}
-                </button>
-              ))}
+            {/* Filter Row */}
+            <div className="flex flex-wrap items-center gap-6">
+              {/* Framework Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Framework:</span>
+                <div className="flex flex-wrap gap-2">
+                  <FilterButton
+                    active={selectedFramework === null}
+                    onClick={() => setSelectedFramework(null)}
+                  >
+                    All
+                  </FilterButton>
+                  {data.frameworks.map((framework) => (
+                    <FilterButton
+                      key={framework.id}
+                      active={selectedFramework === framework.name}
+                      onClick={() => setSelectedFramework(framework.name)}
+                    >
+                      {framework.name}
+                    </FilterButton>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Status:</span>
+                <div className="flex flex-wrap gap-2">
+                  <FilterButton
+                    active={selectedStatus === "all"}
+                    onClick={() => setSelectedStatus("all")}
+                  >
+                    All
+                  </FilterButton>
+                  <FilterButton
+                    active={selectedStatus === "has_evidence"}
+                    onClick={() => setSelectedStatus("has_evidence")}
+                    variant="success"
+                  >
+                    Has Evidence
+                  </FilterButton>
+                  <FilterButton
+                    active={selectedStatus === "partial"}
+                    onClick={() => setSelectedStatus("partial")}
+                    variant="warning"
+                  >
+                    Partial
+                  </FilterButton>
+                  <FilterButton
+                    active={selectedStatus === "limited"}
+                    onClick={() => setSelectedStatus("limited")}
+                    variant="info"
+                  >
+                    Limited
+                  </FilterButton>
+                  <FilterButton
+                    active={selectedStatus === "no_evidence"}
+                    onClick={() => setSelectedStatus("no_evidence")}
+                    variant="error"
+                  >
+                    Missing
+                  </FilterButton>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Status Filter */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700">Status:</span>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: "all", label: "All", color: "bg-gray-100 text-gray-600" },
-                { value: "has_evidence", label: "Has Evidence", color: "bg-green-100 text-green-700" },
-                { value: "partial", label: "Partial", color: "bg-yellow-100 text-yellow-700" },
-                { value: "limited", label: "Limited", color: "bg-blue-100 text-blue-700" },
-                { value: "no_evidence", label: "Missing", color: "bg-red-100 text-red-700" },
-              ].map((status) => (
-                <button
-                  key={status.value}
-                  onClick={() => setSelectedStatus(status.value as StatusFilter)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    selectedStatus === status.value
-                      ? status.color
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {status.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Results count */}
-        <div className="text-sm text-gray-500">
-          Showing {filteredControls.length} of {data.controls.length} controls
-        </div>
-      </div>
+            {/* Results count */}
+            <p className="text-sm text-gray-500">
+              Showing {filteredControls.length} of {data.controls.length} controls
+            </p>
+          </CardContent>
+        </Card>
+      </FadeIn>
 
       {/* Controls List */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="divide-y divide-gray-200">
-          {filteredControls.map((control) => (
-            <div key={control.controlId} className="p-4">
-              <button
-                onClick={() =>
+      <FadeIn delay={0.3}>
+        <Card padding="none" variant="elevated">
+          <div className="divide-y divide-gray-100">
+            {filteredControls.map((control, index) => (
+              <ControlItem
+                key={control.controlId}
+                control={control}
+                isExpanded={expandedControl === control.controlId}
+                onToggle={() =>
                   setExpandedControl(
                     expandedControl === control.controlId ? null : control.controlId
                   )
                 }
-                className="w-full text-left"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
-                        {control.controlCode}
-                      </span>
-                      <StatusBadge status={control.status} />
-                    </div>
-                    <h3 className="font-medium text-gray-900 mt-2">
-                      {control.controlTitle}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {control.frameworkName} &bull; {control.evidenceCount} evidence items
-                    </p>
-                  </div>
-                  <svg
-                    className={`w-5 h-5 text-gray-400 transition-transform ${
-                      expandedControl === control.controlId ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-              </button>
-
-              {expandedControl === control.controlId && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  {control.controlDescription && (
-                    <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">
-                      {control.controlDescription}
-                    </p>
-                  )}
-
-                  {control.note && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <p className="text-sm text-blue-800">
-                        <span className="font-medium">Note:</span> {control.note}
-                      </p>
-                    </div>
-                  )}
-
-                  {control.evidence.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">
-                      No evidence collected yet. Make sure you have synced your repositories.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-gray-700">
-                        Supporting Evidence:
-                      </p>
-                      {control.evidence.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-gray-50 rounded-lg p-3 text-sm"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {item.title}
-                              </p>
-                              <p className="text-gray-600 mt-1">
-                                {item.description}
-                              </p>
-                            </div>
-                            {item.url && (
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary-600 hover:text-primary-700 ml-4 flex-shrink-0"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                  />
-                                </svg>
-                              </a>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-400 mt-2">
-                            {new Date(item.timestamp).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+                index={index}
+              />
+            ))}
+            {filteredControls.length === 0 && (
+              <div className="p-8 text-center text-gray-500">No controls match your filters</div>
+            )}
+          </div>
+        </Card>
+      </FadeIn>
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: "has_evidence" | "partial" | "no_evidence" | "limited" }) {
-  const styles = {
-    has_evidence: "bg-green-50 text-green-700",
-    partial: "bg-yellow-50 text-yellow-700",
-    limited: "bg-blue-50 text-blue-700",
-    no_evidence: "bg-red-50 text-red-700",
-  };
+// Sub-components
 
-  const labels = {
-    has_evidence: "Has Evidence",
-    partial: "Partial",
-    limited: "Limited",
-    no_evidence: "Missing",
+function SummaryCard({
+  value,
+  label,
+  variant,
+}: {
+  value: string | number;
+  label: string;
+  variant: "accent" | "success" | "warning" | "info" | "error";
+}) {
+  const colors = {
+    accent: "text-accent",
+    success: "text-green-600",
+    warning: "text-yellow-600",
+    info: "text-blue-600",
+    error: "text-red-600",
   };
 
   return (
-    <span className={`text-xs px-2 py-0.5 rounded ${styles[status]}`}>
-      {labels[status]}
-    </span>
+    <motion.div
+      whileHover={{ y: -2, boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.1)" }}
+      className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm"
+    >
+      <p className={cn("text-3xl font-bold", colors[variant])}>{value}</p>
+      <p className="text-sm text-gray-600 mt-1">{label}</p>
+    </motion.div>
+  );
+}
+
+function FilterButton({
+  children,
+  active,
+  onClick,
+  variant,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+  variant?: "success" | "warning" | "info" | "error";
+}) {
+  const activeColors = {
+    default: "bg-gray-900 text-white",
+    success: "bg-green-100 text-green-700",
+    warning: "bg-yellow-100 text-yellow-700",
+    info: "bg-blue-100 text-blue-700",
+    error: "bg-red-100 text-red-700",
+  };
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className={cn(
+        "px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200",
+        active
+          ? variant
+            ? activeColors[variant]
+            : activeColors.default
+          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+      )}
+    >
+      {children}
+    </motion.button>
+  );
+}
+
+function ControlItem({
+  control,
+  isExpanded,
+  onToggle,
+  index,
+}: {
+  control: ControlEvidence;
+  isExpanded: boolean;
+  onToggle: () => void;
+  index: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(index * 0.03, 0.3) }}
+      className="group"
+    >
+      <button
+        onClick={onToggle}
+        className="w-full text-left p-5 hover:bg-gray-50/50 transition-colors"
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-sm bg-gray-100 px-2.5 py-1 rounded-md font-medium">
+                {control.controlCode}
+              </span>
+              <Badge variant={statusBadgeVariant[control.status]}>
+                {statusLabels[control.status]}
+              </Badge>
+            </div>
+            <h3 className="font-medium text-gray-900 mt-2.5">{control.controlTitle}</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              {control.frameworkName} • {control.evidenceCount} evidence items
+            </p>
+          </div>
+          <motion.div
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="ml-4 mt-1"
+          >
+            <ChevronIcon className="w-5 h-5 text-gray-400" />
+          </motion.div>
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-5 pt-2 border-t border-gray-100 bg-gray-50/30">
+              {control.controlDescription && (
+                <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">
+                  {control.controlDescription}
+                </p>
+              )}
+
+              {control.note && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">Note:</span> {control.note}
+                  </p>
+                </div>
+              )}
+
+              {control.evidence.length === 0 ? (
+                <p className="text-sm text-gray-500 italic">
+                  No evidence collected yet. Make sure you have synced your repositories.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-700">Supporting Evidence:</p>
+                  {control.evidence.map((item, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="bg-white rounded-lg p-4 text-sm border border-gray-200 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-gray-900">{item.title}</p>
+                          <p className="text-gray-600 mt-1">{item.description}</p>
+                        </div>
+                        {item.url && (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent hover:text-accent-hover ml-4 flex-shrink-0 transition-colors"
+                          >
+                            <ExternalLinkIcon className="w-4 h-4" />
+                          </a>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {new Date(item.timestamp).toLocaleString()}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// Icons
+function SearchIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
+    </svg>
+  );
+}
+
+function ChevronIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+      />
+    </svg>
   );
 }

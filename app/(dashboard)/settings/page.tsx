@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { FadeIn } from "@/components/ui/Motion";
 
 interface SubscriptionData {
   plan: string;
@@ -84,195 +89,216 @@ function SettingsContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
+          <p className="text-gray-500">Loading...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-3xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">
-          Manage your organization and subscription
-        </p>
-      </div>
+      {/* Header */}
+      <FadeIn>
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Settings</h1>
+          <p className="text-gray-500 mt-1">Manage your organization and subscription</p>
+        </div>
+      </FadeIn>
 
       {/* Success/Cancel Messages */}
-      {success && (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <svg
-              className="w-5 h-5 text-green-600 mr-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            <p className="text-green-700">
-              Successfully upgraded to Pro! Enjoy unlimited exports.
-            </p>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4"
+          >
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                <CheckIcon className="w-5 h-5 text-green-600" />
+              </div>
+              <p className="text-green-700 font-medium">
+                Successfully upgraded to Pro! Enjoy unlimited exports.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
-      {canceled && (
-        <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-700">
-            Upgrade was canceled. You can upgrade anytime.
-          </p>
-        </div>
-      )}
+        {canceled && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4"
+          >
+            <p className="text-yellow-700">Upgrade was canceled. You can upgrade anytime.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Organization Settings */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Organization</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Organization Name
-            </label>
-            <p className="text-gray-900">{org?.name || "—"}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Organization Slug
-            </label>
-            <p className="text-gray-500 font-mono text-sm">{org?.slug || "—"}</p>
-          </div>
-        </div>
-      </div>
+      <FadeIn delay={0.1}>
+        <Card variant="elevated" className="mb-6">
+          <CardHeader>
+            <CardTitle>Organization</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Organization Name
+              </label>
+              <p className="text-gray-900 font-medium">{org?.name || "—"}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Organization Slug
+              </label>
+              <p className="text-gray-600 font-mono text-sm bg-gray-50 px-3 py-2 rounded-lg inline-block">
+                {org?.slug || "—"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </FadeIn>
 
       {/* Subscription Settings */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Subscription</h2>
+      <FadeIn delay={0.2}>
+        <Card variant="elevated">
+          <CardHeader>
+            <CardTitle>Subscription</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start justify-between mb-6 pb-6 border-b border-gray-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-lg font-semibold ${
+                      subscription?.plan === "pro" ? "text-accent" : "text-gray-900"
+                    }`}
+                  >
+                    {subscription?.plan === "pro" ? "Pro Plan" : "Free Plan"}
+                  </span>
+                  {subscription?.status === "active" && (
+                    <Badge variant="success" size="sm">
+                      Active
+                    </Badge>
+                  )}
+                  {subscription?.status === "past_due" && (
+                    <Badge variant="error" size="sm">
+                      Past Due
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-gray-500 mt-1">
+                  {subscription?.plan === "pro"
+                    ? "Unlimited repositories and exports"
+                    : "3 repositories, no exports"}
+                </p>
+                {subscription?.currentPeriodEnd && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    {subscription.cancelAtPeriodEnd
+                      ? `Cancels on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+                      : `Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
+                  </p>
+                )}
+              </div>
 
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <div className="flex items-center">
-              <span
-                className={`text-lg font-semibold ${
-                  subscription?.plan === "pro" ? "text-primary-600" : "text-gray-900"
-                }`}
-              >
-                {subscription?.plan === "pro" ? "Pro Plan" : "Free Plan"}
-              </span>
-              {subscription?.status === "active" && (
-                <span className="ml-2 bg-green-50 text-green-700 text-xs px-2 py-0.5 rounded">
-                  Active
-                </span>
+              {subscription?.plan === "pro" ? (
+                <Button
+                  variant="secondary"
+                  onClick={handleManageBilling}
+                  loading={managingBilling}
+                  disabled={managingBilling}
+                >
+                  {managingBilling ? "Opening..." : "Manage Billing"}
+                </Button>
+              ) : (
+                <Button
+                  variant="accent"
+                  onClick={handleUpgrade}
+                  loading={upgrading}
+                  disabled={upgrading}
+                >
+                  {upgrading ? "Processing..." : "Upgrade to Pro"}
+                </Button>
               )}
-              {subscription?.status === "past_due" && (
-                <span className="ml-2 bg-red-50 text-red-700 text-xs px-2 py-0.5 rounded">
-                  Past Due
-                </span>
-              )}
             </div>
-            <p className="text-gray-500 mt-1">
-              {subscription?.plan === "pro"
-                ? "Unlimited repositories and exports"
-                : "3 repositories, no exports"}
-            </p>
-            {subscription?.currentPeriodEnd && (
-              <p className="text-sm text-gray-500 mt-2">
-                {subscription.cancelAtPeriodEnd
-                  ? `Cancels on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
-                  : `Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
-              </p>
-            )}
-          </div>
 
-          {subscription?.plan === "pro" ? (
-            <button
-              onClick={handleManageBilling}
-              disabled={managingBilling}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              {managingBilling ? "Opening..." : "Manage Billing"}
-            </button>
-          ) : (
-            <button
-              onClick={handleUpgrade}
-              disabled={upgrading}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
-            >
-              {upgrading ? "Processing..." : "Upgrade to Pro"}
-            </button>
-          )}
-        </div>
-
-        {/* Plan Comparison */}
-        <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-sm font-medium text-gray-900 mb-4">Plan Features</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="font-medium text-gray-900 mb-3">Free</p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center text-gray-600">
-                  <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Up to 3 repositories
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  View compliance evidence
-                </li>
-                <li className="flex items-center text-gray-400">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  No PDF/CSV exports
-                </li>
-              </ul>
+            {/* Plan Comparison */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">Plan Features</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  className="bg-gray-50 rounded-xl p-5 border border-gray-100"
+                >
+                  <p className="font-semibold text-gray-900 mb-4">Free</p>
+                  <ul className="space-y-3 text-sm">
+                    <FeatureItem included>Up to 3 repositories</FeatureItem>
+                    <FeatureItem included>View compliance evidence</FeatureItem>
+                    <FeatureItem>No PDF/CSV exports</FeatureItem>
+                  </ul>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  className="bg-gradient-to-br from-accent-light/50 to-orange-50 rounded-xl p-5 border-2 border-accent/20"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="font-semibold text-gray-900">Pro</p>
+                    <span className="text-accent font-semibold">$49/month</span>
+                  </div>
+                  <ul className="space-y-3 text-sm">
+                    <FeatureItem included>Unlimited repositories</FeatureItem>
+                    <FeatureItem included>View compliance evidence</FeatureItem>
+                    <FeatureItem included>Unlimited PDF exports</FeatureItem>
+                    <FeatureItem included>Unlimited CSV exports</FeatureItem>
+                    <FeatureItem included>Priority support</FeatureItem>
+                  </ul>
+                </motion.div>
+              </div>
             </div>
-            <div className="bg-primary-50 rounded-lg p-4 border border-primary-200">
-              <p className="font-medium text-primary-900 mb-3">Pro — $49/month</p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center text-gray-600">
-                  <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Unlimited repositories
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  View compliance evidence
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Unlimited PDF exports
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Unlimited CSV exports
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Priority support
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      </FadeIn>
     </div>
+  );
+}
+
+function FeatureItem({
+  children,
+  included = false,
+}: {
+  children: React.ReactNode;
+  included?: boolean;
+}) {
+  return (
+    <li className={`flex items-center ${included ? "text-gray-700" : "text-gray-400"}`}>
+      {included ? (
+        <CheckIcon className="w-4 h-4 text-green-500 mr-2.5 flex-shrink-0" />
+      ) : (
+        <XIcon className="w-4 h-4 text-gray-300 mr-2.5 flex-shrink-0" />
+      )}
+      {children}
+    </li>
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
   );
 }
 
@@ -281,7 +307,10 @@ export default function SettingsPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-gray-500">Loading...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
+            <p className="text-gray-500">Loading...</p>
+          </div>
         </div>
       }
     >

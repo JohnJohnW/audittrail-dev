@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET() {
-  const checks: Record<string, { status: "healthy" | "degraded" | "unhealthy"; message?: string }> = {};
+  const checks: Record<string, { status: "healthy" | "degraded" | "unhealthy"; message?: string }> =
+    {};
 
   // Database check
   try {
@@ -31,10 +32,9 @@ export async function GET() {
     };
   }
 
-  const overallStatus =
-    Object.values(checks).every((c) => c.status === "healthy")
-      ? "healthy"
-      : Object.values(checks).some((c) => c.status === "unhealthy")
+  const overallStatus = Object.values(checks).every((c) => c.status === "healthy")
+    ? "healthy"
+    : Object.values(checks).some((c) => c.status === "unhealthy")
       ? "unhealthy"
       : "degraded";
 

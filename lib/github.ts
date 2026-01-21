@@ -1,6 +1,7 @@
 import { db } from "./db";
+import { GITHUB_CONFIG } from "./constants";
 
-const GITHUB_API_BASE = "https://api.github.com";
+const GITHUB_API_BASE = GITHUB_CONFIG.API_BASE;
 
 export interface GitHubRepo {
   id: number;
@@ -102,14 +103,18 @@ export class GitHubClient {
 
     if (!response.ok) {
       if (response.status === 401) {
-        throw new Error("GitHub token is invalid or expired. Please reconnect your GitHub account.");
+        throw new Error(
+          "GitHub token is invalid or expired. Please reconnect your GitHub account."
+        );
       }
       if (response.status === 403) {
         const rateLimitRemaining = response.headers.get("X-RateLimit-Remaining");
         if (rateLimitRemaining === "0") {
           const resetTime = response.headers.get("X-RateLimit-Reset");
           const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : null;
-          throw new Error(`GitHub API rate limit exceeded. Resets at ${resetDate?.toLocaleString() || "unknown"}`);
+          throw new Error(
+            `GitHub API rate limit exceeded. Resets at ${resetDate?.toLocaleString() || "unknown"}`
+          );
         }
         throw new Error("GitHub API access forbidden. Check token scopes.");
       }
@@ -128,9 +133,9 @@ export class GitHubClient {
       const user = await this.getUser();
       return { valid: true, login: user.login };
     } catch (error) {
-      return { 
-        valid: false, 
-        error: error instanceof Error ? error.message : "Unknown error" 
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
@@ -158,7 +163,13 @@ export class GitHubClient {
     return allRepos;
   }
 
-  async getCommits(owner: string, repo: string, since?: Date, page = 1, perPage = 100): Promise<GitHubCommit[]> {
+  async getCommits(
+    owner: string,
+    repo: string,
+    since?: Date,
+    page = 1,
+    perPage = 100
+  ): Promise<GitHubCommit[]> {
     let endpoint = `/repos/${owner}/${repo}/commits?page=${page}&per_page=${perPage}`;
     if (since) {
       endpoint += `&since=${since.toISOString()}`;
@@ -166,18 +177,30 @@ export class GitHubClient {
     return this.fetch(endpoint);
   }
 
-  async getPullRequests(owner: string, repo: string, state: "all" | "open" | "closed" = "all", page = 1, perPage = 100): Promise<GitHubPullRequest[]> {
-    return this.fetch(`/repos/${owner}/${repo}/pulls?state=${state}&page=${page}&per_page=${perPage}&sort=updated&direction=desc`);
+  async getPullRequests(
+    owner: string,
+    repo: string,
+    state: "all" | "open" | "closed" = "all",
+    page = 1,
+    perPage = 100
+  ): Promise<GitHubPullRequest[]> {
+    return this.fetch(
+      `/repos/${owner}/${repo}/pulls?state=${state}&page=${page}&per_page=${perPage}&sort=updated&direction=desc`
+    );
   }
 
   async getReviews(owner: string, repo: string, prNumber: number): Promise<GitHubReview[]> {
     return this.fetch(`/repos/${owner}/${repo}/pulls/${prNumber}/reviews`);
   }
 
-  async getBranchProtection(owner: string, repo: string, branch: string): Promise<GitHubBranchProtection | null> {
+  async getBranchProtection(
+    owner: string,
+    repo: string,
+    branch: string
+  ): Promise<GitHubBranchProtection | null> {
     try {
       return await this.fetch(`/repos/${owner}/${repo}/branches/${branch}/protection`);
-    } catch (error) {
+    } catch (_error) {
       // Branch protection not enabled
       return null;
     }
@@ -195,7 +218,9 @@ export async function getGitHubClientForOrg(orgId: string): Promise<GitHubClient
 
   // Check if token is known to be expired
   if (connection.tokenExpiresAt && connection.tokenExpiresAt < new Date()) {
-    console.warn(`GitHub token for org ${orgId} has expired (expired at ${connection.tokenExpiresAt.toISOString()})`);
+    console.warn(
+      `GitHub token for org ${orgId} has expired (expired at ${connection.tokenExpiresAt.toISOString()})`
+    );
     // Token is expired - could implement refresh logic here
     // For now, still return the client and let it fail with a clear error
   }

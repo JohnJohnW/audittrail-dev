@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -12,10 +13,7 @@ interface ErrorBoundaryProps {
   fallback?: React.ComponentType<{ error: Error | null; resetError: () => void }>;
 }
 
-export class ErrorBoundary extends React.Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -36,9 +34,7 @@ export class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       const FallbackComponent = this.props.fallback || DefaultErrorFallback;
-      return (
-        <FallbackComponent error={this.state.error} resetError={this.resetError} />
-      );
+      return <FallbackComponent error={this.state.error} resetError={this.resetError} />;
     }
 
     return this.props.children;
@@ -71,17 +67,13 @@ function DefaultErrorFallback({
               />
             </svg>
           </div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">
-            Something went wrong
-          </h1>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h1>
           <p className="text-gray-500 text-sm mb-6">
             An unexpected error occurred. Please try again.
           </p>
           {error && process.env.NODE_ENV === "development" && (
             <details className="mb-6 text-left">
-              <summary className="text-sm text-gray-500 cursor-pointer mb-2">
-                Error details
-              </summary>
+              <summary className="text-sm text-gray-500 cursor-pointer mb-2">Error details</summary>
               <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto max-h-40">
                 {error.message}
               </pre>
@@ -94,12 +86,12 @@ function DefaultErrorFallback({
             >
               Try Again
             </button>
-            <a
+            <Link
               href="/"
               className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
             >
               Go Home
-            </a>
+            </Link>
           </div>
         </div>
       </div>

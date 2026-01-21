@@ -14,10 +14,9 @@ export type AnalyticsEvent =
   | "page_view"
   | "conversion";
 
-export function trackEvent(
-  event: AnalyticsEvent,
-  properties?: Record<string, any>
-) {
+type AnalyticsValue = string | number | boolean | null | undefined;
+
+export function trackEvent(event: AnalyticsEvent, properties?: Record<string, AnalyticsValue>) {
   if (typeof window !== "undefined") {
     track(event, properties);
   }

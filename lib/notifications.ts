@@ -12,7 +12,7 @@ export interface NotificationPreferences {
 }
 
 export async function getUserNotificationPreferences(
-  userId: string
+  _userId: string
 ): Promise<NotificationPreferences> {
   // Default preferences - in future, store in database
   return {

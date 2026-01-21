@@ -1,8 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getGitHubClientForOrg, GitHubClient } from "@/lib/github";
+import type { GitHubClient } from "@/lib/github";
+import { getGitHubClientForOrg } from "@/lib/github";
 import { isValidCuid } from "@/lib/utils";
+import { handleApiError } from "@/lib/error-handler";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,10 +36,7 @@ export async function POST(request: NextRequest) {
 
     const client = await getGitHubClientForOrg(orgId);
     if (!client) {
-      return NextResponse.json(
-        { error: "GitHub not connected" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
     }
 
     // Get repositories to sync
@@ -49,10 +49,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (repositories.length === 0) {
-      return NextResponse.json(
-        { error: "No repositories to sync" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No repositories to sync" }, { status: 400 });
     }
 
     const results = [];
@@ -77,9 +74,7 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        const since =
-          repo.lastSyncedAt ||
-          new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // Last 90 days
+        const since = repo.lastSyncedAt || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // Last 90 days
 
         // Sync commits
         const commits = await syncCommits(client, repo.id, owner, repoName, since);
@@ -120,11 +115,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ results });
   } catch (error) {
-    console.error("Sync error:", error);
-    return NextResponse.json(
-      { error: "Failed to sync repositories" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
@@ -187,7 +178,10 @@ async function syncCommits(
         if (results[i].status === "fulfilled") {
           count++;
         } else {
-          console.error(`Error upserting commit ${batch[i].sha}:`, (results[i] as PromiseRejectedResult).reason);
+          console.error(
+            `Error upserting commit ${batch[i].sha}:`,
+            (results[i] as PromiseRejectedResult).reason
+          );
         }
       }
     }
@@ -252,7 +246,7 @@ async function syncPullRequests(
         if (pr.merged_at) {
           const reviews = await client.getReviews(owner, repoName, pr.number);
           const limitedReviews = reviews.slice(0, REVIEW_LIMIT);
-          
+
           const reviewResults = await Promise.allSettled(
             limitedReviews.map((review) =>
               db.review.upsert({
@@ -274,7 +268,7 @@ async function syncPullRequests(
               })
             )
           );
-          
+
           reviewCount += reviewResults.filter((r) => r.status === "fulfilled").length;
         }
       } catch (error) {
@@ -313,14 +307,11 @@ async function syncBranchProtection(
       update: {
         requirePullRequest: !!protection.required_pull_request_reviews,
         requiredApprovals:
-          protection.required_pull_request_reviews
-            ?.required_approving_review_count || 0,
+          protection.required_pull_request_reviews?.required_approving_review_count || 0,
         dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews ||
-          false,
+          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
         requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews ||
-          false,
+          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
         enforceAdmins: protection.enforce_admins?.enabled || false,
         requireStatusChecks: !!protection.required_status_checks,
       },
@@ -329,14 +320,11 @@ async function syncBranchProtection(
         branch,
         requirePullRequest: !!protection.required_pull_request_reviews,
         requiredApprovals:
-          protection.required_pull_request_reviews
-            ?.required_approving_review_count || 0,
+          protection.required_pull_request_reviews?.required_approving_review_count || 0,
         dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews ||
-          false,
+          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
         requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews ||
-          false,
+          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
         enforceAdmins: protection.enforce_admins?.enabled || false,
         requireStatusChecks: !!protection.required_status_checks,
         snapshotAt,
@@ -392,9 +380,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching sync status:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch sync status" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch sync status" }, { status: 500 });
   }
 }

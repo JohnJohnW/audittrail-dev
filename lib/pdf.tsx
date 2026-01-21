@@ -1,11 +1,5 @@
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-} from "@react-pdf/renderer";
-import { ControlEvidence } from "./compliance";
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import type { ControlEvidence } from "./compliance";
 
 const styles = StyleSheet.create({
   page: {
@@ -183,26 +177,18 @@ export function ExportPDF({
         <View style={styles.header}>
           <Text style={styles.title}>Compliance Evidence Report</Text>
           <Text style={styles.subtitle}>{frameworkName}</Text>
-          <Text style={[styles.subtitle, { marginTop: 8 }]}>
-            Organization: {orgName}
-          </Text>
+          <Text style={[styles.subtitle, { marginTop: 8 }]}>Organization: {orgName}</Text>
           <Text style={styles.subtitle}>
-            Generated: {generatedAt.toLocaleDateString()} at{" "}
-            {generatedAt.toLocaleTimeString()}
+            Generated: {generatedAt.toLocaleDateString()} at {generatedAt.toLocaleTimeString()}
           </Text>
           {dateRange && (dateRange.from || dateRange.to) && (
             <Text style={styles.subtitle}>
-              Date Range:{" "}
-              {dateRange.from
-                ? dateRange.from.toLocaleDateString()
-                : "Beginning"}{" "}
-              - {dateRange.to ? dateRange.to.toLocaleDateString() : "Present"}
+              Date Range: {dateRange.from ? dateRange.from.toLocaleDateString() : "Beginning"} -{" "}
+              {dateRange.to ? dateRange.to.toLocaleDateString() : "Present"}
             </Text>
           )}
           {repositories && repositories.length > 0 && (
-            <Text style={styles.subtitle}>
-              Repositories: {repositories.length} selected
-            </Text>
+            <Text style={styles.subtitle}>Repositories: {repositories.length} selected</Text>
           )}
         </View>
 
@@ -220,23 +206,18 @@ export function ExportPDF({
               <Text style={styles.summaryLabel}>Full Evidence</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { color: "#ca8a04" }]}>
-                {summary.partial}
-              </Text>
+              <Text style={[styles.summaryValue, { color: "#ca8a04" }]}>{summary.partial}</Text>
               <Text style={styles.summaryLabel}>Partial Evidence</Text>
             </View>
             <View style={[styles.summaryItem, { marginRight: 0 }]}>
-              <Text style={[styles.summaryValue, { color: "#dc2626" }]}>
-                {summary.noEvidence}
-              </Text>
+              <Text style={[styles.summaryValue, { color: "#dc2626" }]}>{summary.noEvidence}</Text>
               <Text style={styles.summaryLabel}>Missing Evidence</Text>
             </View>
           </View>
           <Text style={styles.description}>
-            This report contains automatically collected evidence from GitHub
-            repositories mapped to {frameworkName} compliance controls. Evidence
-            includes commit history, pull request approvals, code reviews, and
-            branch protection configurations.
+            This report contains automatically collected evidence from GitHub repositories mapped to{" "}
+            {frameworkName} compliance controls. Evidence includes commit history, pull request
+            approvals, code reviews, and branch protection configurations.
           </Text>
         </View>
 
@@ -245,9 +226,7 @@ export function ExportPDF({
         </Text>
         <Text
           style={styles.pageNumber}
-          render={({ pageNumber, totalPages }) =>
-            `${pageNumber} / ${totalPages}`
-          }
+          render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
         />
       </Page>
 
@@ -270,19 +249,19 @@ export function ExportPDF({
                   control.status === "has_evidence"
                     ? styles.statusGreen
                     : control.status === "partial"
-                    ? styles.statusYellow
-                    : control.status === "limited"
-                    ? styles.statusBlue
-                    : styles.statusRed,
+                      ? styles.statusYellow
+                      : control.status === "limited"
+                        ? styles.statusBlue
+                        : styles.statusRed,
                 ]}
               >
                 {control.status === "has_evidence"
                   ? "HAS EVIDENCE"
                   : control.status === "partial"
-                  ? "PARTIAL"
-                  : control.status === "limited"
-                  ? "LIMITED"
-                  : "MISSING"}
+                    ? "PARTIAL"
+                    : control.status === "limited"
+                      ? "LIMITED"
+                      : "MISSING"}
               </Text>
             </View>
             <View style={styles.controlBody}>
@@ -321,9 +300,7 @@ export function ExportPDF({
         </Text>
         <Text
           style={styles.pageNumber}
-          render={({ pageNumber, totalPages }) =>
-            `${pageNumber} / ${totalPages}`
-          }
+          render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
           fixed
         />
       </Page>

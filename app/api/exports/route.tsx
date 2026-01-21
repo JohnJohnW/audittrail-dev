@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
@@ -35,8 +36,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Fixed logic: must have pro plan with active status
-    const canExport =
-      subscription?.plan === "pro" && subscription?.status === "active";
+    const canExport = subscription?.plan === "pro" && subscription?.status === "active";
 
     if (!canExport) {
       return NextResponse.json(
@@ -93,7 +93,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "repositoryIds must be an array" }, { status: 400 });
       }
       if (repositoryIds.some((id) => typeof id !== "string" || !isValidCuid(id))) {
-        return NextResponse.json({ error: "Invalid repositoryId format in array" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Invalid repositoryId format in array" },
+          { status: 400 }
+        );
       }
     }
 
@@ -118,9 +121,7 @@ export async function POST(request: NextRequest) {
     if (frameworkId) {
       const framework = evidence.frameworks.find((f) => f.id === frameworkId);
       if (framework) {
-        controls = evidence.controls.filter(
-          (c) => c.frameworkName === framework.name
-        );
+        controls = evidence.controls.filter((c) => c.frameworkName === framework.name);
         frameworkName = framework.name;
       }
     }
@@ -176,55 +177,61 @@ export async function POST(request: NextRequest) {
       } else {
         // Generate comprehensive CSV with evidence details
         const csvRows: string[] = [];
-        
+
         // Header row
-        csvRows.push([
-          "Control Code",
-          "Control Title",
-          "Framework",
-          "Status",
-          "Evidence Count",
-          "Evidence Type",
-          "Evidence Title",
-          "Evidence Description",
-          "Evidence Timestamp",
-          "Evidence URL",
-          "Evidence Relevance",
-        ].join(","));
+        csvRows.push(
+          [
+            "Control Code",
+            "Control Title",
+            "Framework",
+            "Status",
+            "Evidence Count",
+            "Evidence Type",
+            "Evidence Title",
+            "Evidence Description",
+            "Evidence Timestamp",
+            "Evidence URL",
+            "Evidence Relevance",
+          ].join(",")
+        );
 
         // Data rows - one row per evidence item (or one row for controls with no evidence)
         for (const control of controls) {
           if (control.evidence.length === 0) {
             // No evidence - still output the control
-            csvRows.push([
-              escapeCSV(control.controlCode),
-              escapeCSV(control.controlTitle),
-              escapeCSV(control.frameworkName),
-              escapeCSV(control.status),
-              "0",
-              escapeCSV(control.evidenceType),
-              "",
-              "",
-              "",
-              "",
-              "",
-            ].join(","));
-          } else {
-            // Output one row per evidence item
-            for (const item of control.evidence) {
-              csvRows.push([
+            csvRows.push(
+              [
                 escapeCSV(control.controlCode),
                 escapeCSV(control.controlTitle),
                 escapeCSV(control.frameworkName),
                 escapeCSV(control.status),
-                String(control.evidenceCount),
+                "0",
                 escapeCSV(control.evidenceType),
-                escapeCSV(item.title),
-                escapeCSV(item.description),
-                new Date(item.timestamp).toISOString(),
-                escapeCSV(item.url || ""),
-                escapeCSV((item as { relevance?: string }).relevance || ""),
-              ].join(","));
+                "",
+                "",
+                "",
+                "",
+                "",
+              ].join(",")
+            );
+          } else {
+            // Output one row per evidence item
+            for (const item of control.evidence) {
+              csvRows.push(
+                [
+                  escapeCSV(control.controlCode),
+                  escapeCSV(control.controlTitle),
+                  escapeCSV(control.frameworkName),
+                  escapeCSV(control.status),
+                  String(control.evidenceCount),
+                  escapeCSV(control.evidenceType),
+                  escapeCSV(item.title),
+                  escapeCSV(item.description),
+                  new Date(item.timestamp).toISOString(),
+                  escapeCSV(item.url || ""),
+                  escapeCSV((item as { relevance?: string }).relevance || ""),
+                ].join(",")
+              );
             }
           }
         }
@@ -252,18 +259,18 @@ export async function POST(request: NextRequest) {
         where: { id: exportRecord.id },
         data: { status: "failed" },
       });
-      
+
       return NextResponse.json(
-        { error: "Failed to generate export", details: generateError instanceof Error ? generateError.message : "Unknown error" },
+        {
+          error: "Failed to generate export",
+          details: generateError instanceof Error ? generateError.message : "Unknown error",
+        },
         { status: 500 }
       );
     }
   } catch (error) {
     console.error("Export error:", error);
-    return NextResponse.json(
-      { error: "Failed to generate export" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate export" }, { status: 500 });
   }
 }
 
@@ -292,14 +299,10 @@ export async function GET() {
 
     return NextResponse.json({
       exports,
-      canExport:
-        subscription?.plan === "pro" && subscription?.status === "active",
+      canExport: subscription?.plan === "pro" && subscription?.status === "active",
     });
   } catch (error) {
     console.error("Error fetching exports:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch exports" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch exports" }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { subDays, startOfDay } from "date-fns";
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const daysParam = searchParams.get("days");
-    
+
     // Validate and clamp days parameter (1-365)
     let days = 30; // default
     if (daysParam !== null) {
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
       GROUP BY DATE(committed_at)
       ORDER BY date
     `;
-    
+
     // Batch query: Get all PRs grouped by date
     const prsByDate = await db.$queryRaw<Array<{ date: string; count: bigint }>>`
       SELECT DATE(merged_at) as date, COUNT(*)::bigint as count
@@ -94,12 +95,18 @@ export async function GET(request: NextRequest) {
     );
 
     // Get total cumulative counts for fallback calculation (single query each)
-    const totalCommits = repoIds.length > 0 ? await db.commit.count({
-      where: { repoId: { in: repoIds } },
-    }) : 0;
-    const totalPRs = repoIds.length > 0 ? await db.pullRequest.count({
-      where: { repoId: { in: repoIds }, mergedAt: { not: null } },
-    }) : 0;
+    const totalCommits =
+      repoIds.length > 0
+        ? await db.commit.count({
+            where: { repoId: { in: repoIds } },
+          })
+        : 0;
+    const totalPRs =
+      repoIds.length > 0
+        ? await db.pullRequest.count({
+            where: { repoId: { in: repoIds }, mergedAt: { not: null } },
+          })
+        : 0;
 
     // Aggregate data by date using pre-fetched data
     for (const dateStr of dates) {
@@ -114,9 +121,7 @@ export async function GET(request: NextRequest) {
       const snapshot = snapshotMap.get(dateKey);
       if (snapshot) {
         complianceScores.push(snapshot.overallScore);
-        evidenceCounts.push(
-          snapshot.withEvidence + snapshot.partial + snapshot.limited
-        );
+        evidenceCounts.push(snapshot.withEvidence + snapshot.partial + snapshot.limited);
       } else {
         // Fallback: simple estimate based on total activity
         const activityScore = Math.min(100, Math.round((totalCommits + totalPRs * 2) / 10));

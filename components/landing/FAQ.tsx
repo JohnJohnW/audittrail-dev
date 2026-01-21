@@ -54,28 +54,25 @@ export function FAQ() {
     <section className="py-20 bg-white px-6">
       <div className="max-w-2xl mx-auto">
         <FadeIn direction="up" className="text-center mb-12">
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">
-            FAQ
-          </p>
-          <h2 className="text-2xl font-semibold text-gray-900">
-            Common questions
-          </h2>
+          <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">FAQ</p>
+          <h2 className="text-2xl font-semibold text-gray-900">Common questions</h2>
         </FadeIn>
 
         <FadeIn direction="up" delay={0.2}>
           <div className="space-y-0 border border-gray-200 rounded-lg overflow-hidden bg-white">
             {faqs.map((faq, index) => (
-              <div 
-                key={index} 
-                className={`border-b border-gray-100 last:border-b-0 ${openIndex === index ? 'bg-accent-light/30' : ''} transition-colors duration-200`}
+              <div
+                key={index}
+                className={`border-b border-gray-100 last:border-b-0 ${openIndex === index ? "bg-accent-light/30" : ""} transition-colors duration-200`}
               >
                 <button
+                  id={`faq-button-${index}`}
+                  aria-expanded={openIndex === index}
+                  aria-controls={`faq-panel-${index}`}
                   className="w-full text-left py-4 px-5 flex items-start justify-between gap-4 hover:bg-gray-50 transition-colors"
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 >
-                  <span className="text-sm font-medium text-gray-900 pr-4">
-                    {faq.question}
-                  </span>
+                  <span className="text-sm font-medium text-gray-900 pr-4">{faq.question}</span>
                   <motion.svg
                     animate={{ rotate: openIndex === index ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
@@ -83,6 +80,7 @@ export function FAQ() {
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -95,6 +93,9 @@ export function FAQ() {
                 <AnimatePresence>
                   {openIndex === index && (
                     <motion.div
+                      id={`faq-panel-${index}`}
+                      role="region"
+                      aria-labelledby={`faq-button-${index}`}
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getGitHubClientForOrg } from "@/lib/github";
@@ -39,9 +40,7 @@ export async function GET() {
       where: { orgId },
       select: { githubRepoId: true, isActive: true },
     });
-    const trackedMap = new Map(
-      trackedRepos.map((r) => [r.githubRepoId.toString(), r.isActive])
-    );
+    const trackedMap = new Map(trackedRepos.map((r) => [r.githubRepoId.toString(), r.isActive]));
 
     const repositories = githubRepos.map((repo) => ({
       id: repo.id,
@@ -62,11 +61,7 @@ export async function GET() {
       repositories,
     });
   } catch (error) {
-    console.error("Error fetching repositories:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch repositories" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
@@ -114,10 +109,7 @@ export async function POST(request: NextRequest) {
     // Get GitHub client
     const client = await getGitHubClientForOrg(orgId);
     if (!client) {
-      return NextResponse.json(
-        { error: "GitHub not connected" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
     }
 
     // Get all repos to verify the selected ones exist
@@ -152,10 +144,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error saving repositories:", error);
-    return NextResponse.json(
-      { error: "Failed to save repositories" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

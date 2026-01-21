@@ -41,11 +41,10 @@ export function handleApiError(error: unknown): NextResponse {
   }
 
   if (error instanceof AppError) {
-    logger.error(
-      `API Error [${error.statusCode}]: ${error.message}`,
-      error,
-      { requestId, code: error.code }
-    );
+    logger.error(`API Error [${error.statusCode}]: ${error.message}`, error, {
+      requestId,
+      code: error.code,
+    });
 
     return NextResponse.json(
       {

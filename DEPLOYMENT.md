@@ -26,6 +26,7 @@ git push origin main
 ## Step 3: Configure Build Settings
 
 Vercel should auto-detect from `vercel.json`, but verify:
+
 - **Framework Preset**: Next.js
 - **Build Command**: `npx prisma generate && npm run build`
 - **Output Directory**: `.next` (default)
@@ -36,35 +37,43 @@ Vercel should auto-detect from `vercel.json`, but verify:
 In Vercel project settings → **Environment Variables**, add all of these:
 
 ### Database (Supabase)
+
 ```
 DATABASE_URL=postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres?pgbouncer=true&connection_limit=1
 DIRECT_URL=postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres
 ```
+
 ⚠️ **Important**: Use your Supabase connection strings. `DIRECT_URL` should use port 5432 (direct connection, not pooler).
 
 ### Authentication
+
 ```
 NEXTAUTH_SECRET=[your-secret-from-local-.env]
 NEXTAUTH_URL=https://your-app-name.vercel.app
 ```
+
 ⚠️ **Important**: Generate a new `NEXTAUTH_SECRET` for production:
+
 ```bash
 openssl rand -base64 32
 ```
 
 ### Email (Resend)
+
 ```
 RESEND_API_KEY=re_[your-resend-api-key]
 EMAIL_FROM=AuditTrail <noreply@yourdomain.com>
 ```
 
 ### GitHub OAuth
+
 ```
 GITHUB_CLIENT_ID=[your-github-client-id]
 GITHUB_CLIENT_SECRET=[your-github-client-secret]
 ```
 
 ### Stripe
+
 ```
 STRIPE_SECRET_KEY=sk_live_[your-secret-key]
 STRIPE_PUBLISHABLE_KEY=pk_live_[your-publishable-key]
@@ -73,6 +82,7 @@ STRIPE_WEBHOOK_SECRET=whsec_[your-webhook-secret]
 ```
 
 ### Cron Job
+
 ```
 CRON_SECRET=[your-cron-secret-from-local-.env]
 ```
@@ -125,27 +135,32 @@ CRON_SECRET=[your-cron-secret-from-local-.env]
 ## Troubleshooting
 
 ### Build Fails
+
 - Check that all environment variables are set
 - Verify `DATABASE_URL` and `DIRECT_URL` are correct
 - Check build logs in Vercel dashboard
 
 ### Database Connection Errors
+
 - Ensure `DIRECT_URL` uses port 5432 (direct connection)
 - Verify Supabase allows connections from Vercel IPs
 - Check Supabase connection pooling settings
 
 ### Authentication Not Working
+
 - Verify `NEXTAUTH_SECRET` is set and matches production
 - Check `NEXTAUTH_URL` matches your Vercel domain
 - Ensure GitHub OAuth callback URL is correct
 
 ### Cron Job Not Running
+
 - Vercel Cron requires Pro plan or Hobby with limits
 - Verify `CRON_SECRET` is set
 - Check Vercel Cron logs in dashboard
 - Alternative: Use external cron service (e.g., cron-job.org) to call `/api/cron/sync` with `Authorization: Bearer [CRON_SECRET]` header
 
 ### Stripe Webhooks Not Working
+
 - Verify webhook URL is correct
 - Check webhook secret matches
 - View webhook events in Stripe dashboard

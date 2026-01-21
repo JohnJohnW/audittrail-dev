@@ -17,32 +17,24 @@ export default function PrivacyPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-12">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-8">
-          Privacy Policy
-        </h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Privacy Policy</h1>
 
         <div className="prose prose-gray max-w-none text-sm text-gray-600 space-y-6">
           <p className="text-gray-500">Last updated: January 2025</p>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              Overview
-            </h2>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Overview</h2>
             <p>
-              AuditTrail.dev (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) is committed to protecting your
-              privacy. This policy explains how we collect, use, and protect your
+              AuditTrail.dev (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) is committed to
+              protecting your privacy. This policy explains how we collect, use, and protect your
               data.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              Data We Collect
-            </h2>
-            
-            <h3 className="text-base font-medium text-gray-900 mt-6 mb-2">
-              Account Information
-            </h3>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Data We Collect</h2>
+
+            <h3 className="text-base font-medium text-gray-900 mt-6 mb-2">Account Information</h3>
             <ul className="list-disc pl-6 space-y-1">
               <li>Email address (for authentication and communication)</li>
               <li>Name (from GitHub profile)</li>
@@ -63,20 +55,15 @@ export default function PrivacyPage() {
               We never store your source code or file contents.
             </p>
 
-            <h3 className="text-base font-medium text-gray-900 mt-6 mb-2">
-              Payment Information
-            </h3>
+            <h3 className="text-base font-medium text-gray-900 mt-6 mb-2">Payment Information</h3>
             <p>
-              Payment processing is handled by Stripe. We do not store credit card
-              numbers. Stripe may collect payment details in accordance with their
-              privacy policy.
+              Payment processing is handled by Stripe. We do not store credit card numbers. Stripe
+              may collect payment details in accordance with their privacy policy.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              How We Use Your Data
-            </h2>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">How We Use Your Data</h2>
             <ul className="list-disc pl-6 space-y-1">
               <li>Generate compliance evidence reports from your GitHub activity</li>
               <li>Map repository metadata to compliance framework controls</li>
@@ -87,9 +74,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              Data Security
-            </h2>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Data Security</h2>
             <ul className="list-disc pl-6 space-y-1">
               <li>All data is encrypted in transit (TLS 1.3)</li>
               <li>Data at rest is encrypted</li>
@@ -100,33 +85,36 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              Data Retention
-            </h2>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Data Retention</h2>
             <p>
-              We retain your data for as long as your account is active. When you
-              delete your account, we delete your data within 30 days, except where
-              required by law.
+              We retain your data for as long as your account is active. When you delete your
+              account, we delete your data within 30 days, except where required by law.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              Third-Party Services
-            </h2>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Third-Party Services</h2>
             <ul className="list-disc pl-6 space-y-1">
-              <li><strong>GitHub</strong> - Repository data access (via OAuth)</li>
-              <li><strong>Stripe</strong> - Payment processing</li>
-              <li><strong>Supabase</strong> - Database hosting</li>
-              <li><strong>Vercel</strong> - Application hosting</li>
-              <li><strong>Resend</strong> - Transactional email</li>
+              <li>
+                <strong>GitHub</strong> - Repository data access (via OAuth)
+              </li>
+              <li>
+                <strong>Stripe</strong> - Payment processing
+              </li>
+              <li>
+                <strong>Supabase</strong> - Database hosting
+              </li>
+              <li>
+                <strong>Vercel</strong> - Application hosting
+              </li>
+              <li>
+                <strong>Resend</strong> - Transactional email
+              </li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              Your Rights
-            </h2>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Your Rights</h2>
             <p>You have the right to:</p>
             <ul className="list-disc pl-6 mt-2 space-y-1">
               <li>Access your data</li>
@@ -138,35 +126,26 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              Cookies
-            </h2>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Cookies</h2>
             <p>
-              We use essential cookies for authentication and session management.
-              We do not use tracking or advertising cookies.
+              We use essential cookies for authentication and session management. We do not use
+              tracking or advertising cookies.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              Changes to This Policy
-            </h2>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Changes to This Policy</h2>
             <p>
-              We may update this policy from time to time. We will notify users of
-              significant changes via email.
+              We may update this policy from time to time. We will notify users of significant
+              changes via email.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">
-              Contact
-            </h2>
+            <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Contact</h2>
             <p>
               For privacy-related questions, contact us at{" "}
-              <a
-                href="mailto:privacy@audittrail.dev"
-                className="text-gray-900 hover:underline"
-              >
+              <a href="mailto:privacy@audittrail.dev" className="text-gray-900 hover:underline">
                 privacy@audittrail.dev
               </a>
             </p>

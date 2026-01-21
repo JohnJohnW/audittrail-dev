@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getGitHubClientForOrg, GitHubClient } from "@/lib/github";
+import type { GitHubClient } from "@/lib/github";
+import { getGitHubClientForOrg } from "@/lib/github";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
 
 // Cron job endpoint for automatic syncing
@@ -13,10 +15,7 @@ export async function GET(request: NextRequest) {
 
     if (!cronSecret) {
       console.error("CRON_SECRET not configured");
-      return NextResponse.json(
-        { error: "Cron not configured" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Cron not configured" }, { status: 500 });
     }
 
     // Vercel Cron sends the secret as Bearer token
@@ -84,9 +83,7 @@ export async function GET(request: NextRequest) {
             const [owner, repoName] = repo.fullName.split("/");
             if (!owner || !repoName) continue;
 
-            const since =
-              repo.lastSyncedAt ||
-              new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+            const since = repo.lastSyncedAt || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
             // Sync commits (limited for cron)
             await syncCommitsForCron(client, repo.id, owner, repoName, since);
@@ -95,13 +92,7 @@ export async function GET(request: NextRequest) {
             await syncPRsForCron(client, repo.id, owner, repoName);
 
             // Sync branch protection
-            await syncBranchProtectionForCron(
-              client,
-              repo.id,
-              owner,
-              repoName,
-              repo.defaultBranch
-            );
+            await syncBranchProtectionForCron(client, repo.id, owner, repoName, repo.defaultBranch);
 
             // Update last synced timestamp
             await db.repository.update({
@@ -135,9 +126,7 @@ export async function GET(request: NextRequest) {
     }
 
     const successCount = results.filter((r) => r.status === "success").length;
-    console.log(
-      `Sync completed: ${successCount}/${organizations.length} organizations synced`
-    );
+    console.log(`Sync completed: ${successCount}/${organizations.length} organizations synced`);
 
     return NextResponse.json({
       success: true,
@@ -274,7 +263,7 @@ async function syncPRsForCron(
             )
           );
         }
-      } catch (error) {
+      } catch (_error) {
         // Skip individual PR errors
       }
     }
@@ -306,14 +295,11 @@ async function syncBranchProtectionForCron(
       update: {
         requirePullRequest: !!protection.required_pull_request_reviews,
         requiredApprovals:
-          protection.required_pull_request_reviews
-            ?.required_approving_review_count || 0,
+          protection.required_pull_request_reviews?.required_approving_review_count || 0,
         dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews ||
-          false,
+          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
         requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews ||
-          false,
+          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
         enforceAdmins: protection.enforce_admins?.enabled || false,
         requireStatusChecks: !!protection.required_status_checks,
       },
@@ -322,14 +308,11 @@ async function syncBranchProtectionForCron(
         branch,
         requirePullRequest: !!protection.required_pull_request_reviews,
         requiredApprovals:
-          protection.required_pull_request_reviews
-            ?.required_approving_review_count || 0,
+          protection.required_pull_request_reviews?.required_approving_review_count || 0,
         dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews ||
-          false,
+          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
         requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews ||
-          false,
+          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
         enforceAdmins: protection.enforce_admins?.enabled || false,
         requireStatusChecks: !!protection.required_status_checks,
         snapshotAt,
@@ -337,7 +320,7 @@ async function syncBranchProtectionForCron(
     });
 
     return protection;
-  } catch (error) {
+  } catch (_error) {
     // Branch protection not configured or no access - this is okay
     return null;
   }
@@ -349,11 +332,10 @@ async function storeComplianceSnapshot(orgId: string) {
     const summary = getEvidenceSummary(evidence.controls);
 
     // Calculate per-framework scores
-    const frameworkScores: Record<string, { score: number; total: number; withEvidence: number }> = {};
+    const frameworkScores: Record<string, { score: number; total: number; withEvidence: number }> =
+      {};
     for (const framework of evidence.frameworks) {
-      const frameworkControls = evidence.controls.filter(
-        (c) => c.frameworkName === framework.name
-      );
+      const frameworkControls = evidence.controls.filter((c) => c.frameworkName === framework.name);
       const frameworkSummary = getEvidenceSummary(frameworkControls);
       frameworkScores[framework.name] = {
         score: frameworkSummary.score,

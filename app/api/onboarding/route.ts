@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/error-handler";
@@ -27,8 +28,7 @@ export async function GET() {
       {
         id: "connect_github",
         title: "Connect GitHub",
-        description:
-          "Connect your GitHub account to start tracking repositories.",
+        description: "Connect your GitHub account to start tracking repositories.",
         completed: !!githubConnection,
         action: githubConnection
           ? undefined
@@ -40,8 +40,7 @@ export async function GET() {
       {
         id: "select_repos",
         title: "Select Repositories",
-        description:
-          "Choose which repositories you want to track for compliance evidence.",
+        description: "Choose which repositories you want to track for compliance evidence.",
         completed: repositories.length > 0,
         action:
           repositories.length > 0
@@ -54,8 +53,7 @@ export async function GET() {
       {
         id: "first_sync",
         title: "Run First Sync",
-        description:
-          "Sync your repositories to collect compliance evidence for the first time.",
+        description: "Sync your repositories to collect compliance evidence for the first time.",
         completed: repositories.some((r) => r.lastSyncedAt !== null),
         action: repositories.some((r) => r.lastSyncedAt !== null)
           ? undefined
@@ -80,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { stepId } = body;
+    const { stepId: _stepId } = body;
 
     // Step completion is tracked implicitly through data state
     // This endpoint can be used for future analytics or custom steps

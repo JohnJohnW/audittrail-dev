@@ -11,7 +11,8 @@ function ErrorContent() {
   const errorMessages: Record<string, { title: string; message: string }> = {
     Configuration: {
       title: "Configuration Error",
-      message: "There's a problem with the server configuration. Please try again or contact support.",
+      message:
+        "There's a problem with the server configuration. Please try again or contact support.",
     },
     AccessDenied: {
       title: "Access Denied",
@@ -19,7 +20,8 @@ function ErrorContent() {
     },
     Verification: {
       title: "Link Expired",
-      message: "This verification link has expired or has already been used. Please request a new one.",
+      message:
+        "This verification link has expired or has already been used. Please request a new one.",
     },
     OAuthSignin: {
       title: "Sign In Error",
@@ -55,14 +57,10 @@ function ErrorContent() {
             />
           </svg>
         </div>
-        
-        <h1 className="text-xl font-semibold text-gray-900 mb-2">
-          {title}
-        </h1>
-        <p className="text-sm text-gray-500 mb-8">
-          {message}
-        </p>
-        
+
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">{title}</h1>
+        <p className="text-sm text-gray-500 mb-8">{message}</p>
+
         <Link
           href="/auth/signin"
           className="inline-block bg-gray-900 text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
@@ -71,8 +69,8 @@ function ErrorContent() {
         </Link>
 
         <div className="mt-6">
-          <a 
-            href="mailto:support@audittrail.dev" 
+          <a
+            href="mailto:support@audittrail.dev"
             className="text-xs text-gray-400 hover:text-gray-600"
           >
             Contact support

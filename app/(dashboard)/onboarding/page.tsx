@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
 
@@ -17,7 +16,6 @@ interface OnboardingStep {
 }
 
 export default function OnboardingPage() {
-  const router = useRouter();
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -83,11 +81,10 @@ export default function OnboardingPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Setup Complete!
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Setup Complete!</h1>
             <p className="text-gray-600 mb-6">
-              You're all set to start tracking compliance evidence. Head to your dashboard to get started.
+              You&apos;re all set to start tracking compliance evidence. Head to your dashboard to
+              get started.
             </p>
             <Link
               href="/dashboard"
@@ -105,18 +102,16 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to AuditTrail.dev
-          </h1>
-          <p className="text-gray-600">
-            Let's get you set up in just a few steps
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to AuditTrail.dev</h1>
+          <p className="text-gray-600">Let&apos;s get you set up in just a few steps</p>
         </div>
 
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Progress</span>
-            <span>{completedCount} of {steps.length} completed</span>
+            <span>
+              {completedCount} of {steps.length} completed
+            </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
@@ -134,8 +129,8 @@ export default function OnboardingPage() {
                 step.completed
                   ? "border-green-200 bg-green-50"
                   : index === completedCount
-                  ? "border-primary-500 bg-primary-50"
-                  : "border-gray-200"
+                    ? "border-primary-500 bg-primary-50"
+                    : "border-gray-200"
               }`}
             >
               <div className="flex items-start gap-4">
@@ -144,17 +139,12 @@ export default function OnboardingPage() {
                     step.completed
                       ? "bg-green-600 text-white"
                       : index === completedCount
-                      ? "bg-primary-600 text-white"
-                      : "bg-gray-200 text-gray-600"
+                        ? "bg-primary-600 text-white"
+                        : "bg-gray-200 text-gray-600"
                   }`}
                 >
                   {step.completed ? (
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -167,9 +157,7 @@ export default function OnboardingPage() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    {step.title}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{step.title}</h3>
                   <p className="text-gray-600 mb-4">{step.description}</p>
                   {step.action && !step.completed && (
                     <Link

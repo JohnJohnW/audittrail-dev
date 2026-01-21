@@ -1,43 +1,34 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import Resend from "next-auth/providers/resend";
 import GitHub from "next-auth/providers/github";
 import { db } from "./db";
 
 // Validate required environment variables at startup
-const requiredEnvVars = ["NEXTAUTH_SECRET", "NEXTAUTH_URL"] as const;
+if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+  throw new Error(
+    "GitHub OAuth credentials are required. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables."
+  );
+}
 
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    console.warn(
-      `Warning: ${envVar} is not set. Authentication may not work correctly.`
-    );
-  }
+if (!process.env.NEXTAUTH_SECRET) {
+  console.warn("Warning: NEXTAUTH_SECRET is not set. Authentication may not work correctly.");
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(db),
   providers: [
-    Resend({
-      from: process.env.EMAIL_FROM || "AuditTrail <noreply@audittrail.dev>",
+    GitHub({
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      authorization: {
+        params: {
+          scope: "read:user user:email repo",
+        },
+      },
     }),
-    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
-      ? [
-          GitHub({
-            clientId: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
-            authorization: {
-              params: {
-                scope: "read:user user:email repo",
-              },
-            },
-          }),
-        ]
-      : []),
   ],
   pages: {
     signIn: "/auth/signin",
-    verifyRequest: "/auth/verify",
     error: "/auth/error",
   },
   callbacks: {

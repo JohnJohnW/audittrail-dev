@@ -32,9 +32,7 @@ export default function AuthError({
             />
           </svg>
         </div>
-        <h1 className="text-xl font-semibold text-gray-900 mb-2">
-          Authentication Error
-        </h1>
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">Authentication Error</h1>
         <p className="text-sm text-gray-500 mb-6">
           Something went wrong during authentication. Please try again.
         </p>
@@ -45,10 +43,7 @@ export default function AuthError({
           >
             Try Again
           </button>
-          <Link
-            href="/"
-            className="text-sm text-gray-500 hover:text-gray-900"
-          >
+          <Link href="/" className="text-sm text-gray-500 hover:text-gray-900">
             ← Back to home
           </Link>
         </div>

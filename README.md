@@ -126,6 +126,7 @@ npm run db:seed
 ## Compliance Frameworks
 
 ### ISO 27001:2022 (10 controls)
+
 - A.8.9: Configuration Management
 - A.8.32: Change Management
 - A.8.4: Access to Source Code
@@ -138,6 +139,7 @@ npm run db:seed
 - A.5.17: Authentication Information
 
 ### Essential Eight (5 controls)
+
 - E8-1: Application Control
 - E8-2: Patch Applications
 - E8-4: Restrict Administrative Privileges

@@ -8,14 +8,14 @@ export function Hero() {
     <section className="pt-28 pb-16 px-6 relative overflow-hidden">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-b from-accent-light/30 via-white to-white pointer-events-none" />
-      
+
       <div className="max-w-3xl mx-auto text-center relative">
         <FadeInOnLoad delay={0}>
           <p className="text-sm text-gray-500 mb-4">
             ISO 27001 & Essential Eight for Australian businesses
           </p>
         </FadeInOnLoad>
-        
+
         <FadeInOnLoad delay={0.1}>
           <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 tracking-tight leading-[1.15] mb-6">
             Audit evidence from
@@ -41,9 +41,9 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
-            Connect your GitHub repositories. We extract commits, pull requests, 
-            reviews, and branch protection rules—then map them to compliance 
-            controls. Export audit-ready reports in one click.
+            Connect your GitHub repositories. We extract commits, pull requests, reviews, and branch
+            protection rules—then map them to compliance controls. Export audit-ready reports in one
+            click.
           </p>
         </FadeInOnLoad>
 

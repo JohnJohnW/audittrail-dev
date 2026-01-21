@@ -132,10 +132,7 @@ function matchesPatterns(text: string, patterns: RegExp[]): boolean {
   return patterns.some((p) => p.test(text));
 }
 
-function getCommitRelevance(
-  message: string,
-  controlCode: string
-): "high" | "medium" | "low" {
+function getCommitRelevance(message: string, controlCode: string): "high" | "medium" | "low" {
   // Patching controls (E8-PA, E8-PO, A.8.8)
   if (["E8-PA", "E8-PO", "A.8.8"].includes(controlCode)) {
     if (matchesPatterns(message, AUTOMATED_DEPENDENCY_PATTERNS)) return "high";
@@ -253,14 +250,11 @@ export async function getComplianceEvidence(
   const infrastructureCommits = allCommits.filter((c) =>
     matchesPatterns(c.message, INFRASTRUCTURE_PATTERNS)
   );
-  const securityCommits = allCommits.filter((c) =>
-    matchesPatterns(c.message, SECURITY_PATTERNS)
-  );
-  const testCommits = allCommits.filter((c) =>
-    matchesPatterns(c.message, TEST_PATTERNS)
-  );
+  const securityCommits = allCommits.filter((c) => matchesPatterns(c.message, SECURITY_PATTERNS));
+  const testCommits = allCommits.filter((c) => matchesPatterns(c.message, TEST_PATTERNS));
   // Signed commits provide strong evidence for authentication controls
-  const signedCommits = allCommits.filter((c) => c.verified === true);
+  // TODO: Use signedCommits for auth controls like A.5.17, E8-MFA
+  const _signedCommits = allCommits.filter((c) => c.verified === true);
   // CI/CD security tool commits for security testing evidence
   const cicdSecurityCommits = allCommits.filter((c) =>
     matchesPatterns(c.message, CICD_SECURITY_PATTERNS)
@@ -279,8 +273,7 @@ export async function getComplianceEvidence(
   for (const framework of frameworks) {
     for (const control of framework.controls) {
       const evidence: EvidenceItem[] = [];
-      let status: "has_evidence" | "partial" | "no_evidence" | "limited" =
-        "no_evidence";
+      let status: "has_evidence" | "partial" | "no_evidence" | "limited" = "no_evidence";
       let note: string | undefined;
 
       // Check if this control has limited Git evidence
@@ -305,10 +298,7 @@ export async function getComplianceEvidence(
                   ? dependencyCommits
                   : allCommits;
           } else if (control.code === "E8-PO") {
-            relevantCommits =
-              infrastructureCommits.length > 0
-                ? infrastructureCommits
-                : allCommits;
+            relevantCommits = infrastructureCommits.length > 0 ? infrastructureCommits : allCommits;
           } else if (["A.8.28", "A.8.26"].includes(control.code)) {
             relevantCommits =
               securityCommits.length > 0
@@ -322,24 +312,22 @@ export async function getComplianceEvidence(
                 : allCommits;
           } else if (control.code === "A.8.33") {
             relevantCommits =
-              testCommits.length > 0
-                ? [...testCommits, ...allCommits.slice(0, 10)]
-                : allCommits;
+              testCommits.length > 0 ? [...testCommits, ...allCommits.slice(0, 10)] : allCommits;
           }
 
           // Build evidence items
           for (const commit of relevantCommits.slice(0, 30)) {
             let relevance = getCommitRelevance(commit.message, control.code);
-            
+
             // Signed commits are high relevance for auth controls
             if (["A.5.17", "E8-MFA"].includes(control.code) && commit.verified) {
               relevance = "high";
             }
-            
-            const signedNote = commit.verified 
-              ? ` [Signed: ${commit.verificationReason || "verified"}]` 
+
+            const signedNote = commit.verified
+              ? ` [Signed: ${commit.verificationReason || "verified"}]`
               : "";
-            
+
             evidence.push({
               type: "commit",
               title: `Commit: ${commit.sha.slice(0, 7)}${commit.verified ? " ✓" : ""}`,
@@ -358,9 +346,7 @@ export async function getComplianceEvidence(
           }
 
           // Determine status based on evidence quality
-          const highRelevanceCount = evidence.filter(
-            (e) => e.relevance === "high"
-          ).length;
+          const highRelevanceCount = evidence.filter((e) => e.relevance === "high").length;
 
           if (status !== "limited") {
             if (highRelevanceCount >= 3) {
@@ -380,26 +366,24 @@ export async function getComplianceEvidence(
 
           for (const pr of approvedPRs.slice(0, 30)) {
             // Detect automated dependency PRs (Dependabot, Renovate)
-            const isAutomatedDependency = 
+            const isAutomatedDependency =
               pr.authorLogin.includes("dependabot") ||
               pr.authorLogin.includes("renovate") ||
               pr.authorLogin === "dependabot[bot]" ||
               pr.authorLogin === "renovate[bot]" ||
               matchesPatterns(pr.title, AUTOMATED_DEPENDENCY_PATTERNS);
-            
+
             // Determine relevance
-            let relevance: "high" | "medium" | "low" = 
-              pr.baseBranch === "main" || pr.baseBranch === "master"
-                ? "high"
-                : "medium";
-            
+            let relevance: "high" | "medium" | "low" =
+              pr.baseBranch === "main" || pr.baseBranch === "master" ? "high" : "medium";
+
             // Automated dependency PRs are highly relevant for certain controls
             if (isAutomatedDependency) {
               relevance = "high";
             }
-            
+
             const automatedNote = isAutomatedDependency ? " [Automated]" : "";
-            
+
             evidence.push({
               type: "pr",
               title: `PR #${pr.number}: ${pr.title.slice(0, 60)}`,
@@ -453,18 +437,12 @@ export async function getComplianceEvidence(
                 protectionStrength,
               },
               relevance:
-                protectionStrength >= 4
-                  ? "high"
-                  : protectionStrength >= 2
-                    ? "medium"
-                    : "low",
+                protectionStrength >= 4 ? "high" : protectionStrength >= 2 ? "medium" : "low",
             });
           }
 
           if (status !== "limited") {
-            const hasStrongProtection = evidence.some(
-              (e) => e.relevance === "high"
-            );
+            const hasStrongProtection = evidence.some((e) => e.relevance === "high");
             if (evidence.length > 0 && hasStrongProtection) {
               status = "has_evidence";
             } else if (evidence.length > 0) {

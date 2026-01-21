@@ -16,13 +16,7 @@ interface EmptyStateProps {
   };
 }
 
-export function EmptyState({
-  icon,
-  title,
-  description,
-  action,
-  secondaryAction,
-}: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, secondaryAction }: EmptyStateProps) {
   return (
     <div className="text-center py-10 px-4">
       {icon && (
@@ -36,8 +30,8 @@ export function EmptyState({
       <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">{description}</p>
       {(action || secondaryAction) && (
         <div className="flex gap-3 justify-center">
-          {action && (
-            action.href ? (
+          {action &&
+            (action.href ? (
               <Link
                 href={action.href}
                 className="inline-flex items-center bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
@@ -51,10 +45,9 @@ export function EmptyState({
               >
                 {action.label}
               </button>
-            )
-          )}
-          {secondaryAction && (
-            secondaryAction.href ? (
+            ))}
+          {secondaryAction &&
+            (secondaryAction.href ? (
               <Link
                 href={secondaryAction.href}
                 className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900"
@@ -68,8 +61,7 @@ export function EmptyState({
               >
                 {secondaryAction.label}
               </button>
-            )
-          )}
+            ))}
         </div>
       )}
     </div>

@@ -16,12 +16,7 @@ class Logger {
     this.requestId = requestId;
   }
 
-  private log(
-    level: LogLevel,
-    message: string,
-    context?: LogContext,
-    error?: Error
-  ) {
+  private log(level: LogLevel, message: string, context?: LogContext, error?: Error) {
     const logEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -34,10 +29,10 @@ class Logger {
       level === LogLevel.ERROR
         ? console.error
         : level === LogLevel.WARN
-        ? console.warn
-        : level === LogLevel.INFO
-        ? console.info
-        : console.debug;
+          ? console.warn
+          : level === LogLevel.INFO
+            ? console.info
+            : console.debug;
 
     if (error) {
       consoleMethod(`[${level.toUpperCase()}] ${message}`, logEntry, error);
