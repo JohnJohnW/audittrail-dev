@@ -70,6 +70,16 @@ export function Footer() {
                 </a>
               </li>
               <li>
+                <Link href="/status" className="text-gray-600 hover:text-gray-900">
+                  Status
+                </Link>
+              </li>
+              <li>
+                <Link href="/changelog" className="text-gray-600 hover:text-gray-900">
+                  Changelog
+                </Link>
+              </li>
+              <li>
                 <a
                   href="mailto:hello@audittrail.dev"
                   className="text-gray-600 hover:text-gray-900"

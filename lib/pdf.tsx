@@ -158,6 +158,8 @@ interface ExportPDFProps {
     score: number;
   };
   controls: ControlEvidence[];
+  dateRange?: { from?: Date; to?: Date };
+  repositories?: string[];
 }
 
 export function ExportPDF({
@@ -166,6 +168,8 @@ export function ExportPDF({
   generatedAt,
   summary,
   controls,
+  dateRange,
+  repositories,
 }: ExportPDFProps) {
   return (
     <Document>
@@ -181,6 +185,20 @@ export function ExportPDF({
             Generated: {generatedAt.toLocaleDateString()} at{" "}
             {generatedAt.toLocaleTimeString()}
           </Text>
+          {dateRange && (dateRange.from || dateRange.to) && (
+            <Text style={styles.subtitle}>
+              Date Range:{" "}
+              {dateRange.from
+                ? dateRange.from.toLocaleDateString()
+                : "Beginning"}{" "}
+              - {dateRange.to ? dateRange.to.toLocaleDateString() : "Present"}
+            </Text>
+          )}
+          {repositories && repositories.length > 0 && (
+            <Text style={styles.subtitle}>
+              Repositories: {repositories.length} selected
+            </Text>
+          )}
         </View>
 
         <View style={styles.section}>

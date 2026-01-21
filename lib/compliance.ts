@@ -21,10 +21,21 @@ export interface ControlEvidence {
   evidence: EvidenceItem[];
 }
 
-export async function getComplianceEvidence(orgId: string): Promise<{
+export interface ComplianceEvidenceOptions {
+  dateFrom?: Date;
+  dateTo?: Date;
+  repositoryIds?: string[];
+}
+
+export async function getComplianceEvidence(
+  orgId: string,
+  options: ComplianceEvidenceOptions = {}
+): Promise<{
   frameworks: { id: string; name: string; controlCount: number }[];
   controls: ControlEvidence[];
 }> {
+  const { dateFrom, dateTo, repositoryIds } = options;
+
   // Get all frameworks and controls
   const frameworks = await db.complianceFramework.findMany({
     include: {
@@ -32,16 +43,37 @@ export async function getComplianceEvidence(orgId: string): Promise<{
     },
   });
 
+  // Build repository filter
+  const repoWhere: any = { orgId, isActive: true };
+  if (repositoryIds && repositoryIds.length > 0) {
+    repoWhere.id = { in: repositoryIds };
+  }
+
+  // Build date filters
+  const commitWhere: any = {};
+  const prWhere: any = { state: "merged" };
+  if (dateFrom || dateTo) {
+    if (dateFrom) {
+      commitWhere.committedAt = { gte: dateFrom };
+      prWhere.mergedAt = { gte: dateFrom };
+    }
+    if (dateTo) {
+      commitWhere.committedAt = { ...commitWhere.committedAt, lte: dateTo };
+      prWhere.mergedAt = { ...prWhere.mergedAt, lte: dateTo };
+    }
+  }
+
   // Get org's active repositories
   const repositories = await db.repository.findMany({
-    where: { orgId, isActive: true },
+    where: repoWhere,
     include: {
       commits: {
+        where: commitWhere,
         orderBy: { committedAt: "desc" },
         take: 100,
       },
       pullRequests: {
-        where: { state: "merged" },
+        where: prWhere,
         include: {
           reviews: {
             where: { state: "APPROVED" },

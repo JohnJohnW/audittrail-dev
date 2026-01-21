@@ -41,9 +41,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    const { format, frameworkId } = body as {
+    const { format, frameworkId, dateFrom, dateTo, repositoryIds } = body as {
       format: "pdf" | "csv";
       frameworkId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      repositoryIds?: string[];
     };
 
     if (!format || !["pdf", "csv"].includes(format)) {
@@ -55,8 +58,13 @@ export async function POST(request: NextRequest) {
       where: { id: orgId },
     });
 
-    // Get evidence
-    const evidence = await getComplianceEvidence(orgId);
+    // Get evidence with filters
+    const evidenceOptions = {
+      dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+      dateTo: dateTo ? new Date(dateTo) : undefined,
+      repositoryIds,
+    };
+    const evidence = await getComplianceEvidence(orgId, evidenceOptions);
     const summary = getEvidenceSummary(evidence.controls);
 
     // Filter by framework if specified

@@ -1,0 +1,191 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
+
+interface OnboardingStep {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  action?: {
+    label: string;
+    href: string;
+  };
+}
+
+export default function OnboardingPage() {
+  const router = useRouter();
+  const [steps, setSteps] = useState<OnboardingStep[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOnboardingStatus();
+  }, []);
+
+  const fetchOnboardingStatus = async () => {
+    try {
+      const response = await fetch("/api/onboarding");
+      const data = await response.json();
+      setSteps(data.steps || []);
+    } catch (error) {
+      console.error("Failed to fetch onboarding status:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStepComplete = async (stepId: string) => {
+    try {
+      await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stepId }),
+      });
+      fetchOnboardingStatus();
+      trackEvent("onboarding_complete", { step: stepId });
+    } catch (error) {
+      console.error("Failed to update onboarding:", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  const completedCount = steps.filter((s) => s.completed).length;
+  const progress = steps.length > 0 ? (completedCount / steps.length) * 100 : 0;
+  const allCompleted = steps.every((s) => s.completed);
+
+  if (allCompleted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg
+                className="w-8 h-8 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Setup Complete!
+            </h1>
+            <p className="text-gray-600 mb-6">
+              You're all set to start tracking compliance evidence. Head to your dashboard to get started.
+            </p>
+            <Link
+              href="/dashboard"
+              className="inline-block bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors"
+            >
+              Go to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome to AuditTrail.dev
+          </h1>
+          <p className="text-gray-600">
+            Let's get you set up in just a few steps
+          </p>
+        </div>
+
+        <div className="mb-8">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Progress</span>
+            <span>{completedCount} of {steps.length} completed</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {steps.map((step, index) => (
+            <div
+              key={step.id}
+              className={`bg-white rounded-xl border-2 p-6 ${
+                step.completed
+                  ? "border-green-200 bg-green-50"
+                  : index === completedCount
+                  ? "border-primary-500 bg-primary-50"
+                  : "border-gray-200"
+              }`}
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
+                    step.completed
+                      ? "bg-green-600 text-white"
+                      : index === completedCount
+                      ? "bg-primary-600 text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {step.completed ? (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    {step.title}
+                  </h3>
+                  <p className="text-gray-600 mb-4">{step.description}</p>
+                  {step.action && !step.completed && (
+                    <Link
+                      href={step.action.href}
+                      onClick={() => handleStepComplete(step.id)}
+                      className="inline-flex items-center bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors text-sm"
+                    >
+                      {step.action.label}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
