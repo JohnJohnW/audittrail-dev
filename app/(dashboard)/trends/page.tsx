@@ -16,7 +16,9 @@ import {
 } from "recharts";
 import { format } from "date-fns";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
+import { StatCard, StatCardGrid } from "@/components/ui/StatCard";
+import { FadeIn } from "@/components/ui/Motion";
+import { chart, chartStyles } from "@/lib/design-tokens";
 
 interface TrendData {
   dates: string[];
@@ -75,25 +77,18 @@ export default function TrendsPage() {
     evidenceCount: data.evidenceCounts[index] || 0,
   }));
 
-  const tooltipStyle = {
-    backgroundColor: "#fff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-  };
-
   return (
     <div>
       {/* Header */}
       <FadeIn>
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
               Trends & Analytics
             </h1>
-            <p className="text-gray-500 mt-1">Historical compliance and activity trends</p>
+            <p className="text-sm sm:text-base text-gray-500 mt-1">Historical compliance and activity trends</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {[
               { value: 7, label: "7d" },
               { value: 30, label: "30d" },
@@ -128,11 +123,11 @@ export default function TrendsPage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="commits" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid {...chartStyles.grid} />
+                  <XAxis dataKey="date" tick={chartStyles.axis.tick} />
+                  <YAxis tick={chartStyles.axis.tick} />
+                  <Tooltip contentStyle={chartStyles.tooltip.contentStyle} />
+                  <Bar dataKey="commits" fill={chart.primary} radius={chartStyles.bar.radius} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -147,11 +142,11 @@ export default function TrendsPage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="pullRequests" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid {...chartStyles.grid} />
+                  <XAxis dataKey="date" tick={chartStyles.axis.tick} />
+                  <YAxis tick={chartStyles.axis.tick} />
+                  <Tooltip contentStyle={chartStyles.tooltip.contentStyle} />
+                  <Bar dataKey="pullRequests" fill={chart.secondary} radius={chartStyles.bar.radius} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -169,18 +164,18 @@ export default function TrendsPage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <YAxis domain={[0, 100]} tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <Tooltip contentStyle={tooltipStyle} />
+                  <CartesianGrid {...chartStyles.grid} />
+                  <XAxis dataKey="date" tick={chartStyles.axis.tick} />
+                  <YAxis domain={[0, 100]} tick={chartStyles.axis.tick} />
+                  <Tooltip contentStyle={chartStyles.tooltip.contentStyle} />
                   <Legend />
                   <Line
                     type="monotone"
                     dataKey="complianceScore"
-                    stroke="#8b5cf6"
+                    stroke={chart.primary}
                     strokeWidth={2}
                     name="Compliance Score (%)"
-                    dot={{ fill: "#8b5cf6", strokeWidth: 2 }}
+                    dot={{ fill: chart.primary, strokeWidth: 2 }}
                     activeDot={{ r: 6 }}
                   />
                 </LineChart>
@@ -197,18 +192,18 @@ export default function TrendsPage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <Tooltip contentStyle={tooltipStyle} />
+                  <CartesianGrid {...chartStyles.grid} />
+                  <XAxis dataKey="date" tick={chartStyles.axis.tick} />
+                  <YAxis tick={chartStyles.axis.tick} />
+                  <Tooltip contentStyle={chartStyles.tooltip.contentStyle} />
                   <Legend />
                   <Line
                     type="monotone"
                     dataKey="evidenceCount"
-                    stroke="#f59e0b"
+                    stroke={chart.secondary}
                     strokeWidth={2}
                     name="Evidence Items"
-                    dot={{ fill: "#f59e0b", strokeWidth: 2 }}
+                    dot={{ fill: chart.secondary, strokeWidth: 2 }}
                     activeDot={{ r: 6 }}
                   />
                 </LineChart>
@@ -225,69 +220,30 @@ export default function TrendsPage() {
             <CardTitle>Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <StaggerItem>
-                <SummaryStatCard
-                  label="Total Commits"
-                  value={data.commits.reduce((a, b) => a + b, 0).toLocaleString()}
-                  color="blue"
-                />
-              </StaggerItem>
-              <StaggerItem>
-                <SummaryStatCard
-                  label="Total Pull Requests"
-                  value={data.pullRequests.reduce((a, b) => a + b, 0).toLocaleString()}
-                  color="green"
-                />
-              </StaggerItem>
-              <StaggerItem>
-                <SummaryStatCard
-                  label="Avg Compliance Score"
-                  value={`${Math.round(
-                    data.complianceScores.reduce((a, b) => a + b, 0) /
-                      data.complianceScores.filter((s) => s > 0).length || 0
-                  )}%`}
-                  color="purple"
-                />
-              </StaggerItem>
-              <StaggerItem>
-                <SummaryStatCard
-                  label="Total Evidence Items"
-                  value={data.evidenceCounts.reduce((a, b) => a + b, 0).toLocaleString()}
-                  color="orange"
-                />
-              </StaggerItem>
-            </StaggerContainer>
+            <StatCardGrid columns={{ default: 2, md: 4 }}>
+              <StatCard
+                label="Total Commits"
+                value={data.commits.reduce((a, b) => a + b, 0).toLocaleString()}
+              />
+              <StatCard
+                label="Total Pull Requests"
+                value={data.pullRequests.reduce((a, b) => a + b, 0).toLocaleString()}
+              />
+              <StatCard
+                label="Avg Compliance Score"
+                value={`${Math.round(
+                  data.complianceScores.reduce((a, b) => a + b, 0) /
+                    data.complianceScores.filter((s) => s > 0).length || 0
+                )}%`}
+              />
+              <StatCard
+                label="Total Evidence Items"
+                value={data.evidenceCounts.reduce((a, b) => a + b, 0).toLocaleString()}
+              />
+            </StatCardGrid>
           </CardContent>
         </Card>
       </FadeIn>
     </div>
-  );
-}
-
-function SummaryStatCard({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: "blue" | "green" | "purple" | "orange";
-}) {
-  const colors = {
-    blue: "from-blue-50 to-blue-100/50 text-blue-600",
-    green: "from-green-50 to-green-100/50 text-green-600",
-    purple: "from-purple-50 to-purple-100/50 text-purple-600",
-    orange: "from-orange-50 to-orange-100/50 text-orange-600",
-  };
-
-  return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      className={`bg-gradient-to-br ${colors[color].split(" ")[0]} ${colors[color].split(" ")[1]} rounded-xl p-5`}
-    >
-      <p className="text-sm text-gray-600 mb-1">{label}</p>
-      <p className={`text-2xl font-bold ${colors[color].split(" ")[2]}`}>{value}</p>
-    </motion.div>
   );
 }

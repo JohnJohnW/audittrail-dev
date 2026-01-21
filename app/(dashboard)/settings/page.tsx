@@ -101,9 +101,9 @@ function SettingsContent() {
     <div className="max-w-3xl">
       {/* Header */}
       <FadeIn>
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Settings</h1>
-          <p className="text-gray-500 mt-1">Manage your organization and subscription</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Settings</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">Manage your organization and subscription</p>
         </div>
       </FadeIn>
 
@@ -171,9 +171,9 @@ function SettingsContent() {
             <CardTitle>Subscription</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-start justify-between mb-6 pb-6 border-b border-gray-100">
-              <div>
-                <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-100">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={`text-lg font-semibold ${
                       subscription?.plan === "pro" ? "text-accent" : "text-gray-900"
@@ -192,7 +192,7 @@ function SettingsContent() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-gray-500 mt-1">
+                <p className="text-sm sm:text-base text-gray-500 mt-1">
                   {subscription?.plan === "pro"
                     ? "Unlimited repositories and exports"
                     : "3 repositories, no exports"}
@@ -206,25 +206,29 @@ function SettingsContent() {
                 )}
               </div>
 
-              {subscription?.plan === "pro" ? (
-                <Button
-                  variant="secondary"
-                  onClick={handleManageBilling}
-                  loading={managingBilling}
-                  disabled={managingBilling}
-                >
-                  {managingBilling ? "Opening..." : "Manage Billing"}
-                </Button>
-              ) : (
-                <Button
-                  variant="accent"
-                  onClick={handleUpgrade}
-                  loading={upgrading}
-                  disabled={upgrading}
-                >
-                  {upgrading ? "Processing..." : "Upgrade to Pro"}
-                </Button>
-              )}
+              <div className="shrink-0">
+                {subscription?.plan === "pro" ? (
+                  <Button
+                    variant="secondary"
+                    onClick={handleManageBilling}
+                    loading={managingBilling}
+                    disabled={managingBilling}
+                    className="w-full sm:w-auto"
+                  >
+                    {managingBilling ? "Opening..." : "Manage Billing"}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="accent"
+                    onClick={handleUpgrade}
+                    loading={upgrading}
+                    disabled={upgrading}
+                    className="w-full sm:w-auto"
+                  >
+                    {upgrading ? "Processing..." : "Upgrade to Pro"}
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Plan Comparison */}

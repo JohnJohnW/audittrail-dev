@@ -19,9 +19,9 @@ const variantStyles = {
 
 const paddingStyles = {
   none: "",
-  sm: "p-4",
-  md: "p-6",
-  lg: "p-8",
+  sm: "p-3 sm:p-4",
+  md: "p-4 sm:p-6",
+  lg: "p-5 sm:p-8",
 };
 
 export function Card({ children, className, variant = "default", padding = "md" }: CardProps) {
@@ -40,9 +40,9 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className, action }: CardHeaderProps) {
   return (
-    <div className={cn("flex items-center justify-between mb-4", className)}>
-      <div>{children}</div>
-      {action && <div>{action}</div>}
+    <div className={cn("flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4", className)}>
+      <div className="min-w-0">{children}</div>
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
@@ -55,7 +55,7 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className, as: Component = "h3" }: CardTitleProps) {
   return (
-    <Component className={cn("text-lg font-semibold text-gray-900", className)}>
+    <Component className={cn("text-base sm:text-lg font-semibold text-gray-900", className)}>
       {children}
     </Component>
   );

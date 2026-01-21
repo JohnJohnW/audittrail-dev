@@ -52,35 +52,33 @@ export function DashboardNav({ user }: DashboardNavProps) {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "sticky top-0 z-50 transition-all duration-300",
+        "sticky top-0 z-50 w-full max-w-full overflow-hidden transition-all duration-300",
         scrolled
           ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200/50"
           : "bg-white border-b border-gray-200"
       )}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="relative w-8 h-8 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-200"
-              >
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 overflow-hidden">
+        <div className="flex items-center justify-between h-14 sm:h-16">
+          <div className="flex items-center min-w-0 shrink-0">
+            <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
+              <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-200 shrink-0">
                 <Image
                   src="/icon.svg"
                   alt="AuditTrail.dev"
                   width={32}
                   height={32}
-                  className="rounded-lg"
+                  className="rounded-lg w-full h-full"
                   priority
                 />
-              </motion.div>
-              <span className="text-base font-semibold text-gray-900">
+              </div>
+              <span className="hidden md:inline text-sm font-semibold text-gray-900 whitespace-nowrap">
                 AuditTrail<span className="text-accent">.dev</span>
               </span>
             </Link>
 
-            <div className="hidden md:flex ml-10 gap-1">
+            {/* Desktop navigation - shows at md: and above */}
+            <div className="hidden md:flex ml-4 lg:ml-8 gap-0.5">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -89,14 +87,14 @@ export function DashboardNav({ user }: DashboardNavProps) {
                     key={item.name}
                     href={item.href}
                     className={cn(
-                      "relative px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2",
+                      "relative px-2 lg:px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap",
                       active
                         ? "text-accent"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/80"
                     )}
                   >
-                    <Icon className={cn("w-4 h-4", active ? "text-accent" : "text-gray-400")} />
-                    {item.name}
+                    <Icon className={cn("w-4 h-4 shrink-0", active ? "text-accent" : "text-gray-400")} />
+                    <span className="hidden lg:inline">{item.name}</span>
                     {active && (
                       <motion.div
                         layoutId="activeTab"
@@ -110,8 +108,8 @@ export function DashboardNav({ user }: DashboardNavProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Mobile menu button */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Mobile menu button - shows below md: */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -180,7 +178,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50 overflow-hidden"
+                      className="absolute right-0 mt-2 w-56 sm:w-60 bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50 overflow-hidden"
                     >
                       <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
                         <p className="text-sm font-semibold text-gray-900 truncate">
@@ -231,8 +229,8 @@ export function DashboardNav({ user }: DashboardNavProps) {
               transition={{ duration: 0.2 }}
               className="md:hidden overflow-hidden"
             >
-              <div className="py-3 border-t border-gray-100">
-                <div className="flex flex-col gap-1">
+              <div className="py-2 sm:py-3 border-t border-gray-100">
+                <div className="flex flex-col gap-0.5">
                   {navigation.map((item) => {
                     const Icon = item.icon;
                     return (
@@ -249,7 +247,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                       >
                         <Icon
                           className={cn(
-                            "w-4 h-4",
+                            "w-4 h-4 shrink-0",
                             isActive(item.href) ? "text-accent" : "text-gray-400"
                           )}
                         />

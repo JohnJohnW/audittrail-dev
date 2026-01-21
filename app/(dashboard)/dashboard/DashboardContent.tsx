@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { StatCard, StatCardGrid } from "@/components/ui/StatCard";
 import { SyncButton } from "@/components/dashboard/SyncButton";
-import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
+import { FadeIn } from "@/components/ui/Motion";
 
 interface Repository {
   id: string;
@@ -51,48 +52,42 @@ export function DashboardContent({
     <div>
       {/* Header */}
       <FadeIn>
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Overview</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Overview</h1>
           <p className="text-sm text-gray-500 mt-1">Your compliance evidence at a glance</p>
         </div>
       </FadeIn>
 
       {/* Stats Grid */}
-      <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StaggerItem>
+      <FadeIn delay={0.1}>
+        <StatCardGrid columns={{ default: 2, lg: 4 }} className="mb-6 sm:mb-8">
           <StatCard
-            title="Repositories"
+            label="Repositories"
             value={repositories.length}
             subtitle="tracked"
             icon={<RepoIcon />}
           />
-        </StaggerItem>
-        <StaggerItem>
           <StatCard
-            title="Commits"
+            label="Commits"
             value={totalCommits.toLocaleString()}
             subtitle="collected"
             icon={<CommitIcon />}
           />
-        </StaggerItem>
-        <StaggerItem>
           <StatCard
-            title="Pull Requests"
+            label="Pull Requests"
             value={totalPRs.toLocaleString()}
             subtitle="with reviews"
             icon={<PRIcon />}
           />
-        </StaggerItem>
-        <StaggerItem>
           <StatCard
-            title="Plan"
+            label="Plan"
             value={subscription?.plan === "pro" ? "Pro" : "Free"}
             subtitle={subscription?.plan === "pro" ? "unlimited exports" : "view only"}
             highlight={subscription?.plan !== "pro"}
             icon={<PlanIcon />}
           />
-        </StaggerItem>
-      </StaggerContainer>
+        </StatCardGrid>
+      </FadeIn>
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -183,45 +178,6 @@ export function DashboardContent({
 }
 
 // Sub-components
-
-function StatCard({
-  title,
-  value,
-  subtitle,
-  highlight = false,
-  icon,
-}: {
-  title: string;
-  value: string | number;
-  subtitle: string;
-  highlight?: boolean;
-  icon: React.ReactNode;
-}) {
-  return (
-    <motion.div
-      whileHover={{ y: -2, boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.1)" }}
-      transition={{ duration: 0.2 }}
-      className={`rounded-xl border p-5 shadow-sm transition-all ${
-        highlight
-          ? "border-accent/30 bg-gradient-to-br from-accent-light/50 to-white"
-          : "border-gray-200 bg-white"
-      }`}
-    >
-      <div className="flex items-start justify-between mb-3">
-        <div
-          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-            highlight ? "bg-accent/10 text-accent" : "bg-gray-100 text-gray-500"
-          }`}
-        >
-          {icon}
-        </div>
-      </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-sm font-medium text-gray-600">{title}</p>
-      <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
-    </motion.div>
-  );
-}
 
 function EmptyGitHubState() {
   return (

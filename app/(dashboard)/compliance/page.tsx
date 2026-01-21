@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
-import { cn } from "@/lib/utils";
+import { chart, chartStyles, progress } from "@/lib/design-tokens";
 
 interface PieLabelProps {
   name?: string;
@@ -29,7 +29,8 @@ interface ComplianceScore {
   byCategory: { category: string; score: number }[];
 }
 
-const COLORS = ["#10b981", "#f59e0b", "#ef4444"];
+// Monochromatic accent palette for consistent, professional look
+const PIE_COLORS = [chart.primary, chart.tertiary];
 
 export default function CompliancePage() {
   const [score, setScore] = useState<ComplianceScore | null>(null);
@@ -85,22 +86,22 @@ export default function CompliancePage() {
     <div>
       {/* Header */}
       <FadeIn>
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Compliance Score</h1>
-          <p className="text-gray-500 mt-1">Overall compliance status and framework breakdown</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Compliance Score</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">Overall compliance status and framework breakdown</p>
         </div>
       </FadeIn>
 
       {/* Overall Score */}
       <FadeIn delay={0.1}>
-        <Card variant="elevated" className="mb-8">
-          <CardContent className="py-10">
+        <Card variant="elevated" className="mb-6 sm:mb-8">
+          <CardContent className="py-6 sm:py-10">
             <div className="text-center">
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="inline-flex items-center justify-center w-36 h-36 rounded-full bg-gradient-to-br from-accent-light to-accent/10 mb-6 shadow-lg shadow-accent/10"
+                className="inline-flex items-center justify-center w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-accent-light to-accent/10 mb-4 sm:mb-6 shadow-lg shadow-accent/10"
               >
                 <motion.span
                   initial={{ opacity: 0 }}
@@ -128,18 +129,11 @@ export default function CompliancePage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={score.byFramework}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis dataKey="framework" tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                    }}
-                  />
-                  <Bar dataKey="score" fill="#F97316" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid {...chartStyles.grid} />
+                  <XAxis dataKey="framework" tick={chartStyles.axis.tick} />
+                  <YAxis tick={chartStyles.axis.tick} />
+                  <Tooltip contentStyle={chartStyles.tooltip.contentStyle} />
+                  <Bar dataKey="score" fill={chart.primary} radius={chartStyles.bar.radius} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -165,22 +159,15 @@ export default function CompliancePage() {
                     }}
                     outerRadius={100}
                     innerRadius={60}
-                    fill="#8884d8"
+                    fill={chart.primary}
                     dataKey="value"
                     strokeWidth={2}
                   >
                     {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                    }}
-                  />
+                  <Tooltip contentStyle={chartStyles.tooltip.contentStyle} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -200,30 +187,33 @@ export default function CompliancePage() {
                 <StaggerItem key={framework.framework}>
                   <motion.div
                     whileHover={{ scale: 1.01 }}
-                    className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 sm:p-5 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100"
                   >
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{framework.framework}</h3>
-                      <p className="text-sm text-gray-500 mt-1">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">{framework.framework}</h3>
+                      <p className="text-sm text-gray-500 mt-0.5 sm:mt-1">
                         {framework.withEvidence} of {framework.total} controls with evidence
                       </p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">{framework.score}%</div>
-                      <div className="w-36 bg-gray-200 rounded-full h-2.5 mt-2 overflow-hidden">
+                    <div className="flex items-center gap-3 sm:gap-4 sm:text-right shrink-0">
+                      <div className="flex-1 sm:flex-none sm:w-24 lg:w-36 bg-gray-200 rounded-full h-2.5 overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${framework.score}%` }}
                           transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
-                          className={cn(
-                            "h-2.5 rounded-full",
-                            framework.score >= 70
-                              ? "bg-green-500"
-                              : framework.score >= 40
-                                ? "bg-yellow-500"
-                                : "bg-red-500"
-                          )}
+                          className="h-2.5 rounded-full"
+                          style={{
+                            backgroundColor:
+                              framework.score >= 70
+                                ? progress.high
+                                : framework.score >= 40
+                                  ? progress.medium
+                                  : progress.low,
+                          }}
                         />
+                      </div>
+                      <div className="text-xl sm:text-2xl font-bold text-accent w-14 text-right">
+                        {framework.score}%
                       </div>
                     </div>
                   </motion.div>

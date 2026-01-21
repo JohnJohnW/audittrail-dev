@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { StatCard, StatCardGrid } from "@/components/ui/StatCard";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
 import { cn } from "@/lib/utils";
 
@@ -123,43 +124,31 @@ export default function EvidencePage() {
     <div>
       {/* Header */}
       <FadeIn>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
               Compliance Evidence
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-sm sm:text-base text-gray-500 mt-1">
               View how your GitHub activity maps to compliance controls
             </p>
           </div>
-          <Button variant="accent" href="/exports">
+          <Button variant="accent" href="/exports" className="w-full sm:w-auto">
             Export Report
           </Button>
         </div>
       </FadeIn>
 
-      {/* Summary Cards */}
-      <StaggerContainer className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <StaggerItem>
-          <SummaryCard
-            value={`${data.summary.score}%`}
-            label="Evidence Coverage"
-            variant="accent"
-          />
-        </StaggerItem>
-        <StaggerItem>
-          <SummaryCard value={data.summary.withEvidence} label="Full Evidence" variant="success" />
-        </StaggerItem>
-        <StaggerItem>
-          <SummaryCard value={data.summary.partial} label="Partial Evidence" variant="warning" />
-        </StaggerItem>
-        <StaggerItem>
-          <SummaryCard value={data.summary.limited || 0} label="Limited" variant="info" />
-        </StaggerItem>
-        <StaggerItem>
-          <SummaryCard value={data.summary.noEvidence} label="Missing Evidence" variant="error" />
-        </StaggerItem>
-      </StaggerContainer>
+      {/* Summary Cards - All using accent color for consistency */}
+      <FadeIn delay={0.1}>
+        <StatCardGrid columns={{ default: 2, sm: 3, lg: 5 }} className="mb-6 sm:mb-8">
+          <StatCard value={`${data.summary.score}%`} label="Evidence Coverage" highlight />
+          <StatCard value={data.summary.withEvidence} label="Full Evidence" />
+          <StatCard value={data.summary.partial} label="Partial Evidence" />
+          <StatCard value={data.summary.limited || 0} label="Limited" />
+          <StatCard value={data.summary.noEvidence} label="Missing Evidence" />
+        </StatCardGrid>
+      </FadeIn>
 
       {/* Search and Filters */}
       <FadeIn delay={0.2}>
@@ -174,10 +163,10 @@ export default function EvidencePage() {
             />
 
             {/* Filter Row */}
-            <div className="flex flex-wrap items-center gap-6">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-4 sm:gap-6">
               {/* Framework Filter */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">Framework:</span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 shrink-0">Framework:</span>
                 <div className="flex flex-wrap gap-2">
                   <FilterButton
                     active={selectedFramework === null}
@@ -198,8 +187,8 @@ export default function EvidencePage() {
               </div>
 
               {/* Status Filter */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">Status:</span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 shrink-0">Status:</span>
                 <div className="flex flex-wrap gap-2">
                   <FilterButton
                     active={selectedStatus === "all"}
@@ -210,28 +199,24 @@ export default function EvidencePage() {
                   <FilterButton
                     active={selectedStatus === "has_evidence"}
                     onClick={() => setSelectedStatus("has_evidence")}
-                    variant="success"
                   >
                     Has Evidence
                   </FilterButton>
                   <FilterButton
                     active={selectedStatus === "partial"}
                     onClick={() => setSelectedStatus("partial")}
-                    variant="warning"
                   >
                     Partial
                   </FilterButton>
                   <FilterButton
                     active={selectedStatus === "limited"}
                     onClick={() => setSelectedStatus("limited")}
-                    variant="info"
                   >
                     Limited
                   </FilterButton>
                   <FilterButton
                     active={selectedStatus === "no_evidence"}
                     onClick={() => setSelectedStatus("no_evidence")}
-                    variant="error"
                   >
                     Missing
                   </FilterButton>
@@ -276,53 +261,15 @@ export default function EvidencePage() {
 
 // Sub-components
 
-function SummaryCard({
-  value,
-  label,
-  variant,
-}: {
-  value: string | number;
-  label: string;
-  variant: "accent" | "success" | "warning" | "info" | "error";
-}) {
-  const colors = {
-    accent: "text-accent",
-    success: "text-green-600",
-    warning: "text-yellow-600",
-    info: "text-blue-600",
-    error: "text-red-600",
-  };
-
-  return (
-    <motion.div
-      whileHover={{ y: -2, boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.1)" }}
-      className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm"
-    >
-      <p className={cn("text-3xl font-bold", colors[variant])}>{value}</p>
-      <p className="text-sm text-gray-600 mt-1">{label}</p>
-    </motion.div>
-  );
-}
-
 function FilterButton({
   children,
   active,
   onClick,
-  variant,
 }: {
   children: React.ReactNode;
   active: boolean;
   onClick: () => void;
-  variant?: "success" | "warning" | "info" | "error";
 }) {
-  const activeColors = {
-    default: "bg-gray-900 text-white",
-    success: "bg-green-100 text-green-700",
-    warning: "bg-yellow-100 text-yellow-700",
-    info: "bg-blue-100 text-blue-700",
-    error: "bg-red-100 text-red-700",
-  };
-
   return (
     <motion.button
       whileHover={{ scale: 1.02 }}
@@ -331,9 +278,7 @@ function FilterButton({
       className={cn(
         "px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200",
         active
-          ? variant
-            ? activeColors[variant]
-            : activeColors.default
+          ? "bg-accent text-white"
           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
       )}
     >
