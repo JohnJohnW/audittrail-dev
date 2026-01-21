@@ -19,11 +19,25 @@ export async function GET() {
     const evidence = await getComplianceEvidence(orgId);
     const summary = getEvidenceSummary(evidence.controls);
 
-    // Calculate scores by framework
+    // Pre-group controls by framework for O(n) instead of O(n*m) filtering
+    const controlsByFramework = new Map<string, typeof evidence.controls>();
+    for (const control of evidence.controls) {
+      const existing = controlsByFramework.get(control.frameworkName) || [];
+      existing.push(control);
+      controlsByFramework.set(control.frameworkName, existing);
+    }
+
+    // Pre-group controls by evidence type for O(n) instead of O(n*m) filtering
+    const controlsByCategory = new Map<string, typeof evidence.controls>();
+    for (const control of evidence.controls) {
+      const existing = controlsByCategory.get(control.evidenceType) || [];
+      existing.push(control);
+      controlsByCategory.set(control.evidenceType, existing);
+    }
+
+    // Calculate scores by framework using pre-grouped data
     const byFramework = evidence.frameworks.map((framework) => {
-      const frameworkControls = evidence.controls.filter(
-        (c) => c.frameworkName === framework.name
-      );
+      const frameworkControls = controlsByFramework.get(framework.name) || [];
       const frameworkSummary = getEvidenceSummary(frameworkControls);
       return {
         framework: framework.name,
@@ -33,15 +47,10 @@ export async function GET() {
       };
     });
 
-    // Group by evidence type (category)
-    const byCategory = [
-      "commit_history",
-      "pr_approvals",
-      "branch_protection",
-    ].map((category) => {
-      const categoryControls = evidence.controls.filter(
-        (c) => c.evidenceType === category
-      );
+    // Calculate scores by category using pre-grouped data
+    const categories = ["commit_history", "pr_approvals", "branch_protection"];
+    const byCategory = categories.map((category) => {
+      const categoryControls = controlsByCategory.get(category) || [];
       const categorySummary = getEvidenceSummary(categoryControls);
       return {
         category: category.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase()),

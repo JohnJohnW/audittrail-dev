@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { subDays, startOfDay } from "date-fns";
 import { handleApiError } from "@/lib/error-handler";
+import { clamp } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +18,17 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const days = parseInt(searchParams.get("days") || "30", 10);
+    const daysParam = searchParams.get("days");
+    
+    // Validate and clamp days parameter (1-365)
+    let days = 30; // default
+    if (daysParam !== null) {
+      const parsed = parseInt(daysParam, 10);
+      if (isNaN(parsed)) {
+        return NextResponse.json({ error: "days must be a number" }, { status: 400 });
+      }
+      days = clamp(parsed, 1, 365);
+    }
 
     const startDate = startOfDay(subDays(new Date(), days));
     const dates: string[] = [];
@@ -53,38 +64,53 @@ export async function GET(request: NextRequest) {
       snapshots.map((s) => [s.snapshotDate.toISOString().split("T")[0], s])
     );
 
-    // Aggregate data by date
+    // Batch query: Get all commits grouped by date using raw SQL for efficiency
+    const commitsByDate = await db.$queryRaw<Array<{ date: string; count: bigint }>>`
+      SELECT DATE(committed_at) as date, COUNT(*)::bigint as count
+      FROM commits
+      WHERE repo_id = ANY(${repoIds})
+        AND committed_at >= ${startDate}
+      GROUP BY DATE(committed_at)
+      ORDER BY date
+    `;
+    
+    // Batch query: Get all PRs grouped by date
+    const prsByDate = await db.$queryRaw<Array<{ date: string; count: bigint }>>`
+      SELECT DATE(merged_at) as date, COUNT(*)::bigint as count
+      FROM pull_requests
+      WHERE repo_id = ANY(${repoIds})
+        AND merged_at >= ${startDate}
+        AND merged_at IS NOT NULL
+      GROUP BY DATE(merged_at)
+      ORDER BY date
+    `;
+
+    // Convert to Maps for O(1) lookup
+    const commitsMap = new Map(
+      commitsByDate.map((r) => [r.date.toString().split("T")[0], Number(r.count)])
+    );
+    const prsMap = new Map(
+      prsByDate.map((r) => [r.date.toString().split("T")[0], Number(r.count)])
+    );
+
+    // Get total cumulative counts for fallback calculation (single query each)
+    const totalCommits = repoIds.length > 0 ? await db.commit.count({
+      where: { repoId: { in: repoIds } },
+    }) : 0;
+    const totalPRs = repoIds.length > 0 ? await db.pullRequest.count({
+      where: { repoId: { in: repoIds }, mergedAt: { not: null } },
+    }) : 0;
+
+    // Aggregate data by date using pre-fetched data
     for (const dateStr of dates) {
       const date = new Date(dateStr);
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
       const dateKey = date.toISOString().split("T")[0];
 
-      // Commits for this day
-      const dayCommits = await db.commit.count({
-        where: {
-          repoId: { in: repoIds },
-          committedAt: {
-            gte: date,
-            lt: nextDate,
-          },
-        },
-      });
-      commits.push(dayCommits);
+      // Get from maps (O(1) lookup instead of N queries)
+      commits.push(commitsMap.get(dateKey) || 0);
+      pullRequests.push(prsMap.get(dateKey) || 0);
 
-      // Pull requests merged on this day
-      const dayPRs = await db.pullRequest.count({
-        where: {
-          repoId: { in: repoIds },
-          mergedAt: {
-            gte: date,
-            lt: nextDate,
-          },
-        },
-      });
-      pullRequests.push(dayPRs);
-
-      // Use stored snapshot if available, otherwise calculate
+      // Use stored snapshot if available, otherwise use fallback
       const snapshot = snapshotMap.get(dateKey);
       if (snapshot) {
         complianceScores.push(snapshot.overallScore);
@@ -92,27 +118,10 @@ export async function GET(request: NextRequest) {
           snapshot.withEvidence + snapshot.partial + snapshot.limited
         );
       } else {
-        // Fallback: estimate based on cumulative activity
-        const allCommits = await db.commit.count({
-          where: {
-            repoId: { in: repoIds },
-            committedAt: { lte: nextDate },
-          },
-        });
-        const allPRs = await db.pullRequest.count({
-          where: {
-            repoId: { in: repoIds },
-            mergedAt: { lte: nextDate },
-          },
-        });
-
-        // Simplified compliance score (based on activity) - used as fallback
-        const activityScore = Math.min(
-          100,
-          Math.round((allCommits + allPRs * 2) / 10)
-        );
+        // Fallback: simple estimate based on total activity
+        const activityScore = Math.min(100, Math.round((totalCommits + totalPRs * 2) / 10));
         complianceScores.push(activityScore);
-        evidenceCounts.push(allCommits + allPRs);
+        evidenceCounts.push(totalCommits + totalPRs);
       }
     }
 

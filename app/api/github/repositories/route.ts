@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getGitHubClientForOrg } from "@/lib/github";
+import { handleApiError } from "@/lib/error-handler";
 
 export async function GET() {
   try {

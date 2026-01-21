@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { ExportPDF } from "@/lib/pdf";
+import { isValidCuid, isValidDateString } from "@/lib/utils";
 
 // Helper to escape CSV values
 function escapeCSV(value: string): string {
@@ -59,8 +60,41 @@ export async function POST(request: NextRequest) {
       repositoryIds?: string[];
     };
 
+    // Validate format
     if (!format || !["pdf", "csv"].includes(format)) {
       return NextResponse.json({ error: "Invalid format" }, { status: 400 });
+    }
+
+    // Validate frameworkId if provided
+    if (frameworkId && !isValidCuid(frameworkId)) {
+      return NextResponse.json({ error: "Invalid frameworkId format" }, { status: 400 });
+    }
+
+    // Validate date strings if provided
+    if (dateFrom && !isValidDateString(dateFrom)) {
+      return NextResponse.json({ error: "Invalid dateFrom format" }, { status: 400 });
+    }
+    if (dateTo && !isValidDateString(dateTo)) {
+      return NextResponse.json({ error: "Invalid dateTo format" }, { status: 400 });
+    }
+
+    // Validate date range logic
+    if (dateFrom && dateTo) {
+      const fromDate = new Date(dateFrom);
+      const toDate = new Date(dateTo);
+      if (fromDate > toDate) {
+        return NextResponse.json({ error: "dateFrom must be before dateTo" }, { status: 400 });
+      }
+    }
+
+    // Validate repositoryIds if provided
+    if (repositoryIds) {
+      if (!Array.isArray(repositoryIds)) {
+        return NextResponse.json({ error: "repositoryIds must be an array" }, { status: 400 });
+      }
+      if (repositoryIds.some((id) => typeof id !== "string" || !isValidCuid(id))) {
+        return NextResponse.json({ error: "Invalid repositoryId format in array" }, { status: 400 });
+      }
     }
 
     // Get organization

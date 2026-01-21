@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { handleApiError } from "@/lib/error-handler";
 
 export async function GET() {
   try {
@@ -45,10 +46,6 @@ export async function GET() {
           },
     });
   } catch (error) {
-    console.error("Error fetching settings:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch settings" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

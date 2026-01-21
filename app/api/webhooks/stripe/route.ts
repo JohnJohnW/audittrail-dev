@@ -3,9 +3,18 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
+import { isValidCuid } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
-  const body = await request.text();
+  // Safely read request body
+  let body: string;
+  try {
+    body = await request.text();
+  } catch (error) {
+    console.error("Failed to read request body:", error);
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
   const headersList = await headers();
   const signature = headersList.get("stripe-signature");
 
@@ -13,25 +22,37 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
+  // Validate webhook secret exists
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error("STRIPE_WEBHOOK_SECRET not configured");
+    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+  }
+
   let event: Stripe.Event;
   const stripe = getStripe();
 
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
     console.error("Webhook signature verification failed:", error);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  // Helper to validate orgId from metadata
+  const validateOrgId = (orgId: string | undefined): string | null => {
+    if (!orgId || !isValidCuid(orgId)) {
+      if (orgId) console.warn(`Invalid orgId format in webhook metadata: ${orgId}`);
+      return null;
+    }
+    return orgId;
+  };
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const orgId = session.metadata?.orgId;
+        const orgId = validateOrgId(session.metadata?.orgId);
 
         if (orgId && session.subscription && session.customer) {
           await db.subscription.update({
@@ -49,7 +70,7 @@ export async function POST(request: NextRequest) {
 
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
-        const orgId = subscription.metadata?.orgId;
+        const orgId = validateOrgId(subscription.metadata?.orgId);
 
         if (orgId) {
           await db.subscription.update({
@@ -67,7 +88,7 @@ export async function POST(request: NextRequest) {
 
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
-        const orgId = subscription.metadata?.orgId;
+        const orgId = validateOrgId(subscription.metadata?.orgId);
 
         if (orgId) {
           await db.subscription.update({
@@ -87,16 +108,20 @@ export async function POST(request: NextRequest) {
         const subscriptionId = invoice.subscription as string;
 
         if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          const orgId = subscription.metadata?.orgId;
+          try {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            const orgId = validateOrgId(subscription.metadata?.orgId);
 
-          if (orgId) {
-            await db.subscription.update({
-              where: { orgId },
-              data: {
-                status: "past_due",
-              },
-            });
+            if (orgId) {
+              await db.subscription.update({
+                where: { orgId },
+                data: {
+                  status: "past_due",
+                },
+              });
+            }
+          } catch (retrieveError) {
+            console.error("Failed to retrieve subscription:", retrieveError);
           }
         }
         break;

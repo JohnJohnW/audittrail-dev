@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getGitHubClientForOrg, GitHubClient } from "@/lib/github";
+import { isValidCuid } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +25,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { repositoryId } = body;
+
+    // Validate repositoryId format if provided
+    if (repositoryId && !isValidCuid(repositoryId)) {
+      return NextResponse.json({ error: "Invalid repositoryId format" }, { status: 400 });
+    }
 
     const client = await getGitHubClientForOrg(orgId);
     if (!client) {
@@ -122,6 +128,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Chunk array into smaller arrays for batch processing
+function chunk<T>(arr: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size)
+  );
+}
+
 async function syncCommits(
   client: GitHubClient,
   repoId: string,
@@ -132,39 +145,50 @@ async function syncCommits(
   let page = 1;
   let count = 0;
   const maxPages = 10; // Limit to prevent excessive API calls
+  const BATCH_SIZE = 25; // Process commits in parallel batches
 
   while (page <= maxPages) {
     const commits = await client.getCommits(owner, repoName, since, page);
     if (commits.length === 0) break;
 
-    for (const commit of commits) {
-      try {
-        await db.commit.upsert({
-          where: {
-            repoId_sha: {
+    // Process commits in batches using Promise.all for parallelization
+    const batches = chunk(commits, BATCH_SIZE);
+    for (const batch of batches) {
+      const results = await Promise.allSettled(
+        batch.map((commit) =>
+          db.commit.upsert({
+            where: {
+              repoId_sha: {
+                repoId,
+                sha: commit.sha,
+              },
+            },
+            update: {
+              verified: commit.commit.verification?.verified || false,
+              verificationReason: commit.commit.verification?.reason || null,
+            },
+            create: {
               repoId,
               sha: commit.sha,
+              message: commit.commit.message.slice(0, 5000), // Limit message length
+              authorName: commit.commit.author.name,
+              authorEmail: commit.commit.author.email,
+              committedAt: new Date(commit.commit.author.date),
+              url: commit.html_url,
+              verified: commit.commit.verification?.verified || false,
+              verificationReason: commit.commit.verification?.reason || null,
             },
-          },
-          update: {
-            verified: commit.commit.verification?.verified || false,
-            verificationReason: commit.commit.verification?.reason || null,
-          },
-          create: {
-            repoId,
-            sha: commit.sha,
-            message: commit.commit.message.slice(0, 5000), // Limit message length
-            authorName: commit.commit.author.name,
-            authorEmail: commit.commit.author.email,
-            committedAt: new Date(commit.commit.author.date),
-            url: commit.html_url,
-            verified: commit.commit.verification?.verified || false,
-            verificationReason: commit.commit.verification?.reason || null,
-          },
-        });
-        count++;
-      } catch (error) {
-        console.error(`Error upserting commit ${commit.sha}:`, error);
+          })
+        )
+      );
+
+      // Count successes and log failures
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].status === "fulfilled") {
+          count++;
+        } else {
+          console.error(`Error upserting commit ${batch[i].sha}:`, (results[i] as PromiseRejectedResult).reason);
+        }
       }
     }
 
@@ -185,6 +209,7 @@ async function syncPullRequests(
   let count = 0;
   let reviewCount = 0;
   const maxPages = 5;
+  const REVIEW_LIMIT = 20; // Limit reviews per PR to prevent unbounded fetches
 
   while (page <= maxPages) {
     const prs = await client.getPullRequests(owner, repoName, "all", page);
@@ -223,12 +248,14 @@ async function syncPullRequests(
         });
         count++;
 
-        // Sync reviews for merged PRs
+        // Sync reviews for merged PRs - batch process with Promise.allSettled
         if (pr.merged_at) {
           const reviews = await client.getReviews(owner, repoName, pr.number);
-          for (const review of reviews) {
-            try {
-              await db.review.upsert({
+          const limitedReviews = reviews.slice(0, REVIEW_LIMIT);
+          
+          const reviewResults = await Promise.allSettled(
+            limitedReviews.map((review) =>
+              db.review.upsert({
                 where: {
                   prId_githubReviewId: {
                     prId: dbPr.id,
@@ -244,12 +271,11 @@ async function syncPullRequests(
                   body: review.body?.slice(0, 5000) || null,
                   submittedAt: new Date(review.submitted_at),
                 },
-              });
-              reviewCount++;
-            } catch (error) {
-              console.error(`Error upserting review:`, error);
-            }
-          }
+              })
+            )
+          );
+          
+          reviewCount += reviewResults.filter((r) => r.status === "fulfilled").length;
         }
       } catch (error) {
         console.error(`Error upserting PR ${pr.number}:`, error);

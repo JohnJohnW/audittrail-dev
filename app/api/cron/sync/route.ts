@@ -154,6 +154,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Chunk array into smaller arrays for batch processing
+function chunk<T>(arr: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size)
+  );
+}
+
 // Simplified sync functions for cron (fewer pages to avoid timeouts)
 async function syncCommitsForCron(
   client: GitHubClient,
@@ -163,36 +170,39 @@ async function syncCommitsForCron(
   since: Date
 ) {
   const maxPages = 3; // Limit pages for cron
+  const BATCH_SIZE = 25;
 
   for (let page = 1; page <= maxPages; page++) {
     const commits = await client.getCommits(owner, repoName, since, page);
     if (commits.length === 0) break;
 
-    for (const commit of commits) {
-      try {
-        await db.commit.upsert({
-          where: {
-            repoId_sha: { repoId, sha: commit.sha },
-          },
-          update: {
-            verified: commit.commit.verification?.verified || false,
-            verificationReason: commit.commit.verification?.reason || null,
-          },
-          create: {
-            repoId,
-            sha: commit.sha,
-            message: commit.commit.message.slice(0, 5000),
-            authorName: commit.commit.author.name,
-            authorEmail: commit.commit.author.email,
-            committedAt: new Date(commit.commit.author.date),
-            url: commit.html_url,
-            verified: commit.commit.verification?.verified || false,
-            verificationReason: commit.commit.verification?.reason || null,
-          },
-        });
-      } catch (error) {
-        // Skip individual commit errors
-      }
+    // Process in batches using Promise.allSettled
+    const batches = chunk(commits, BATCH_SIZE);
+    for (const batch of batches) {
+      await Promise.allSettled(
+        batch.map((commit) =>
+          db.commit.upsert({
+            where: {
+              repoId_sha: { repoId, sha: commit.sha },
+            },
+            update: {
+              verified: commit.commit.verification?.verified || false,
+              verificationReason: commit.commit.verification?.reason || null,
+            },
+            create: {
+              repoId,
+              sha: commit.sha,
+              message: commit.commit.message.slice(0, 5000),
+              authorName: commit.commit.author.name,
+              authorEmail: commit.commit.author.email,
+              committedAt: new Date(commit.commit.author.date),
+              url: commit.html_url,
+              verified: commit.commit.verification?.verified || false,
+              verificationReason: commit.commit.verification?.reason || null,
+            },
+          })
+        )
+      );
     }
 
     if (commits.length < 100) break;
@@ -206,6 +216,7 @@ async function syncPRsForCron(
   repoName: string
 ) {
   const maxPages = 2; // Limit for cron
+  const REVIEW_LIMIT = 10;
 
   for (let page = 1; page <= maxPages; page++) {
     const prs = await client.getPullRequests(owner, repoName, "all", page);
@@ -238,12 +249,12 @@ async function syncPRsForCron(
           },
         });
 
-        // Sync reviews for merged PRs only
+        // Sync reviews for merged PRs only - batch with Promise.allSettled
         if (pr.merged_at) {
           const reviews = await client.getReviews(owner, repoName, pr.number);
-          for (const review of reviews.slice(0, 10)) {
-            try {
-              await db.review.upsert({
+          await Promise.allSettled(
+            reviews.slice(0, REVIEW_LIMIT).map((review) =>
+              db.review.upsert({
                 where: {
                   prId_githubReviewId: {
                     prId: dbPr.id,
@@ -259,11 +270,9 @@ async function syncPRsForCron(
                   body: review.body?.slice(0, 5000) || null,
                   submittedAt: new Date(review.submitted_at),
                 },
-              });
-            } catch (error) {
-              // Skip individual review errors
-            }
-          }
+              })
+            )
+          );
         }
       } catch (error) {
         // Skip individual PR errors

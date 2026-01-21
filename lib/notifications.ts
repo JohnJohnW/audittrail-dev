@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { db } from "./db";
+import { escapeHtml } from "./utils";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -39,11 +40,11 @@ export async function sendSyncFailureNotification(
   await resend.emails.send({
     from: process.env.EMAIL_FROM || "AuditTrail <noreply@audittrail.dev>",
     to: user.email,
-    subject: `Sync Failed: ${repositoryName}`,
+    subject: `Sync Failed: ${escapeHtml(repositoryName)}`,
     html: `
       <h2>Repository Sync Failed</h2>
-      <p>We encountered an error while syncing your repository <strong>${repositoryName}</strong> for organization <strong>${org?.name}</strong>.</p>
-      <p><strong>Error:</strong> ${error}</p>
+      <p>We encountered an error while syncing your repository <strong>${escapeHtml(repositoryName)}</strong> for organization <strong>${escapeHtml(org?.name || "Unknown")}</strong>.</p>
+      <p><strong>Error:</strong> ${escapeHtml(error)}</p>
       <p>Please check your repository settings and try syncing again.</p>
       <p><a href="${process.env.NEXTAUTH_URL}/repositories">View Repositories</a></p>
     `,
@@ -65,11 +66,11 @@ export async function sendExportReadyNotification(
   await resend.emails.send({
     from: process.env.EMAIL_FROM || "AuditTrail <noreply@audittrail.dev>",
     to: user.email,
-    subject: `Export Ready: ${fileName}`,
+    subject: `Export Ready: ${escapeHtml(fileName)}`,
     html: `
       <h2>Your Export is Ready</h2>
-      <p>Your compliance evidence export <strong>${fileName}</strong> has been generated successfully.</p>
-      <p><a href="${downloadUrl}">Download Export</a></p>
+      <p>Your compliance evidence export <strong>${escapeHtml(fileName)}</strong> has been generated successfully.</p>
+      <p><a href="${escapeHtml(downloadUrl)}">Download Export</a></p>
       <p>This link will expire in 7 days.</p>
     `,
   });
@@ -96,15 +97,15 @@ export async function sendWeeklyDigest(
   await resend.emails.send({
     from: process.env.EMAIL_FROM || "AuditTrail <noreply@audittrail.dev>",
     to: user.email,
-    subject: `Weekly Compliance Digest - ${org?.name}`,
+    subject: `Weekly Compliance Digest - ${escapeHtml(org?.name || "Organization")}`,
     html: `
       <h2>Weekly Compliance Summary</h2>
       <p>Here's your compliance activity for the past week:</p>
       <ul>
-        <li><strong>Repositories Synced:</strong> ${summary.repositoriesSynced}</li>
-        <li><strong>New Commits:</strong> ${summary.newCommits}</li>
-        <li><strong>New Pull Requests:</strong> ${summary.newPRs}</li>
-        <li><strong>Compliance Score:</strong> ${summary.complianceScore}%</li>
+        <li><strong>Repositories Synced:</strong> ${Number(summary.repositoriesSynced)}</li>
+        <li><strong>New Commits:</strong> ${Number(summary.newCommits)}</li>
+        <li><strong>New Pull Requests:</strong> ${Number(summary.newPRs)}</li>
+        <li><strong>Compliance Score:</strong> ${Number(summary.complianceScore)}%</li>
       </ul>
       <p><a href="${process.env.NEXTAUTH_URL}/dashboard">View Dashboard</a></p>
     `,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
+import { handleApiError } from "@/lib/error-handler";
 
 export async function GET() {
   try {
@@ -23,10 +24,6 @@ export async function GET() {
       summary,
     });
   } catch (error) {
-    console.error("Error fetching evidence:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch evidence" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

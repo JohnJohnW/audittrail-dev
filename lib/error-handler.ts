@@ -1,23 +1,26 @@
 import { NextResponse } from "next/server";
 import { logger } from "./logger";
 
+// Check if running in production
+const isProduction = process.env.NODE_ENV === "production";
+
 export interface ApiError {
   message: string;
   statusCode: number;
   code?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export class AppError extends Error {
   statusCode: number;
   code?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 
   constructor(
     message: string,
     statusCode: number = 500,
     code?: string,
-    details?: any
+    details?: Record<string, unknown>
   ) {
     super(message);
     this.name = "AppError";
@@ -29,14 +32,19 @@ export class AppError extends Error {
 }
 
 export function handleApiError(error: unknown): NextResponse {
-  // Generate request ID for tracking
-  const requestId = crypto.randomUUID();
+  // Generate request ID for tracking - use fallback if crypto not available
+  let requestId: string;
+  try {
+    requestId = crypto.randomUUID();
+  } catch {
+    requestId = `err-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+  }
 
   if (error instanceof AppError) {
     logger.error(
       `API Error [${error.statusCode}]: ${error.message}`,
       error,
-      { requestId, code: error.code, details: error.details }
+      { requestId, code: error.code }
     );
 
     return NextResponse.json(
@@ -44,23 +52,23 @@ export function handleApiError(error: unknown): NextResponse {
         error: error.message,
         code: error.code,
         requestId,
-        ...(process.env.NODE_ENV === "development" && { details: error.details }),
+        // Only include details in development, never in production
+        ...(!isProduction && error.details && { details: error.details }),
       },
       { status: error.statusCode }
     );
   }
 
   if (error instanceof Error) {
+    // Log full error internally but don't expose to client in production
     logger.error(`Unexpected error: ${error.message}`, error, { requestId });
 
     return NextResponse.json(
       {
         error: "An unexpected error occurred",
         requestId,
-        ...(process.env.NODE_ENV === "development" && {
-          message: error.message,
-          stack: error.stack,
-        }),
+        // In development only, include error message (but never stack traces in response)
+        ...(!isProduction && { message: error.message }),
       },
       { status: 500 }
     );
