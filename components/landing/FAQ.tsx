@@ -18,7 +18,12 @@ const faqs = [
   {
     question: "Which compliance controls can you evidence?",
     answer:
-      "We map to change management, access control, and audit trail controls. For ISO 27001, that includes A.8.32 (Change Management) and A.5.18 (Access Rights). For Essential Eight, we cover application control and administrative privilege restrictions. Full control mappings are available in the dashboard.",
+      "We map to change management, access control, and audit trail controls. For ISO 27001, that includes A.8.32 (Change Management), A.8.4 (Access to Source Code), and secure development lifecycle controls. For ACSC Essential Eight, we cover application control, patching, and administrative privilege restrictions. Full control mappings are available in the dashboard.",
+  },
+  {
+    question: "Why only Australian frameworks?",
+    answer:
+      "We've built AuditTrail specifically for Australian businesses. ISO 27001 is the most common information security standard here, and Essential Eight is mandated by the ACSC for government suppliers. By focusing on these frameworks, we provide deeper, more accurate control mappings.",
   },
   {
     question: "Will auditors accept these reports?",
@@ -33,12 +38,12 @@ const faqs = [
   {
     question: "Can I use this for my certification audit?",
     answer:
-      "Yes. AuditTrail generates evidence that supports certification audits for ISO 27001 and Essential Eight. However, we're one part of your compliance program—you'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
+      "Yes. AuditTrail generates evidence that supports certification audits for ISO 27001 and Essential Eight assessments. However, we're one part of your compliance program—you'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
   },
   {
     question: "Do you offer enterprise plans?",
     answer:
-      "Yes. Enterprise includes SSO, custom framework mappings, dedicated support, and SLAs. Contact us at hello@audittrail.dev to discuss your requirements.",
+      "Yes. Enterprise includes SSO, custom framework mappings (including IRAP), dedicated support, and SLAs. Contact us at hello@audittrail.dev to discuss your requirements.",
   },
 ];
 

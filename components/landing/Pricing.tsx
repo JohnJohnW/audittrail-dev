@@ -32,7 +32,7 @@ export function Pricing() {
                 "Up to 3 repositories",
                 "GitHub integration",
                 "View compliance evidence",
-                "All frameworks supported",
+                "ISO 27001 & Essential Eight",
                 "Email support",
               ].map((feature, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
@@ -75,7 +75,7 @@ export function Pricing() {
             <ul className="space-y-3 mb-6">
               {[
                 "Unlimited repositories",
-                "All compliance frameworks",
+                "ISO 27001 & Essential Eight",
                 "Unlimited PDF exports",
                 "Unlimited CSV exports",
                 "Priority support",

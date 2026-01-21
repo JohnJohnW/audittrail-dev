@@ -18,9 +18,10 @@ interface ControlEvidence {
   controlDescription: string | null;
   frameworkName: string;
   evidenceType: string;
-  status: "has_evidence" | "partial" | "no_evidence";
+  status: "has_evidence" | "partial" | "no_evidence" | "limited";
   evidenceCount: number;
   evidence: EvidenceItem[];
+  note?: string;
 }
 
 interface EvidenceData {
@@ -30,6 +31,7 @@ interface EvidenceData {
     total: number;
     withEvidence: number;
     partial: number;
+    limited: number;
     noEvidence: number;
     score: number;
   };
@@ -95,18 +97,22 @@ export default function EvidencePage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <p className="text-3xl font-bold text-gray-900">{data.summary.score}%</p>
           <p className="text-sm text-gray-600">Evidence Coverage</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <p className="text-3xl font-bold text-green-600">{data.summary.withEvidence}</p>
-          <p className="text-sm text-gray-600">Controls with Evidence</p>
+          <p className="text-sm text-gray-600">Full Evidence</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <p className="text-3xl font-bold text-yellow-600">{data.summary.partial}</p>
           <p className="text-sm text-gray-600">Partial Evidence</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <p className="text-3xl font-bold text-blue-600">{data.summary.limited || 0}</p>
+          <p className="text-sm text-gray-600">Limited (Needs Supplement)</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <p className="text-3xl font-bold text-red-600">{data.summary.noEvidence}</p>
@@ -193,9 +199,17 @@ export default function EvidencePage() {
               {expandedControl === control.controlId && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   {control.controlDescription && (
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">
                       {control.controlDescription}
                     </p>
+                  )}
+
+                  {control.note && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-blue-800">
+                        <span className="font-medium">Note:</span> {control.note}
+                      </p>
+                    </div>
                   )}
 
                   {control.evidence.length === 0 ? (
@@ -261,16 +275,18 @@ export default function EvidencePage() {
   );
 }
 
-function StatusBadge({ status }: { status: "has_evidence" | "partial" | "no_evidence" }) {
+function StatusBadge({ status }: { status: "has_evidence" | "partial" | "no_evidence" | "limited" }) {
   const styles = {
     has_evidence: "bg-green-50 text-green-700",
     partial: "bg-yellow-50 text-yellow-700",
+    limited: "bg-blue-50 text-blue-700",
     no_evidence: "bg-red-50 text-red-700",
   };
 
   const labels = {
     has_evidence: "Has Evidence",
     partial: "Partial",
+    limited: "Limited",
     no_evidence: "Missing",
   };
 

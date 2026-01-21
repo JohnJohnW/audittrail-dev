@@ -12,7 +12,7 @@ export function Hero() {
       <div className="max-w-3xl mx-auto text-center relative">
         <FadeInOnLoad delay={0}>
           <p className="text-sm text-gray-500 mb-4">
-            For ISO 27001 & Essential Eight
+            ISO 27001 & Essential Eight for Australian businesses
           </p>
         </FadeInOnLoad>
         

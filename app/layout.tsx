@@ -9,9 +9,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AuditTrail.dev - GitHub Activity to Compliance Evidence",
+  title: "AuditTrail.dev - GitHub to Compliance Evidence for Australian Businesses",
   description:
-    "Turn GitHub activity into audit-ready compliance evidence automatically. ISO 27001, Essential Eight, and more.",
+    "Turn GitHub activity into audit-ready compliance evidence for ISO 27001 and Essential Eight. Built for Australian businesses.",
   keywords: [
     "compliance",
     "audit",
@@ -20,18 +20,23 @@ export const metadata: Metadata = {
     "GitHub",
     "security",
     "GRC",
+    "Australia",
+    "ACSC",
   ],
+  icons: {
+    icon: "/icon.svg",
+  },
   openGraph: {
-    title: "AuditTrail.dev - GitHub Activity to Compliance Evidence",
+    title: "AuditTrail.dev - GitHub to Compliance Evidence for Australian Businesses",
     description:
-      "Turn GitHub activity into audit-ready compliance evidence automatically.",
+      "Turn GitHub activity into audit-ready compliance evidence for ISO 27001 and Essential Eight.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "AuditTrail.dev",
     description:
-      "Turn GitHub activity into audit-ready compliance evidence automatically.",
+      "Turn GitHub activity into audit-ready compliance evidence for ISO 27001 and Essential Eight.",
   },
 };
 
