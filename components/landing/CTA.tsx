@@ -1,9 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { FadeIn } from "@/components/ui/FadeIn";
 
 export function CTA() {
   return (
-    <section className="py-20 px-6 border-t border-gray-100">
-      <div className="max-w-2xl mx-auto text-center">
+    <section className="py-20 px-6 relative overflow-hidden">
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-accent-light/50 via-white to-gray-50 pointer-events-none" />
+      
+      <FadeIn direction="up" className="max-w-2xl mx-auto text-center relative">
         <h2 className="text-2xl font-semibold text-gray-900 mb-3">
           Stop screenshotting GitHub for auditors
         </h2>
@@ -14,18 +20,18 @@ export function CTA() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/auth/signin"
-            className="bg-gray-900 text-white px-5 py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors rounded-md"
+            className="bg-accent text-white px-6 py-2.5 text-sm font-medium hover:bg-accent-hover hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/20 transition-all duration-200 rounded-md"
           >
             Get started free
           </Link>
           <a
             href="mailto:hello@audittrail.dev"
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            className="text-sm text-gray-500 hover:text-accent transition-colors"
           >
             Questions? Email us
           </a>
         </div>
-      </div>
+      </FadeIn>
     </section>
   );
 }

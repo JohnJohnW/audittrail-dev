@@ -1,21 +1,24 @@
+"use client";
+
 import Link from "next/link";
+import { FadeIn, StaggerChildren } from "@/components/ui/FadeIn";
 
 export function Pricing() {
   return (
     <section id="pricing" className="py-20 bg-gray-50 px-6">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
+        <FadeIn direction="up" className="text-center mb-12">
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">
             Pricing
           </p>
           <h2 className="text-2xl font-semibold text-gray-900">
             Start free, upgrade when you need exports
           </h2>
-        </div>
+        </FadeIn>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <StaggerChildren className="grid md:grid-cols-2 gap-6" staggerDelay={0.15}>
           {/* Free Plan */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-300">
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-900 mb-1">Free</h3>
               <div className="flex items-baseline gap-1">
@@ -33,7 +36,7 @@ export function Pricing() {
                 "Email support",
               ].map((feature, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
-                  <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   {feature}
@@ -49,15 +52,15 @@ export function Pricing() {
 
             <Link
               href="/auth/signin"
-              className="block w-full text-center px-4 py-2.5 text-sm font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+              className="block w-full text-center px-4 py-2.5 text-sm font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
             >
               Get started
             </Link>
           </div>
 
           {/* Pro Plan */}
-          <div className="bg-white border border-gray-900 rounded-lg p-6 relative">
-            <div className="absolute -top-3 left-4 px-2 py-0.5 bg-gray-900 text-white text-xs font-medium rounded">
+          <div className="bg-white border-2 border-accent rounded-lg p-6 relative hover:shadow-lg hover:shadow-accent/10 transition-all duration-300">
+            <div className="absolute -top-3 left-4 px-3 py-0.5 bg-accent text-white text-xs font-medium rounded-full">
               Popular
             </div>
             
@@ -79,7 +82,7 @@ export function Pricing() {
                 "Export history & audit log",
               ].map((feature, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
-                  <svg className="w-4 h-4 text-gray-900 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   {feature}
@@ -89,19 +92,21 @@ export function Pricing() {
 
             <Link
               href="/auth/signin"
-              className="block w-full text-center px-4 py-2.5 text-sm font-medium bg-gray-900 rounded-md text-white hover:bg-gray-800 transition-colors"
+              className="block w-full text-center px-4 py-2.5 text-sm font-medium bg-accent rounded-md text-white hover:bg-accent-hover hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/20 transition-all duration-200"
             >
               Start Pro trial
             </Link>
           </div>
-        </div>
+        </StaggerChildren>
 
-        <p className="text-center text-sm text-gray-500 mt-8">
-          Need enterprise features?{" "}
-          <a href="mailto:hello@audittrail.dev" className="text-gray-900 hover:underline">
-            Let&apos;s talk
-          </a>
-        </p>
+        <FadeIn direction="up" delay={0.4}>
+          <p className="text-center text-sm text-gray-500 mt-8">
+            Need enterprise features?{" "}
+            <a href="mailto:hello@audittrail.dev" className="text-accent hover:underline">
+              Let&apos;s talk
+            </a>
+          </p>
+        </FadeIn>
       </div>
     </section>
   );

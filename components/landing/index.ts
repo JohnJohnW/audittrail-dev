@@ -7,5 +7,4 @@ export { Frameworks } from "./Frameworks";
 export { Pricing } from "./Pricing";
 export { FAQ } from "./FAQ";
 export { CTA } from "./CTA";
-export { Careers } from "./Careers";
 export { Footer } from "./Footer";

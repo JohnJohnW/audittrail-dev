@@ -1,13 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+    <header 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled 
+          ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100' 
+          : 'bg-white/80 backdrop-blur-sm'
+      }`}
+    >
       <nav
         className="max-w-5xl mx-auto px-6"
         aria-label="Main navigation"
@@ -42,7 +58,7 @@ export function Header() {
             </Link>
             <Link
               href="/auth/signin"
-              className="bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800 transition-colors rounded-md"
+              className="bg-accent text-white px-4 py-2 text-sm font-medium hover:bg-accent-hover hover:-translate-y-0.5 hover:shadow-md hover:shadow-accent/20 transition-all duration-200 rounded-md"
             >
               Get Started
             </Link>
@@ -80,40 +96,50 @@ export function Header() {
           </button>
         </div>
 
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100">
-            <div className="flex flex-col gap-4">
-              <a
-                href="#how-it-works"
-                className="text-sm text-gray-600 hover:text-gray-900"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                How it works
-              </a>
-              <a
-                href="#pricing"
-                className="text-sm text-gray-600 hover:text-gray-900"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Pricing
-              </a>
-              <Link
-                href="/auth/signin"
-                className="text-sm text-gray-900"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/auth/signin"
-                className="bg-gray-900 text-white px-4 py-2 text-sm font-medium text-center rounded-md"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden overflow-hidden"
+            >
+              <div className="py-4 border-t border-gray-100">
+                <div className="flex flex-col gap-4">
+                  <a
+                    href="#how-it-works"
+                    className="text-sm text-gray-600 hover:text-gray-900"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    How it works
+                  </a>
+                  <a
+                    href="#pricing"
+                    className="text-sm text-gray-600 hover:text-gray-900"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Pricing
+                  </a>
+                  <Link
+                    href="/auth/signin"
+                    className="text-sm text-gray-900"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/auth/signin"
+                    className="bg-accent text-white px-4 py-2 text-sm font-medium text-center rounded-md"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Get Started
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
     </header>
   );

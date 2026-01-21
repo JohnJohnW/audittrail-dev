@@ -8,7 +8,6 @@ import {
   Pricing,
   FAQ,
   CTA,
-  Careers,
   Footer,
 } from "@/components/landing";
 
@@ -24,7 +23,6 @@ export default function Home() {
         <Frameworks />
         <Pricing />
         <FAQ />
-        <Careers />
         <CTA />
       </main>
       <Footer />

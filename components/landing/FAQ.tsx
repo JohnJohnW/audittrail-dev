@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FadeIn } from "@/components/ui/FadeIn";
 
 const faqs = [
   {
@@ -44,60 +46,77 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-20 bg-gray-50 px-6">
+    <section className="py-20 bg-white px-6">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-12">
+        <FadeIn direction="up" className="text-center mb-12">
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">
             FAQ
           </p>
           <h2 className="text-2xl font-semibold text-gray-900">
             Common questions
           </h2>
-        </div>
+        </FadeIn>
 
-        <div className="space-y-0">
-          {faqs.map((faq, index) => (
-            <div key={index} className="border-b border-gray-200 last:border-b-0">
-              <button
-                className="w-full text-left py-4 flex items-start justify-between gap-4"
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+        <FadeIn direction="up" delay={0.2}>
+          <div className="space-y-0 border border-gray-200 rounded-lg overflow-hidden bg-white">
+            {faqs.map((faq, index) => (
+              <div 
+                key={index} 
+                className={`border-b border-gray-100 last:border-b-0 ${openIndex === index ? 'bg-accent-light/30' : ''} transition-colors duration-200`}
               >
-                <span className="text-sm font-medium text-gray-900 pr-4">
-                  {faq.question}
-                </span>
-                <svg
-                  className={`w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 transition-transform ${
-                    openIndex === index ? "rotate-180" : ""
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <button
+                  className="w-full text-left py-4 px-5 flex items-start justify-between gap-4 hover:bg-gray-50 transition-colors"
+                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-              {openIndex === index && (
-                <div className="pb-4 text-sm text-gray-500 leading-relaxed pr-8">
-                  {faq.answer}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                  <span className="text-sm font-medium text-gray-900 pr-4">
+                    {faq.question}
+                  </span>
+                  <motion.svg
+                    animate={{ rotate: openIndex === index ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-4 h-4 text-accent flex-shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </motion.svg>
+                </button>
+                <AnimatePresence>
+                  {openIndex === index && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-5 pb-4 text-sm text-gray-500 leading-relaxed pr-12">
+                        {faq.answer}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
 
-        <div className="mt-10 text-center">
-          <p className="text-sm text-gray-500">
-            More questions?{" "}
-            <a href="mailto:hello@audittrail.dev" className="text-gray-900 hover:underline">
-              Get in touch
-            </a>
-          </p>
-        </div>
+        <FadeIn direction="up" delay={0.4}>
+          <div className="mt-10 text-center">
+            <p className="text-sm text-gray-500">
+              More questions?{" "}
+              <a href="mailto:hello@audittrail.dev" className="text-accent hover:underline">
+                Get in touch
+              </a>
+            </p>
+          </div>
+        </FadeIn>
       </div>
     </section>
   );
