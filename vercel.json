@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npx prisma generate && npm run build",
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/sync",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
