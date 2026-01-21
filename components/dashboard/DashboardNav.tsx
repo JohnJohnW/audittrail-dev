@@ -72,13 +72,13 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   priority
                 />
               </div>
-              <span className="hidden md:inline text-sm font-semibold text-gray-900 whitespace-nowrap">
+              <span className="hidden sm:inline text-sm font-semibold text-gray-900 whitespace-nowrap">
                 AuditTrail<span className="text-accent">.dev</span>
               </span>
             </Link>
 
-            {/* Desktop navigation - shows at md: and above */}
-            <div className="hidden md:flex ml-4 lg:ml-8 gap-0.5">
+            {/* Desktop navigation - shows at lg: and above with full text */}
+            <div className="hidden lg:flex ml-6 gap-1">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -87,14 +87,14 @@ export function DashboardNav({ user }: DashboardNavProps) {
                     key={item.name}
                     href={item.href}
                     className={cn(
-                      "relative px-2 lg:px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap",
+                      "relative px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap",
                       active
                         ? "text-accent"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/80"
                     )}
                   >
                     <Icon className={cn("w-4 h-4 shrink-0", active ? "text-accent" : "text-gray-400")} />
-                    <span className="hidden lg:inline">{item.name}</span>
+                    {item.name}
                     {active && (
                       <motion.div
                         layoutId="activeTab"
@@ -109,10 +109,10 @@ export function DashboardNav({ user }: DashboardNavProps) {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Mobile menu button - shows below md: */}
+            {/* Mobile menu button - shows below lg: */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="lg:hidden p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               aria-label="Toggle menu"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,7 +227,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="md:hidden overflow-hidden"
+              className="lg:hidden overflow-hidden"
             >
               <div className="py-2 sm:py-3 border-t border-gray-100">
                 <div className="flex flex-col gap-0.5">
