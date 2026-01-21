@@ -88,7 +88,7 @@ export default function OnboardingPage() {
             </p>
             <Link
               href="/dashboard"
-              className="inline-block bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors"
+              className="inline-block bg-accent text-white px-6 py-3 rounded-lg font-medium hover:bg-accent-hover transition-colors"
             >
               Go to Dashboard
             </Link>
@@ -115,7 +115,7 @@ export default function OnboardingPage() {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+              className="bg-accent h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -129,7 +129,7 @@ export default function OnboardingPage() {
                 step.completed
                   ? "border-green-200 bg-green-50"
                   : index === completedCount
-                    ? "border-primary-500 bg-primary-50"
+                    ? "border-accent bg-accent-light"
                     : "border-gray-200"
               }`}
             >
@@ -139,7 +139,7 @@ export default function OnboardingPage() {
                     step.completed
                       ? "bg-green-600 text-white"
                       : index === completedCount
-                        ? "bg-primary-600 text-white"
+                        ? "bg-accent text-white"
                         : "bg-gray-200 text-gray-600"
                   }`}
                 >
@@ -163,7 +163,7 @@ export default function OnboardingPage() {
                     <Link
                       href={step.action.href}
                       onClick={() => handleStepComplete(step.id)}
-                      className="inline-flex items-center bg-primary-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors text-sm"
+                      className="inline-flex items-center bg-accent text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-accent-hover transition-colors text-sm"
                     >
                       {step.action.label}
                     </Link>

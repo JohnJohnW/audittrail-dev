@@ -1,42 +1,28 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAuth, parseOptionalJsonBody } from "@/lib/api";
 import { db } from "@/lib/db";
 import type { GitHubClient } from "@/lib/github";
 import { getGitHubClientForOrg } from "@/lib/github";
 import { isValidCuid } from "@/lib/utils";
-import { handleApiError } from "@/lib/error-handler";
+import { handleApiError, AppError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const { orgId } = await requireAuth();
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const orgId = session.orgId;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
-
-    let body: { repositoryId?: string } = {};
-    try {
-      body = await request.json();
-    } catch {
-      // Empty body is okay for syncing all repos
-    }
-
-    const { repositoryId } = body;
+    const body = await parseOptionalJsonBody<{ repositoryId?: string }>(request);
+    const repositoryId = body?.repositoryId;
 
     // Validate repositoryId format if provided
     if (repositoryId && !isValidCuid(repositoryId)) {
-      return NextResponse.json({ error: "Invalid repositoryId format" }, { status: 400 });
+      throw new AppError("Invalid repositoryId format", 400, "INVALID_ID");
     }
 
     const client = await getGitHubClientForOrg(orgId);
     if (!client) {
-      return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
+      throw new AppError("GitHub not connected", 400, "GITHUB_NOT_CONNECTED");
     }
 
     // Get repositories to sync
@@ -49,7 +35,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (repositories.length === 0) {
-      return NextResponse.json({ error: "No repositories to sync" }, { status: 400 });
+      throw new AppError("No repositories to sync", 400, "NO_REPOSITORIES");
     }
 
     const results = [];
@@ -105,7 +91,7 @@ export async function POST(request: NextRequest) {
           branchProtection: protection ? "synced" : "not configured",
         });
       } catch (error) {
-        console.error(`Error syncing ${repo.fullName}:`, error);
+        logger.error(`Error syncing ${repo.fullName}`, error);
         results.push({
           repository: repo.fullName,
           error: error instanceof Error ? error.message : "Unknown error",
@@ -178,8 +164,8 @@ async function syncCommits(
         if (results[i].status === "fulfilled") {
           count++;
         } else {
-          console.error(
-            `Error upserting commit ${batch[i].sha}:`,
+          logger.error(
+            `Error upserting commit ${batch[i].sha}`,
             (results[i] as PromiseRejectedResult).reason
           );
         }
@@ -272,7 +258,7 @@ async function syncPullRequests(
           reviewCount += reviewResults.filter((r) => r.status === "fulfilled").length;
         }
       } catch (error) {
-        console.error(`Error upserting PR ${pr.number}:`, error);
+        logger.error(`Error upserting PR ${pr.number}`, error);
       }
     }
 
@@ -333,23 +319,14 @@ async function syncBranchProtection(
 
     return protection;
   } catch (error) {
-    console.error(`Error syncing branch protection:`, error);
+    logger.error(`Error syncing branch protection`, error);
     return null;
   }
 }
 
 export async function GET() {
   try {
-    const session = await auth();
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const orgId = session.orgId;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
+    const { orgId } = await requireAuth();
 
     // Get sync status for all repositories
     const repositories = await db.repository.findMany({
@@ -379,7 +356,6 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error("Error fetching sync status:", error);
-    return NextResponse.json({ error: "Failed to fetch sync status" }, { status: 500 });
+    return handleApiError(error);
   }
 }

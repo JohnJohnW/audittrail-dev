@@ -33,7 +33,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               "w-full px-3 py-2.5 bg-white border rounded-lg text-sm text-gray-900 placeholder:text-gray-400",
               "transition-all duration-200",
-              "focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500",
+              "focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent",
               "hover:border-gray-400",
               error
                 ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
@@ -82,7 +82,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           className={cn(
             "w-full px-3 py-2.5 bg-white border rounded-lg text-sm text-gray-900 placeholder:text-gray-400",
             "transition-all duration-200",
-            "focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500",
+            "focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent",
             "hover:border-gray-400",
             "min-h-[100px] resize-y",
             error ? "border-red-300 focus:border-red-500 focus:ring-red-500/20" : "border-gray-300",
@@ -123,7 +123,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           className={cn(
             "w-full px-3 py-2.5 bg-white border rounded-lg text-sm text-gray-900",
             "transition-all duration-200",
-            "focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500",
+            "focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent",
             "hover:border-gray-400",
             error ? "border-red-300 focus:border-red-500 focus:ring-red-500/20" : "border-gray-300",
             className

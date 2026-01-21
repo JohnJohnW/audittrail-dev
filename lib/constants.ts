@@ -8,12 +8,16 @@ export const SYNC_CONFIG = {
   MAX_PAGES: 10,
   /** Maximum pages to fetch during cron sync (shorter to avoid timeout) */
   CRON_MAX_PAGES: 3,
+  /** Maximum PR pages to fetch during cron sync */
+  CRON_MAX_PR_PAGES: 2,
   /** Number of items to process in parallel batches */
   BATCH_SIZE: 25,
   /** Maximum reviews to fetch per PR */
   REVIEW_LIMIT: 20,
   /** Maximum reviews to fetch per PR during cron sync */
   CRON_REVIEW_LIMIT: 10,
+  /** Default days to look back if no lastSyncedAt exists */
+  DEFAULT_DAYS_BACK: 90,
 } as const;
 
 // GitHub API configuration
@@ -96,4 +100,34 @@ export const MEMBERSHIP_ROLE = {
   MEMBER: "member",
   ADMIN: "admin",
   OWNER: "owner",
+} as const;
+
+// Export configuration
+export const EXPORT_CONFIG = {
+  /** Maximum exports to return per page in list */
+  MAX_EXPORTS_PER_PAGE: 20,
+  /** Maximum concurrent export operations */
+  MAX_CONCURRENT: 3,
+} as const;
+
+// Health check configuration
+export const HEALTH_CHECK_CONFIG = {
+  /** Timeout for database health check in milliseconds */
+  TIMEOUT_MS: 5000,
+} as const;
+
+// HTTP status codes for consistency
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
+  TOO_MANY_REQUESTS: 429,
+  SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
 } as const;

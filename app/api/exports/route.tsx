@@ -1,11 +1,14 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAuth, canExport as checkCanExport, parseJsonBody } from "@/lib/api";
 import { db } from "@/lib/db";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { ExportPDF } from "@/lib/pdf";
 import { isValidCuid, isValidDateString } from "@/lib/utils";
+import { handleApiError, AppError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
+import { EXPORT_CONFIG } from "@/lib/constants";
 
 // Helper to escape CSV values
 function escapeCSV(value: string): string {
@@ -17,40 +20,25 @@ function escapeCSV(value: string): string {
   return value;
 }
 
+interface ExportBody {
+  format?: "pdf" | "csv";
+  framework?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const orgId = session.orgId;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
+    const { orgId, userId } = await requireAuth();
 
     // Check subscription
-    const subscription = await db.subscription.findUnique({
-      where: { orgId },
-    });
-
-    // Fixed logic: must have pro plan with active status
-    const canExport = subscription?.plan === "pro" && subscription?.status === "active";
+    const canExport = await checkCanExport(orgId);
 
     if (!canExport) {
-      return NextResponse.json(
-        { error: "Upgrade to Pro to export reports", requiresUpgrade: true },
-        { status: 403 }
-      );
+      throw new AppError("Upgrade to Pro to export reports", 403, "SUBSCRIPTION_REQUIRED");
     }
 
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-    }
+    const body = await parseJsonBody<ExportBody>(request);
 
     const { format, frameworkId, dateFrom, dateTo, repositoryIds } = body as {
       format: "pdf" | "csv";
@@ -62,20 +50,20 @@ export async function POST(request: NextRequest) {
 
     // Validate format
     if (!format || !["pdf", "csv"].includes(format)) {
-      return NextResponse.json({ error: "Invalid format" }, { status: 400 });
+      throw new AppError("Invalid format", 400, "INVALID_FORMAT");
     }
 
     // Validate frameworkId if provided
     if (frameworkId && !isValidCuid(frameworkId)) {
-      return NextResponse.json({ error: "Invalid frameworkId format" }, { status: 400 });
+      throw new AppError("Invalid frameworkId format", 400, "INVALID_ID");
     }
 
     // Validate date strings if provided
     if (dateFrom && !isValidDateString(dateFrom)) {
-      return NextResponse.json({ error: "Invalid dateFrom format" }, { status: 400 });
+      throw new AppError("Invalid dateFrom format", 400, "INVALID_DATE");
     }
     if (dateTo && !isValidDateString(dateTo)) {
-      return NextResponse.json({ error: "Invalid dateTo format" }, { status: 400 });
+      throw new AppError("Invalid dateTo format", 400, "INVALID_DATE");
     }
 
     // Validate date range logic
@@ -135,7 +123,7 @@ export async function POST(request: NextRequest) {
     const exportRecord = await db.export.create({
       data: {
         orgId,
-        userId: session.user.id,
+        userId,
         type: format,
         frameworkId: frameworkId || null,
         fileName,
@@ -254,7 +242,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (generateError) {
       // Update export record to failed
-      console.error("Export generation error:", generateError);
+      logger.error("Export generation error", generateError);
       await db.export.update({
         where: { id: exportRecord.id },
         data: { status: "failed" },
@@ -276,33 +264,21 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const session = await auth();
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const orgId = session.orgId;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
+    const { orgId } = await requireAuth();
 
     const exports = await db.export.findMany({
       where: { orgId },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: EXPORT_CONFIG.MAX_EXPORTS_PER_PAGE,
     });
 
-    const subscription = await db.subscription.findUnique({
-      where: { orgId },
-    });
+    const canExportResult = await checkCanExport(orgId);
 
     return NextResponse.json({
       exports,
-      canExport: subscription?.plan === "pro" && subscription?.status === "active",
+      canExport: canExportResult,
     });
   } catch (error) {
-    console.error("Error fetching exports:", error);
-    return NextResponse.json({ error: "Failed to fetch exports" }, { status: 500 });
+    return handleApiError(error);
   }
 }

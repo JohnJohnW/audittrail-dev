@@ -1,35 +1,21 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAuth, getNumericQueryParam } from "@/lib/api";
 import { db } from "@/lib/db";
 import { subDays, startOfDay } from "date-fns";
 import { handleApiError } from "@/lib/error-handler";
-import { clamp } from "@/lib/utils";
+import { TRENDS_CONFIG } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { orgId } = await requireAuth();
 
-    const orgId = session.orgId;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
-
-    const searchParams = request.nextUrl.searchParams;
-    const daysParam = searchParams.get("days");
-
-    // Validate and clamp days parameter (1-365)
-    let days = 30; // default
-    if (daysParam !== null) {
-      const parsed = parseInt(daysParam, 10);
-      if (isNaN(parsed)) {
-        return NextResponse.json({ error: "days must be a number" }, { status: 400 });
-      }
-      days = clamp(parsed, 1, 365);
-    }
+    // Validate and clamp days parameter using helper
+    const days = getNumericQueryParam(request.nextUrl, "days", {
+      defaultValue: TRENDS_CONFIG.DEFAULT_DAYS,
+      min: TRENDS_CONFIG.MIN_DAYS,
+      max: TRENDS_CONFIG.MAX_DAYS,
+    });
 
     const startDate = startOfDay(subDays(new Date(), days));
     const dates: string[] = [];

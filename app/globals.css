@@ -35,7 +35,7 @@ main {
 /* Focus styles for accessibility */
 @layer base {
   *:focus-visible {
-    @apply outline-2 outline-offset-2 outline-primary-500;
+    @apply outline-2 outline-offset-2 outline-accent;
   }
 }
 

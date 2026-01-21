@@ -16,7 +16,7 @@ class Logger {
     this.requestId = requestId;
   }
 
-  private log(level: LogLevel, message: string, context?: LogContext, error?: Error) {
+  private log(level: LogLevel, message: string, context?: LogContext, error?: unknown) {
     const logEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -55,7 +55,7 @@ class Logger {
     this.log(LogLevel.WARN, message, context);
   }
 
-  error(message: string, error?: Error, context?: LogContext) {
+  error(message: string, error?: unknown, context?: LogContext) {
     this.log(LogLevel.ERROR, message, context, error);
   }
 }

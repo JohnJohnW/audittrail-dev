@@ -1,33 +1,13 @@
 import { db } from "./db";
+import type {
+  EvidenceItem,
+  ControlEvidence,
+  ComplianceEvidenceOptions,
+  EvidenceSummary,
+} from "@/types/compliance";
 
-export interface EvidenceItem {
-  type: "commit" | "pr" | "review" | "branch_protection";
-  title: string;
-  description: string;
-  timestamp: Date;
-  url?: string;
-  metadata: Record<string, unknown>;
-  relevance?: "high" | "medium" | "low";
-}
-
-export interface ControlEvidence {
-  controlId: string;
-  controlCode: string;
-  controlTitle: string;
-  controlDescription: string | null;
-  frameworkName: string;
-  evidenceType: string;
-  status: "has_evidence" | "partial" | "no_evidence" | "limited";
-  evidenceCount: number;
-  evidence: EvidenceItem[];
-  note?: string;
-}
-
-export interface ComplianceEvidenceOptions {
-  dateFrom?: Date;
-  dateTo?: Date;
-  repositoryIds?: string[];
-}
+// Re-export types for backward compatibility
+export type { EvidenceItem, ControlEvidence, ComplianceEvidenceOptions, EvidenceSummary };
 
 // Patterns to detect dependency/patching related commits
 const DEPENDENCY_PATTERNS = [

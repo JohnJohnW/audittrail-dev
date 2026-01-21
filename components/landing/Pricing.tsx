@@ -1,7 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { FadeIn, StaggerChildren } from "@/components/ui/FadeIn";
+import { FadeIn, StaggerChildren } from "@/components/ui/Motion";
+
+// Static feature lists - defined outside component to avoid recreation on every render
+const FREE_FEATURES = [
+  "Up to 3 repositories",
+  "GitHub integration",
+  "View compliance evidence",
+  "ISO 27001 & Essential Eight",
+  "Email support",
+];
+
+const PRO_FEATURES = [
+  "Unlimited repositories",
+  "ISO 27001 & Essential Eight",
+  "Unlimited PDF exports",
+  "Unlimited CSV exports",
+  "Priority support",
+  "Export history & audit log",
+];
 
 export function Pricing() {
   return (
@@ -26,13 +44,7 @@ export function Pricing() {
             </div>
 
             <ul className="space-y-3 mb-6">
-              {[
-                "Up to 3 repositories",
-                "GitHub integration",
-                "View compliance evidence",
-                "ISO 27001 & Essential Eight",
-                "Email support",
-              ].map((feature, idx) => (
+              {FREE_FEATURES.map((feature, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
                   <svg
                     className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"
@@ -91,14 +103,7 @@ export function Pricing() {
             </div>
 
             <ul className="space-y-3 mb-6">
-              {[
-                "Unlimited repositories",
-                "ISO 27001 & Essential Eight",
-                "Unlimited PDF exports",
-                "Unlimited CSV exports",
-                "Priority support",
-                "Export history & audit log",
-              ].map((feature, idx) => (
+              {PRO_FEATURES.map((feature, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
                   <svg
                     className="w-4 h-4 text-accent mt-0.5 flex-shrink-0"

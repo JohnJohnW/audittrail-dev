@@ -23,7 +23,7 @@ export function SyncButton() {
     <button
       onClick={handleSync}
       disabled={syncing}
-      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors disabled:opacity-50"
+      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-accent bg-accent-light rounded-lg hover:bg-accent-light/80 transition-colors disabled:opacity-50"
     >
       <svg
         className={`w-4 h-4 mr-1.5 ${syncing ? "animate-spin" : ""}`}

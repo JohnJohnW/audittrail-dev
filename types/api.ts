@@ -1,8 +1,22 @@
 /**
- * Shared API types for AuditTrail.dev
+ * API Types
+ *
+ * Generic API response types and re-exports from domain-specific type files.
  */
 
-// Generic API response wrapper
+// Re-export all domain types for convenience
+export * from "./compliance";
+export * from "./github";
+export * from "./subscription";
+export * from "./export";
+
+// =============================================================================
+// Generic API Response Types
+// =============================================================================
+
+/**
+ * Generic API response wrapper.
+ */
 export interface ApiResponse<T> {
   data?: T;
   error?: string;
@@ -10,69 +24,32 @@ export interface ApiResponse<T> {
   requestId?: string;
 }
 
-// Status enums
-export type ExportStatus = "pending" | "completed" | "failed";
-export type SubscriptionPlan = "free" | "pro";
-export type SubscriptionStatus = "active" | "canceled" | "past_due" | "free";
-export type PRState = "open" | "closed" | "merged";
-export type ReviewState = "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED" | "DISMISSED" | "PENDING";
-export type MembershipRole = "member" | "admin" | "owner";
-export type EvidenceStatus = "has_evidence" | "partial" | "no_evidence" | "limited";
-
-// Compliance types
-export interface ComplianceControl {
-  controlId: string;
-  controlCode: string;
-  controlTitle: string;
-  controlDescription: string | null;
-  frameworkName: string;
-  evidenceType: string;
-  status: EvidenceStatus;
-  evidenceCount: number;
-  evidence: EvidenceItem[];
-  note?: string;
-}
-
-export interface EvidenceItem {
-  type: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  url?: string;
-  relevance?: "high" | "medium" | "low";
-}
-
-export interface EvidenceSummary {
+/**
+ * Paginated response wrapper.
+ */
+export interface PaginatedResponse<T> {
+  data: T[];
   total: number;
-  withEvidence: number;
-  partial: number;
-  limited: number;
-  noEvidence: number;
-  score: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
 }
 
-export interface Framework {
-  id: string;
-  name: string;
-  description: string;
-  controlCount: number;
+/**
+ * Success response for mutation operations.
+ */
+export interface MutationResponse {
+  success: boolean;
+  message?: string;
 }
 
-// Repository types
-export interface Repository {
-  id: number;
-  name: string;
-  fullName: string;
-  private: boolean;
-  defaultBranch: string;
-  url: string;
-  description: string | null;
-  pushedAt: string;
-  isTracked: boolean;
-  isActive: boolean;
-}
+// =============================================================================
+// Feature-specific API Types
+// =============================================================================
 
-// Trends types
+/**
+ * Trend data for analytics.
+ */
 export interface TrendData {
   dates: string[];
   commits: number[];
@@ -81,31 +58,9 @@ export interface TrendData {
   evidenceCounts: number[];
 }
 
-// Export types
-export interface Export {
-  id: string;
-  fileName: string;
-  format: "pdf" | "csv";
-  status: ExportStatus;
-  createdAt: string;
-  fileSize?: number;
-}
-
-// Settings types
-export interface OrganizationSettings {
-  name: string;
-  slug: string;
-}
-
-export interface SubscriptionSettings {
-  plan: SubscriptionPlan;
-  status: SubscriptionStatus;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean;
-  hasStripeCustomer: boolean;
-}
-
-// Onboarding types
+/**
+ * Onboarding step definition.
+ */
 export interface OnboardingStep {
   id: string;
   title: string;
@@ -117,12 +72,17 @@ export interface OnboardingStep {
   };
 }
 
-// Health check types
+/**
+ * Health check for a single service.
+ */
 export interface HealthCheck {
   status: "healthy" | "degraded" | "unhealthy";
   message?: string;
 }
 
+/**
+ * Health check response with all service statuses.
+ */
 export interface HealthResponse {
   status: "healthy" | "degraded" | "unhealthy";
   timestamp: string;

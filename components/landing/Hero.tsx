@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FadeInOnLoad } from "@/components/ui/FadeIn";
+import { FadeInOnLoad } from "@/components/ui/Motion";
 
 export function Hero() {
   return (

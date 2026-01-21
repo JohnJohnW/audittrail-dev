@@ -1,6 +1,6 @@
 "use client";
 
-import { FadeIn, StaggerChildren } from "@/components/ui/FadeIn";
+import { FadeIn, StaggerChildren } from "@/components/ui/Motion";
 
 const stats = [
   {

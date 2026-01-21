@@ -35,14 +35,14 @@ export function ErrorState({ title = "Something went wrong", message, action }: 
         (action.href ? (
           <Link
             href={action.href}
-            className="text-sm font-medium text-primary-600 hover:text-primary-700"
+            className="text-sm font-medium text-accent hover:text-accent-hover"
           >
             {action.label}
           </Link>
         ) : (
           <button
             onClick={action.onClick}
-            className="text-sm font-medium text-primary-600 hover:text-primary-700"
+            className="text-sm font-medium text-accent hover:text-accent-hover"
           >
             {action.label}
           </button>

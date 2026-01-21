@@ -1,33 +1,24 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/api";
 import { db } from "@/lib/db";
 import { createPortalSession } from "@/lib/stripe";
-import { handleApiError } from "@/lib/error-handler";
+import { handleApiError, AppError } from "@/lib/error-handler";
 
 export async function POST() {
   try {
-    const session = await auth();
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const orgId = session.orgId;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
+    const { orgId } = await requireAuth();
 
     const subscription = await db.subscription.findUnique({
       where: { orgId },
     });
 
     if (!subscription?.stripeCustomerId) {
-      return NextResponse.json({ error: "No active subscription" }, { status: 400 });
+      throw new AppError("No active subscription", 400, "NO_SUBSCRIPTION");
     }
 
     const baseUrl = process.env.NEXTAUTH_URL;
     if (!baseUrl) {
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+      throw new AppError("Server configuration error", 500, "CONFIG_ERROR");
     }
 
     const portalSession = await createPortalSession({

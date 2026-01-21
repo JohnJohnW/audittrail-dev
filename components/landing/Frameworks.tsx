@@ -1,6 +1,6 @@
 "use client";
 
-import { FadeIn } from "@/components/ui/FadeIn";
+import { FadeIn } from "@/components/ui/Motion";
 
 const frameworks = [
   {

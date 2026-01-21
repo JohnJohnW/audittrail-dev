@@ -1,20 +1,11 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAuth, parseJsonBody } from "@/lib/api";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/error-handler";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const orgId = session.orgId;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
+    const { orgId } = await requireAuth();
 
     const [githubConnection, repositories] = await Promise.all([
       db.gitHubConnection.findUnique({ where: { orgId } }),
@@ -70,15 +61,14 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+interface OnboardingBody {
+  stepId: string;
+}
 
-    const body = await request.json();
-    const { stepId: _stepId } = body;
+export async function POST(request: Request) {
+  try {
+    await requireAuth();
+    const { stepId: _stepId } = await parseJsonBody<OnboardingBody>(request);
 
     // Step completion is tracked implicitly through data state
     // This endpoint can be used for future analytics or custom steps

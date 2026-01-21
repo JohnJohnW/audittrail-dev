@@ -63,7 +63,7 @@ export default function ChangelogPage() {
         </div>
 
         <div className="mt-8 text-center">
-          <Link href="/" className="text-primary-600 hover:text-primary-700 font-medium">
+          <Link href="/" className="text-accent hover:text-accent-hover font-medium">
             ← Back to Home
           </Link>
         </div>

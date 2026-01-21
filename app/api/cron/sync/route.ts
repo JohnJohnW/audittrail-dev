@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import type { GitHubClient } from "@/lib/github";
 import { getGitHubClientForOrg } from "@/lib/github";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
+import { logger } from "@/lib/logger";
 
 // Cron job endpoint for automatic syncing
 // Protected by CRON_SECRET to prevent unauthorized access
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret) {
-      console.error("CRON_SECRET not configured");
+      logger.error("CRON_SECRET not configured");
       return NextResponse.json({ error: "Cron not configured" }, { status: 500 });
     }
 
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log(`Found ${organizations.length} organizations to sync`);
+    logger.info(`Found ${organizations.length} organizations to sync`);
 
     const results: {
       orgId: string;
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
 
             syncedRepos++;
           } catch (error) {
-            console.error(`Error syncing repo ${repo.fullName}:`, error);
+            logger.error(`Error syncing repo ${repo.fullName}`, error);
           }
         }
 
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
           status: "success",
         });
       } catch (error) {
-        console.error(`Error syncing org ${org.id}:`, error);
+        logger.error(`Error syncing org ${org.id}`, error);
         results.push({
           orgId: org.id,
           repoCount: 0,
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
     }
 
     const successCount = results.filter((r) => r.status === "success").length;
-    console.log(`Sync completed: ${successCount}/${organizations.length} organizations synced`);
+    logger.info(`Sync completed: ${successCount}/${organizations.length} organizations synced`);
 
     return NextResponse.json({
       success: true,
@@ -135,7 +136,7 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error("Cron sync error:", error);
+    logger.error("Cron sync error", error);
     return NextResponse.json(
       { error: "Sync failed", details: error instanceof Error ? error.message : "Unknown" },
       { status: 500 }
@@ -377,9 +378,9 @@ async function storeComplianceSnapshot(orgId: string) {
       },
     });
 
-    console.log(`Stored compliance snapshot for org ${orgId}: ${summary.score}%`);
+    logger.info(`Stored compliance snapshot for org ${orgId}: ${summary.score}%`);
   } catch (error) {
-    console.error(`Error storing compliance snapshot for org ${orgId}:`, error);
+    logger.error(`Error storing compliance snapshot for org ${orgId}`, error);
     // Don't throw - snapshot storage failure shouldn't fail the sync
   }
 }

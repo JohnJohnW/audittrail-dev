@@ -1,0 +1,112 @@
+/**
+ * Compliance and Evidence Types
+ */
+
+// Evidence status levels
+export type EvidenceStatus = "has_evidence" | "partial" | "no_evidence" | "limited";
+
+// Evidence type categories
+export type EvidenceType = "commit" | "pr" | "review" | "branch_protection";
+
+// Relevance levels for evidence items
+export type EvidenceRelevance = "high" | "medium" | "low";
+
+/**
+ * Individual piece of evidence linked to a control.
+ * Used internally with Date objects.
+ */
+export interface EvidenceItem {
+  type: EvidenceType;
+  title: string;
+  description: string;
+  timestamp: Date;
+  url?: string;
+  metadata?: Record<string, unknown>;
+  relevance?: EvidenceRelevance;
+}
+
+/**
+ * Serialized evidence item for API responses.
+ * Uses ISO string for timestamp.
+ */
+export interface EvidenceItemSerialized {
+  type: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  url?: string;
+  relevance?: EvidenceRelevance;
+}
+
+/**
+ * Control with its associated evidence.
+ */
+export interface ControlEvidence {
+  controlId: string;
+  controlCode: string;
+  controlTitle: string;
+  controlDescription: string | null;
+  frameworkName: string;
+  evidenceType: string;
+  status: EvidenceStatus;
+  evidenceCount: number;
+  evidence: EvidenceItem[];
+  note?: string;
+}
+
+/**
+ * Serialized control for API responses.
+ */
+export interface ComplianceControl {
+  controlId: string;
+  controlCode: string;
+  controlTitle: string;
+  controlDescription: string | null;
+  frameworkName: string;
+  evidenceType: string;
+  status: EvidenceStatus;
+  evidenceCount: number;
+  evidence: EvidenceItemSerialized[];
+  note?: string;
+}
+
+/**
+ * Summary statistics for evidence coverage.
+ */
+export interface EvidenceSummary {
+  total: number;
+  withEvidence: number;
+  partial: number;
+  limited: number;
+  noEvidence: number;
+  score: number;
+}
+
+/**
+ * Compliance framework definition.
+ */
+export interface Framework {
+  id: string;
+  name: string;
+  description: string;
+  controlCount: number;
+}
+
+/**
+ * Framework with its score.
+ */
+export interface FrameworkScore {
+  name: string;
+  score: number;
+  total: number;
+  withEvidence: number;
+}
+
+/**
+ * Options for querying compliance evidence.
+ */
+export interface ComplianceEvidenceOptions {
+  dateFrom?: Date;
+  dateTo?: Date;
+  repositoryIds?: string[];
+}

@@ -1,22 +1,13 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAuth, parseJsonBody } from "@/lib/api";
 import { db } from "@/lib/db";
 import { getGitHubClientForOrg } from "@/lib/github";
-import { handleApiError } from "@/lib/error-handler";
+import { handleApiError, AppError } from "@/lib/error-handler";
+import { PLAN_LIMITS } from "@/lib/constants";
 
 export async function GET() {
   try {
-    const session = await auth();
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const orgId = session.orgId;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
+    const { orgId } = await requireAuth();
 
     // Get GitHub connection
     const connection = await db.gitHubConnection.findUnique({
@@ -65,30 +56,22 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
+interface UpdateReposBody {
+  repositoryIds: number[];
+}
+
+export async function POST(request: Request) {
   try {
-    const session = await auth();
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const orgId = session.orgId;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
-
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-    }
-
-    const { repositoryIds } = body as { repositoryIds: number[] };
+    const { orgId } = await requireAuth();
+    const { repositoryIds } = await parseJsonBody<UpdateReposBody>(request);
 
     if (!Array.isArray(repositoryIds)) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      throw new AppError("repositoryIds must be an array", 400, "INVALID_REQUEST");
+    }
+
+    // Validate all IDs are numbers
+    if (!repositoryIds.every((id) => typeof id === "number")) {
+      throw new AppError("All repositoryIds must be numbers", 400, "INVALID_REQUEST");
     }
 
     // Check subscription limits
@@ -96,20 +79,20 @@ export async function POST(request: NextRequest) {
       where: { orgId },
     });
 
-    const maxRepos = subscription?.plan === "pro" ? Infinity : 3;
+    const maxRepos =
+      subscription?.plan === "pro" ? PLAN_LIMITS.PRO_REPO_LIMIT : PLAN_LIMITS.FREE_REPO_LIMIT;
     if (repositoryIds.length > maxRepos) {
-      return NextResponse.json(
-        {
-          error: `Free plan is limited to ${maxRepos} repositories. Upgrade to Pro for unlimited.`,
-        },
-        { status: 403 }
+      throw new AppError(
+        `Free plan is limited to ${PLAN_LIMITS.FREE_REPO_LIMIT} repositories. Upgrade to Pro for unlimited.`,
+        403,
+        "PLAN_LIMIT_EXCEEDED"
       );
     }
 
     // Get GitHub client
     const client = await getGitHubClientForOrg(orgId);
     if (!client) {
-      return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
+      throw new AppError("GitHub not connected", 400, "GITHUB_NOT_CONNECTED");
     }
 
     // Get all repos to verify the selected ones exist

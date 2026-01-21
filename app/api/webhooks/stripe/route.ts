@@ -5,6 +5,7 @@ import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { isValidCuid } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   // Safely read request body
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.text();
   } catch (error) {
-    console.error("Failed to read request body:", error);
+    logger.error("Failed to read request body", error);
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
   // Validate webhook secret exists
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error("STRIPE_WEBHOOK_SECRET not configured");
+    logger.error("STRIPE_WEBHOOK_SECRET not configured");
     return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
   }
 
@@ -36,14 +37,14 @@ export async function POST(request: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
-    console.error("Webhook signature verification failed:", error);
+    logger.error("Webhook signature verification failed", error);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
   // Helper to validate orgId from metadata
   const validateOrgId = (orgId: string | undefined): string | null => {
     if (!orgId || !isValidCuid(orgId)) {
-      if (orgId) console.warn(`Invalid orgId format in webhook metadata: ${orgId}`);
+      if (orgId) logger.warn(`Invalid orgId format in webhook metadata: ${orgId}`);
       return null;
     }
     return orgId;
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
               });
             }
           } catch (retrieveError) {
-            console.error("Failed to retrieve subscription:", retrieveError);
+            logger.error("Failed to retrieve subscription", retrieveError);
           }
         }
         break;
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Webhook handler error:", error);
+    logger.error("Webhook handler error", error);
     return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
   }
 }
