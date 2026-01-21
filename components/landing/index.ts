@@ -1,8 +1,11 @@
 export { Header } from "./Header";
 export { Hero } from "./Hero";
+export { SocialProof } from "./SocialProof";
 export { Problem } from "./Problem";
 export { HowItWorks } from "./HowItWorks";
 export { Frameworks } from "./Frameworks";
 export { Pricing } from "./Pricing";
+export { FAQ } from "./FAQ";
+export { CTA } from "./CTA";
 export { Careers } from "./Careers";
 export { Footer } from "./Footer";

@@ -2,42 +2,33 @@ import Link from "next/link";
 
 export function Hero() {
   return (
-    <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto text-center">
-        <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-sm font-medium mb-6">
-          <span className="w-2 h-2 bg-primary-500 rounded-full mr-2"></span>
-          ISO 27001 & Essential Eight Ready
-        </div>
-
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6">
-          Turn GitHub activity into{" "}
-          <span className="text-primary-600">audit-ready evidence</span>
+    <section className="pt-28 pb-20 px-6">
+      <div className="max-w-3xl mx-auto text-center">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-gray-900 tracking-tight leading-[1.1] mb-6">
+          Compliance evidence
+          <br />
+          from your Git history
         </h1>
 
-        <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-          Connect your repositories. We map your commits, pull requests, and
-          branch protections to compliance controls. Export audit-ready reports
-          in minutes.
+        <p className="text-lg text-gray-500 mb-10 max-w-xl mx-auto leading-relaxed">
+          Connect GitHub. We map commits, PRs, and branch protection to
+          compliance controls. Export audit-ready reports in minutes.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/auth/signin"
-            className="w-full sm:w-auto bg-primary-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-primary-700 transition-colors"
+            className="bg-gray-900 text-white px-6 py-3 text-sm font-medium hover:bg-gray-800 transition-colors rounded-md"
           >
-            Start Free Trial
+            Start free — no credit card
           </Link>
           <a
             href="#how-it-works"
-            className="w-full sm:w-auto border border-gray-300 text-gray-700 px-8 py-4 rounded-lg text-lg font-medium hover:border-gray-400 transition-colors"
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
           >
-            See How It Works
+            See how it works →
           </a>
         </div>
-
-        <p className="mt-6 text-sm text-gray-500">
-          No credit card required. Free tier includes 3 repositories.
-        </p>
       </div>
     </section>
   );
