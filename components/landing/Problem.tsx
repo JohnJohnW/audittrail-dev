@@ -38,7 +38,7 @@ export function Problem() {
                   ×
                 </span>
                 <span className="text-gray-600">
-                  Mapping your Git workflow to ISO 27001 A.12.1.2 or SOC 2 CC6.1
+                  Mapping your Git workflow to ISO 27001 A.8.32 or Essential Eight
                   requires compliance expertise you don&apos;t have time for.
                 </span>
               </li>
@@ -68,7 +68,7 @@ export function Problem() {
                 </span>
                 <span className="text-gray-600">
                   Every artifact maps to specific compliance controls. ISO 27001
-                  Annex A, SOC 2 Trust Services Criteria, Essential Eight—all covered.
+                  Annex A, Essential Eight—all covered.
                 </span>
               </li>
               <li className="flex gap-3 group">

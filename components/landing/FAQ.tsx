@@ -18,7 +18,7 @@ const faqs = [
   {
     question: "Which compliance controls can you evidence?",
     answer:
-      "We map to change management, access control, and audit trail controls. For ISO 27001, that includes A.12.1.2 (Change Management) and A.9.2.3 (Access Rights). For SOC 2, we cover CC6.1, CC6.6, and CC8.1. Full control mappings are available in the dashboard.",
+      "We map to change management, access control, and audit trail controls. For ISO 27001, that includes A.8.32 (Change Management) and A.5.18 (Access Rights). For Essential Eight, we cover application control and administrative privilege restrictions. Full control mappings are available in the dashboard.",
   },
   {
     question: "Will auditors accept these reports?",
@@ -33,7 +33,7 @@ const faqs = [
   {
     question: "Can I use this for my certification audit?",
     answer:
-      "Yes. AuditTrail generates evidence that supports certification audits for ISO 27001, SOC 2, and other frameworks. However, we're one part of your compliance program—you'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
+      "Yes. AuditTrail generates evidence that supports certification audits for ISO 27001 and Essential Eight. However, we're one part of your compliance program—you'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
   },
   {
     question: "Do you offer enterprise plans?",
