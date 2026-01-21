@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import * as Sentry from "@sentry/nextjs";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -27,13 +26,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    Sentry.captureException(error, {
-      contexts: {
-        react: {
-          componentStack: errorInfo.componentStack,
-        },
-      },
-    });
+    console.error("ErrorBoundary caught error:", error, errorInfo);
   }
 
   resetError = () => {
@@ -62,7 +55,7 @@ function DefaultErrorFallback({
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
           <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg
               className="w-8 h-8 text-red-600"
@@ -78,33 +71,32 @@ function DefaultErrorFallback({
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Something went wrong
           </h1>
-          <p className="text-gray-600 mb-6">
-            We're sorry, but something unexpected happened. Our team has been notified.
+          <p className="text-gray-500 text-sm mb-6">
+            An unexpected error occurred. Please try again.
           </p>
           {error && process.env.NODE_ENV === "development" && (
             <details className="mb-6 text-left">
               <summary className="text-sm text-gray-500 cursor-pointer mb-2">
-                Error details (development only)
+                Error details
               </summary>
-              <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto">
+              <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto max-h-40">
                 {error.message}
-                {error.stack}
               </pre>
             </details>
           )}
           <div className="flex gap-3 justify-center">
             <button
               onClick={resetError}
-              className="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors"
+              className="bg-gray-900 text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
             >
               Try Again
             </button>
             <a
               href="/"
-              className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+              className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
             >
               Go Home
             </a>
