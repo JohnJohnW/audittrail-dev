@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SyncButton } from "@/components/dashboard/SyncButton";
@@ -42,7 +43,10 @@ export default async function DashboardPage() {
 
   // Fetch data with error handling
   let githubConnection = null;
-  let repositories: Awaited<ReturnType<typeof db.repository.findMany>> = [];
+  type RepositoryWithCount = Prisma.RepositoryGetPayload<{
+    include: { _count: { select: { commits: true; pullRequests: true } } };
+  }>;
+  let repositories: RepositoryWithCount[] = [];
   let subscription = null;
   let recentExports: Awaited<ReturnType<typeof db.export.findMany>> = [];
 
