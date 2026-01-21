@@ -1,11 +1,13 @@
 import { cn } from "@/lib/utils";
+import type { CSSProperties } from "react";
 
 interface SkeletonProps {
   className?: string;
   shimmer?: boolean;
+  style?: CSSProperties;
 }
 
-export function Skeleton({ className, shimmer = true }: SkeletonProps) {
+export function Skeleton({ className, shimmer = true, style }: SkeletonProps) {
   return (
     <div
       className={cn(
@@ -13,6 +15,7 @@ export function Skeleton({ className, shimmer = true }: SkeletonProps) {
         shimmer && "skeleton-shimmer",
         className
       )}
+      style={style}
     />
   );
 }
