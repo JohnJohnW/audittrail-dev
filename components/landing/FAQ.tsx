@@ -4,29 +4,39 @@ import { useState } from "react";
 
 const faqs = [
   {
-    question: "What GitHub access do you need?",
+    question: "What GitHub permissions do you need?",
     answer:
-      "Read-only access to repositories. We never modify your code or settings. You can revoke access at any time from your GitHub settings.",
+      "Read-only access to repositories, commits, pull requests, and branch protection settings. We use OAuth with the minimum required scopes. We never write to or modify your repositories. You can revoke access anytime from GitHub Settings.",
   },
   {
-    question: "Is my data secure?",
+    question: "Is my source code secure?",
     answer:
-      "Yes. We use read-only GitHub tokens, encrypt data in transit and at rest, and never store your source code. We only store metadata (commit hashes, PR numbers, branch names).",
+      "We never store your source code. We only extract metadata: commit hashes, PR numbers, branch names, timestamps, and authors. All data is encrypted in transit (TLS 1.3) and at rest. We're hosted on Vercel and Supabase with enterprise-grade security.",
   },
   {
-    question: "Which compliance frameworks do you support?",
+    question: "Which compliance controls can you evidence?",
     answer:
-      "ISO 27001:2022, Essential Eight, SOC 2 Type II, NIST CSF, and GDPR. We're actively adding more based on customer demand.",
+      "We map to change management, access control, and audit trail controls. For ISO 27001, that includes A.12.1.2 (Change Management) and A.9.2.3 (Access Rights). For SOC 2, we cover CC6.1, CC6.6, and CC8.1. Full control mappings are available in the dashboard.",
   },
   {
-    question: "Can I export reports?",
+    question: "Will auditors accept these reports?",
     answer:
-      "Yes. Pro plans include unlimited PDF and CSV exports. Free tier lets you view evidence but not export.",
+      "Our reports are designed for auditor review. Each report includes timestamped evidence, control mappings, and source references. The PDF format includes an executive summary and control-by-control breakdown. We recommend reviewing reports with your auditor during the planning phase.",
+  },
+  {
+    question: "How often do you sync data?",
+    answer:
+      "We sync repository data daily via automated jobs. You can also trigger manual syncs from the dashboard anytime. Initial sync typically completes within a few minutes depending on repository size.",
+  },
+  {
+    question: "Can I use this for my certification audit?",
+    answer:
+      "Yes. AuditTrail generates evidence that supports certification audits for ISO 27001, SOC 2, and other frameworks. However, we're one part of your compliance program—you'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
   },
   {
     question: "Do you offer enterprise plans?",
     answer:
-      "Yes. Contact us for custom pricing, SSO, dedicated support, and custom framework mappings.",
+      "Yes. Enterprise includes SSO, custom framework mappings, dedicated support, and SLAs. Contact us at hello@audittrail.dev to discuss your requirements.",
   },
 ];
 
@@ -49,14 +59,14 @@ export function FAQ() {
           {faqs.map((faq, index) => (
             <div key={index} className="border-b border-gray-200 last:border-b-0">
               <button
-                className="w-full text-left py-4 flex items-center justify-between gap-4"
+                className="w-full text-left py-4 flex items-start justify-between gap-4"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 pr-4">
                   {faq.question}
                 </span>
                 <svg
-                  className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${
+                  className={`w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 transition-transform ${
                     openIndex === index ? "rotate-180" : ""
                   }`}
                   fill="none"
@@ -72,12 +82,21 @@ export function FAQ() {
                 </svg>
               </button>
               {openIndex === index && (
-                <div className="pb-4 text-sm text-gray-500 leading-relaxed">
+                <div className="pb-4 text-sm text-gray-500 leading-relaxed pr-8">
                   {faq.answer}
                 </div>
               )}
             </div>
           ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <p className="text-sm text-gray-500">
+            More questions?{" "}
+            <a href="mailto:hello@audittrail.dev" className="text-gray-900 hover:underline">
+              Get in touch
+            </a>
+          </p>
         </div>
       </div>
     </section>

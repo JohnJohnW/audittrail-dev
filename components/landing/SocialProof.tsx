@@ -1,27 +1,24 @@
 export function SocialProof() {
-  const companies = [
-    "Acme Corp",
-    "TechFlow",
-    "DataSafe",
-    "CloudOps",
-    "SecureNet",
-  ];
-
   return (
-    <section className="py-16 border-t border-gray-100">
-      <div className="max-w-5xl mx-auto px-6">
-        <p className="text-center text-xs text-gray-400 uppercase tracking-wider mb-8">
-          Trusted by engineering and security teams
-        </p>
-        <div className="flex items-center justify-center gap-x-12 gap-y-8 flex-wrap">
-          {companies.map((company, index) => (
-            <div
-              key={index}
-              className="text-gray-300 font-medium text-lg tracking-tight"
-            >
-              {company}
-            </div>
-          ))}
+    <section className="py-12 border-t border-gray-100">
+      <div className="max-w-4xl mx-auto px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div>
+            <div className="text-2xl font-semibold text-gray-900">45+</div>
+            <div className="text-xs text-gray-500 mt-1">Compliance controls mapped</div>
+          </div>
+          <div>
+            <div className="text-2xl font-semibold text-gray-900">5</div>
+            <div className="text-xs text-gray-500 mt-1">Frameworks supported</div>
+          </div>
+          <div>
+            <div className="text-2xl font-semibold text-gray-900">&lt;2 min</div>
+            <div className="text-xs text-gray-500 mt-1">To connect GitHub</div>
+          </div>
+          <div>
+            <div className="text-2xl font-semibold text-gray-900">Read-only</div>
+            <div className="text-xs text-gray-500 mt-1">GitHub access</div>
+          </div>
         </div>
       </div>
     </section>

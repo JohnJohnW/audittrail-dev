@@ -2,26 +2,35 @@ export function Problem() {
   return (
     <section className="py-20 px-6">
       <div className="max-w-5xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-16 md:gap-24">
+        <div className="grid md:grid-cols-2 gap-16 md:gap-20">
           <div>
             <p className="text-xs text-gray-400 uppercase tracking-wider mb-4">
               The problem
             </p>
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-              Audit prep takes weeks
+              Audit prep is painful
             </h2>
-            <ul className="space-y-4 text-gray-600 text-[15px] leading-relaxed">
+            <ul className="space-y-4 text-[15px] leading-relaxed">
               <li className="flex gap-3">
-                <span className="text-gray-300">—</span>
-                Engineering teams spend weeks gathering screenshots and spreadsheets before every audit
+                <span className="text-red-400 font-medium">×</span>
+                <span className="text-gray-600">
+                  Auditors ask for change management evidence. You spend hours
+                  screenshotting GitHub PRs and commit logs.
+                </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-gray-300">—</span>
-                Git history, PRs, and protection rules live in different places. Auditors want one clean package
+                <span className="text-red-400 font-medium">×</span>
+                <span className="text-gray-600">
+                  Branch protection rules, code reviews, and deployment approvals
+                  live in different places. Auditors want one package.
+                </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-gray-300">—</span>
-                Mapping development practices to ISO 27001 or SOC 2 controls requires deep expertise
+                <span className="text-red-400 font-medium">×</span>
+                <span className="text-gray-600">
+                  Mapping your Git workflow to ISO 27001 A.12.1.2 or SOC 2 CC6.1
+                  requires compliance expertise you don&apos;t have time for.
+                </span>
               </li>
             </ul>
           </div>
@@ -31,20 +40,29 @@ export function Problem() {
               The solution
             </p>
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-              One-click evidence exports
+              One-click evidence packs
             </h2>
-            <ul className="space-y-4 text-gray-600 text-[15px] leading-relaxed">
+            <ul className="space-y-4 text-[15px] leading-relaxed">
               <li className="flex gap-3">
-                <span className="text-gray-300">—</span>
-                Connect GitHub once. We collect commits, pull requests, reviews, and branch protection rules
+                <span className="text-green-600 font-medium">✓</span>
+                <span className="text-gray-600">
+                  Connect GitHub once. We automatically pull commits, PRs,
+                  reviews, and branch protection settings daily.
+                </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-gray-300">—</span>
-                Everything maps to compliance controls automatically. No manual data entry
+                <span className="text-green-600 font-medium">✓</span>
+                <span className="text-gray-600">
+                  Every artifact maps to specific compliance controls. ISO 27001
+                  Annex A, SOC 2 Trust Services Criteria, Essential Eight—all covered.
+                </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-gray-300">—</span>
-                Export audit-ready PDF reports or CSV files with one click
+                <span className="text-green-600 font-medium">✓</span>
+                <span className="text-gray-600">
+                  Export PDF reports or CSV tables that auditors understand.
+                  No more manual evidence gathering.
+                </span>
               </li>
             </ul>
           </div>
