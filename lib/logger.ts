@@ -1,5 +1,3 @@
-import * as Sentry from "@sentry/nextjs";
-
 export enum LogLevel {
   DEBUG = "debug",
   INFO = "info",
@@ -8,7 +6,7 @@ export enum LogLevel {
 }
 
 interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class Logger {
@@ -24,16 +22,14 @@ class Logger {
     context?: LogContext,
     error?: Error
   ) {
-    const timestamp = new Date().toISOString();
     const logEntry = {
-      timestamp,
+      timestamp: new Date().toISOString(),
       level,
       message,
       requestId: this.requestId,
       ...context,
     };
 
-    // Console logging
     const consoleMethod =
       level === LogLevel.ERROR
         ? console.error
@@ -43,23 +39,10 @@ class Logger {
         ? console.info
         : console.debug;
 
-    consoleMethod(`[${level.toUpperCase()}] ${message}`, {
-      ...context,
-      requestId: this.requestId,
-    });
-
-    // Sentry logging for errors and warnings
-    if (level === LogLevel.ERROR && error) {
-      Sentry.captureException(error, {
-        extra: context,
-        tags: { requestId: this.requestId },
-      });
-    } else if (level === LogLevel.WARN) {
-      Sentry.captureMessage(message, {
-        level: "warning",
-        extra: context,
-        tags: { requestId: this.requestId },
-      });
+    if (error) {
+      consoleMethod(`[${level.toUpperCase()}] ${message}`, logEntry, error);
+    } else {
+      consoleMethod(`[${level.toUpperCase()}] ${message}`, logEntry);
     }
   }
 
