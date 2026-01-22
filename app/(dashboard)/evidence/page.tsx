@@ -90,8 +90,23 @@ export default function EvidencePage() {
         fetch("/api/github/repositories"),
       ]);
 
+      // Check if evidence API call was successful
+      if (!evidenceRes.ok) {
+        const errorData = await evidenceRes.json().catch(() => ({}));
+        console.error("Evidence API error:", errorData);
+        setData(null);
+        return;
+      }
+
       const evidenceData = await evidenceRes.json();
       const reposData = await reposRes.json();
+
+      // Validate evidence data structure
+      if (evidenceData.error || !evidenceData.controls) {
+        console.error("Invalid evidence data:", evidenceData);
+        setData(null);
+        return;
+      }
 
       setData(evidenceData);
       
@@ -111,6 +126,7 @@ export default function EvidencePage() {
       }
     } catch (error) {
       console.error("Failed to fetch data:", error);
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -124,7 +140,21 @@ export default function EvidencePage() {
         params.set("repositoryIds", selectedRepositories.join(","));
       }
       const response = await fetch(`/api/evidence?${params.toString()}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Evidence API error:", errorData);
+        return;
+      }
+      
       const result = await response.json();
+      
+      // Validate data structure before setting
+      if (result.error || !result.controls) {
+        console.error("Invalid evidence data:", result);
+        return;
+      }
+      
       setData(result);
     } catch (error) {
       console.error("Failed to fetch evidence:", error);
@@ -134,8 +164,9 @@ export default function EvidencePage() {
   };
 
   useEffect(() => {
-    // Only fetch evidence when repositories are loaded and selection changes
-    if (repositories.length > 0 || selectedRepositories.length === 0) {
+    // Only refetch evidence when selection changes (not on initial mount)
+    // Initial data is already fetched in fetchData
+    if (selectedRepositories.length > 0) {
       fetchEvidence();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

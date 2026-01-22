@@ -63,9 +63,12 @@ export default function CompliancePage() {
   }, []);
 
   useEffect(() => {
-    if (repositories.length > 0) {
+    // Only refetch score when selection changes (not on initial mount)
+    // Initial data is already fetched in fetchData
+    if (selectedRepositories.length > 0) {
       fetchScore();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRepositories]);
 
   const fetchData = async () => {
@@ -75,8 +78,23 @@ export default function CompliancePage() {
         fetch("/api/github/repositories"),
       ]);
 
+      // Check if score API call was successful
+      if (!scoreRes.ok) {
+        const errorData = await scoreRes.json().catch(() => ({}));
+        console.error("Compliance score API error:", errorData);
+        setScore(null);
+        return;
+      }
+
       const scoreData = await scoreRes.json();
       const reposData = await reposRes.json();
+
+      // Validate score data structure
+      if (scoreData.error || typeof scoreData.overall !== "number") {
+        console.error("Invalid score data:", scoreData);
+        setScore(null);
+        return;
+      }
 
       setScore(scoreData);
       
@@ -96,6 +114,7 @@ export default function CompliancePage() {
       }
     } catch (error) {
       console.error("Failed to fetch data:", error);
+      setScore(null);
     } finally {
       setLoading(false);
     }
@@ -109,7 +128,21 @@ export default function CompliancePage() {
         params.set("repositoryIds", selectedRepositories.join(","));
       }
       const response = await fetch(`/api/compliance/score?${params.toString()}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Compliance score API error:", errorData);
+        return;
+      }
+      
       const data = await response.json();
+      
+      // Validate data structure before setting
+      if (data.error || typeof data.overall !== "number") {
+        console.error("Invalid score data:", data);
+        return;
+      }
+      
       setScore(data);
     } catch (error) {
       console.error("Failed to fetch compliance score:", error);
