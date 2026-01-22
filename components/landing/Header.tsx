@@ -49,12 +49,6 @@ export function Header() {
             </a>
             <Link
               href="/auth/signin"
-              className="text-sm font-medium text-gray-900 hover:text-gray-600 transition-colors"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/auth/signin"
               className="bg-accent text-white px-4 py-2 text-sm font-medium hover:bg-accent-hover hover:-translate-y-0.5 hover:shadow-md hover:shadow-accent/20 transition-all duration-200 rounded-md"
             >
               Get Started
@@ -115,14 +109,7 @@ export function Header() {
                   </a>
                   <Link
                     href="/auth/signin"
-                    className="text-sm text-gray-900"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    href="/auth/signin"
-                    className="bg-accent text-white px-4 py-2 text-sm font-medium text-center rounded-md"
+                    className="bg-accent text-white px-4 py-2 text-sm font-medium text-center rounded-md hover:bg-accent-hover transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Get Started
