@@ -38,10 +38,22 @@ export default function TrendsPage() {
     setLoading(true);
     try {
       const response = await fetch(`/api/trends?days=${days}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch trends: ${response.status} ${response.statusText}`);
+      }
+      
       const result = await response.json();
+      
+      // Validate response structure
+      if (!result || !Array.isArray(result.dates)) {
+        throw new Error("Invalid response format from trends API");
+      }
+      
       setData(result);
     } catch (error) {
       console.error("Failed to fetch trends:", error);
+      setData(null); // Ensure data is null on error
     } finally {
       setLoading(false);
     }
@@ -65,18 +77,49 @@ export default function TrendsPage() {
   if (!data) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Failed to load trends data</p>
+        <p className="text-gray-600 mb-4">Failed to load trends data</p>
+        <button
+          onClick={() => fetchTrends()}
+          className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
-  const chartData = data.dates.map((date, index) => ({
-    date: format(new Date(date), "MMM dd"),
-    commits: data.commits[index] || 0,
-    pullRequests: data.pullRequests[index] || 0,
-    complianceScore: data.complianceScores[index] || 0,
-    evidenceCount: data.evidenceCounts[index] || 0,
-  }));
+  // Safely format chart data with error handling
+  const chartData = data.dates.map((date, index) => {
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) {
+        // Invalid date, use fallback
+        return {
+          date: `Day ${index + 1}`,
+          commits: data.commits[index] || 0,
+          pullRequests: data.pullRequests[index] || 0,
+          complianceScore: data.complianceScores[index] || 0,
+          evidenceCount: data.evidenceCounts[index] || 0,
+        };
+      }
+      return {
+        date: format(dateObj, "MMM dd"),
+        commits: data.commits[index] || 0,
+        pullRequests: data.pullRequests[index] || 0,
+        complianceScore: data.complianceScores[index] || 0,
+        evidenceCount: data.evidenceCounts[index] || 0,
+      };
+    } catch (error) {
+      // Fallback if date formatting fails
+      return {
+        date: `Day ${index + 1}`,
+        commits: data.commits[index] || 0,
+        pullRequests: data.pullRequests[index] || 0,
+        complianceScore: data.complianceScores[index] || 0,
+        evidenceCount: data.evidenceCounts[index] || 0,
+      };
+    }
+  });
 
   return (
     <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function DashboardError({
@@ -10,9 +10,24 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [homeHref, setHomeHref] = useState("/dashboard");
+
   useEffect(() => {
     console.error("Dashboard error:", error);
   }, [error]);
+
+  useEffect(() => {
+    // Check for session cookie (only in browser)
+    let hasSession = false;
+    if (typeof document !== "undefined") {
+      hasSession =
+        document.cookie.includes("authjs.session-token") ||
+        document.cookie.includes("__Secure-authjs.session-token");
+    }
+
+    // Always go to dashboard for dashboard errors, but check session as fallback
+    setHomeHref(hasSession ? "/dashboard" : "/");
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px]">
@@ -38,7 +53,7 @@ export default function DashboardError({
           Try Again
         </button>
         <Link
-          href="/"
+          href={homeHref}
           className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
         >
           Go Home
