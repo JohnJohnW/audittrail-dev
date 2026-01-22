@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { logger } from "./logger";
 import type {
   EvidenceItem,
   ControlEvidence,
@@ -160,48 +161,55 @@ export async function getComplianceEvidence(
   frameworks: { id: string; name: string; controlCount: number }[];
   controls: ControlEvidence[];
 }> {
-  const { dateFrom, dateTo, repositoryIds } = options;
+  try {
+    const { dateFrom, dateTo, repositoryIds } = options;
 
-  // Get all frameworks and controls
-  const frameworks = await db.complianceFramework.findMany({
-    include: {
-      controls: true,
-    },
-  });
+    logger.info("getComplianceEvidence called", { orgId, repositoryIds });
 
-  // If no frameworks exist, return empty result
-  if (frameworks.length === 0) {
-    return {
-      frameworks: [],
-      controls: [],
-    };
-  }
+    // Get all frameworks and controls
+    const frameworks = await db.complianceFramework.findMany({
+      include: {
+        controls: true,
+      },
+    });
 
-  // Build repository filter
-  const repoWhere: Record<string, unknown> = { orgId, isActive: true };
-  if (repositoryIds && repositoryIds.length > 0) {
-    repoWhere.id = { in: repositoryIds };
-  }
+    logger.info("Frameworks fetched", { count: frameworks.length });
 
-  // Build date filters
-  const commitWhere: Record<string, unknown> = {};
-  const prWhere: Record<string, unknown> = { state: "merged" };
-  if (dateFrom || dateTo) {
-    if (dateFrom) {
-      commitWhere.committedAt = { gte: dateFrom };
-      prWhere.mergedAt = { gte: dateFrom };
-    }
-    if (dateTo) {
-      commitWhere.committedAt = {
-        ...(commitWhere.committedAt as object),
-        lte: dateTo,
+    // If no frameworks exist, return empty result
+    if (frameworks.length === 0) {
+      logger.info("No frameworks found, returning empty result");
+      return {
+        frameworks: [],
+        controls: [],
       };
-      prWhere.mergedAt = { ...(prWhere.mergedAt as object), lte: dateTo };
     }
-  }
 
-  // Get org's active repositories
-  const repositories = await db.repository.findMany({
+    // Build repository filter
+    const repoWhere: Record<string, unknown> = { orgId, isActive: true };
+    if (repositoryIds && repositoryIds.length > 0) {
+      repoWhere.id = { in: repositoryIds };
+    }
+
+    // Build date filters
+    const commitWhere: Record<string, unknown> = {};
+    const prWhere: Record<string, unknown> = { state: "merged" };
+    if (dateFrom || dateTo) {
+      if (dateFrom) {
+        commitWhere.committedAt = { gte: dateFrom };
+        prWhere.mergedAt = { gte: dateFrom };
+      }
+      if (dateTo) {
+        commitWhere.committedAt = {
+          ...(commitWhere.committedAt as object),
+          lte: dateTo,
+        };
+        prWhere.mergedAt = { ...(prWhere.mergedAt as object), lte: dateTo };
+      }
+    }
+
+    logger.info("Fetching repositories", { orgId, repoWhere });
+    // Get org's active repositories
+    const repositories = await db.repository.findMany({
     where: repoWhere,
     include: {
       commits: {
@@ -224,13 +232,15 @@ export async function getComplianceEvidence(
         take: 1,
       },
     },
-  });
+    });
 
-  // Create maps to track which repository each commit/PR belongs to
-  const commitToRepo = new Map<string, { id: string; name: string; fullName: string }>();
-  const prToRepo = new Map<string, { id: string; name: string; fullName: string }>();
-  
-  for (const repo of repositories) {
+    logger.info("Repositories fetched", { count: repositories.length });
+
+    // Create maps to track which repository each commit/PR belongs to
+    const commitToRepo = new Map<string, { id: string; name: string; fullName: string }>();
+    const prToRepo = new Map<string, { id: string; name: string; fullName: string }>();
+    
+    for (const repo of repositories) {
     for (const commit of repo.commits) {
       commitToRepo.set(commit.id, {
         id: repo.id,
@@ -245,41 +255,47 @@ export async function getComplianceEvidence(
         fullName: repo.fullName,
       });
     }
-  }
+    }
 
-  // Aggregate data
-  const allCommits = repositories.flatMap((r) => r.commits);
-  const allPRs = repositories.flatMap((r) => r.pullRequests);
-  const allBranchProtections = repositories.flatMap((r) => r.branchProtections);
+    // Aggregate data
+    const allCommits = repositories.flatMap((r) => r.commits);
+    const allPRs = repositories.flatMap((r) => r.pullRequests);
+    const allBranchProtections = repositories.flatMap((r) => r.branchProtections);
 
-  // Categorize commits for smarter matching
-  const dependencyCommits = allCommits.filter((c) =>
-    matchesPatterns(c.message, DEPENDENCY_PATTERNS)
-  );
-  const infrastructureCommits = allCommits.filter((c) =>
-    matchesPatterns(c.message, INFRASTRUCTURE_PATTERNS)
-  );
-  const securityCommits = allCommits.filter((c) => matchesPatterns(c.message, SECURITY_PATTERNS));
-  const testCommits = allCommits.filter((c) => matchesPatterns(c.message, TEST_PATTERNS));
-  // Signed commits provide strong evidence for authentication controls
-  // TODO: Use signedCommits for auth controls like A.5.17, E8-MFA
-  const _signedCommits = allCommits.filter((c) => c.verified === true);
-  // CI/CD security tool commits for security testing evidence
-  const cicdSecurityCommits = allCommits.filter((c) =>
-    matchesPatterns(c.message, CICD_SECURITY_PATTERNS)
-  );
-  // Automated dependency updates (Dependabot/Renovate)
-  const automatedDependencyCommits = allCommits.filter((c) =>
-    matchesPatterns(c.message, AUTOMATED_DEPENDENCY_PATTERNS)
-  );
+    logger.info("Aggregated data", { 
+      commits: allCommits.length, 
+      prs: allPRs.length, 
+      branchProtections: allBranchProtections.length 
+    });
 
-  // Controls that have limited Git evidence
-  const LIMITED_EVIDENCE_CONTROLS = ["E8-MM", "E8-UAH"];
+    // Categorize commits for smarter matching
+    const dependencyCommits = allCommits.filter((c) =>
+      matchesPatterns(c.message, DEPENDENCY_PATTERNS)
+    );
+    const infrastructureCommits = allCommits.filter((c) =>
+      matchesPatterns(c.message, INFRASTRUCTURE_PATTERNS)
+    );
+    const securityCommits = allCommits.filter((c) => matchesPatterns(c.message, SECURITY_PATTERNS));
+    const testCommits = allCommits.filter((c) => matchesPatterns(c.message, TEST_PATTERNS));
+    // Signed commits provide strong evidence for authentication controls
+    // TODO: Use signedCommits for auth controls like A.5.17, E8-MFA
+    const _signedCommits = allCommits.filter((c) => c.verified === true);
+    // CI/CD security tool commits for security testing evidence
+    const cicdSecurityCommits = allCommits.filter((c) =>
+      matchesPatterns(c.message, CICD_SECURITY_PATTERNS)
+    );
+    // Automated dependency updates (Dependabot/Renovate)
+    const automatedDependencyCommits = allCommits.filter((c) =>
+      matchesPatterns(c.message, AUTOMATED_DEPENDENCY_PATTERNS)
+    );
 
-  // Map controls to evidence
-  const controls: ControlEvidence[] = [];
+    // Controls that have limited Git evidence
+    const LIMITED_EVIDENCE_CONTROLS = ["E8-MM", "E8-UAH"];
 
-  for (const framework of frameworks) {
+    // Map controls to evidence
+    const controls: ControlEvidence[] = [];
+
+    for (const framework of frameworks) {
     for (const control of framework.controls) {
       const evidence: EvidenceItem[] = [];
       let status: "has_evidence" | "partial" | "no_evidence" | "limited" = "no_evidence";
@@ -492,16 +508,26 @@ export async function getComplianceEvidence(
         note,
       });
     }
-  }
+    }
 
-  return {
-    frameworks: frameworks.map((f) => ({
-      id: f.id,
-      name: f.name,
-      controlCount: f.controls.length,
-    })),
-    controls,
-  };
+    logger.info("Controls processed", { count: controls.length });
+
+    return {
+      frameworks: frameworks.map((f) => ({
+        id: f.id,
+        name: f.name,
+        controlCount: f.controls.length,
+      })),
+      controls,
+    };
+  } catch (error) {
+    logger.error("Error in getComplianceEvidence", error, { orgId });
+    // Return empty result on error to prevent API from crashing
+    return {
+      frameworks: [],
+      controls: [],
+    };
+  }
 }
 
 function calculateProtectionStrength(bp: {
