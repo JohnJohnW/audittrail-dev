@@ -6,6 +6,8 @@ import { handleApiError, AppError } from "@/lib/error-handler";
 import { PLAN_LIMITS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const { orgId } = await requireAuth();
@@ -46,22 +48,31 @@ export async function GET() {
     // Get tracked repos from database
     const trackedRepos = await db.repository.findMany({
       where: { orgId },
-      select: { githubRepoId: true, isActive: true },
+      select: { id: true, githubRepoId: true, isActive: true },
     });
-    const trackedMap = new Map(trackedRepos.map((r) => [r.githubRepoId.toString(), r.isActive]));
+    const trackedMap = new Map(
+      trackedRepos.map((r) => [
+        r.githubRepoId.toString(),
+        { dbId: r.id, isActive: r.isActive },
+      ])
+    );
 
-    const repositories = githubRepos.map((repo) => ({
-      id: repo.id,
-      name: repo.name,
-      fullName: repo.full_name,
-      private: repo.private,
-      defaultBranch: repo.default_branch,
-      url: repo.html_url,
-      description: repo.description,
-      pushedAt: repo.pushed_at,
-      isTracked: trackedMap.has(repo.id.toString()),
-      isActive: trackedMap.get(repo.id.toString()) ?? false,
-    }));
+    const repositories = githubRepos.map((repo) => {
+      const tracked = trackedMap.get(repo.id.toString());
+      return {
+        id: repo.id,
+        dbId: tracked?.dbId, // Database ID for filtering
+        name: repo.name,
+        fullName: repo.full_name,
+        private: repo.private,
+        defaultBranch: repo.default_branch,
+        url: repo.html_url,
+        description: repo.description,
+        pushedAt: repo.pushed_at,
+        isTracked: !!tracked,
+        isActive: tracked?.isActive ?? false,
+      };
+    });
 
     return NextResponse.json({
       connected: true,

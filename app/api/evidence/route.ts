@@ -4,6 +4,8 @@ import { requireAuth, getQueryParam } from "@/lib/api";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
 import { handleApiError } from "@/lib/error-handler";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const { orgId } = await requireAuth();
