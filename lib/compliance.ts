@@ -169,6 +169,14 @@ export async function getComplianceEvidence(
     },
   });
 
+  // If no frameworks exist, return empty result
+  if (frameworks.length === 0) {
+    return {
+      frameworks: [],
+      controls: [],
+    };
+  }
+
   // Build repository filter
   const repoWhere: Record<string, unknown> = { orgId, isActive: true };
   if (repositoryIds && repositoryIds.length > 0) {

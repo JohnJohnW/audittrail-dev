@@ -83,16 +83,32 @@ export default function CompliancePage() {
         const errorData = await scoreRes.json().catch(() => ({}));
         console.error("Compliance score API error:", errorData);
         setScore(null);
+        setRepositories([]);
         return;
       }
 
+      // Check if repos API call was successful
+      if (!reposRes.ok) {
+        console.error("Repositories API error:", reposRes.status, reposRes.statusText);
+        // Still try to parse score data even if repos fail
+      }
+
       const scoreData = await scoreRes.json();
-      const reposData = await reposRes.json();
+      const reposData = reposRes.ok ? await reposRes.json().catch(() => ({ repositories: [] })) : { repositories: [] };
 
       // Validate score data structure
-      if (scoreData.error || typeof scoreData.overall !== "number") {
-        console.error("Invalid score data:", scoreData);
+      if (scoreData.error) {
+        console.error("Compliance score API returned error:", scoreData);
         setScore(null);
+        setRepositories([]);
+        return;
+      }
+
+      // Validate required fields
+      if (typeof scoreData.overall !== "number" || !Array.isArray(scoreData.byFramework)) {
+        console.error("Invalid score data structure:", scoreData);
+        setScore(null);
+        setRepositories([]);
         return;
       }
 
@@ -115,6 +131,7 @@ export default function CompliancePage() {
     } catch (error) {
       console.error("Failed to fetch data:", error);
       setScore(null);
+      setRepositories([]);
     } finally {
       setLoading(false);
     }

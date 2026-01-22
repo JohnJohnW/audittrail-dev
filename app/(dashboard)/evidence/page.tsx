@@ -95,16 +95,32 @@ export default function EvidencePage() {
         const errorData = await evidenceRes.json().catch(() => ({}));
         console.error("Evidence API error:", errorData);
         setData(null);
+        setRepositories([]);
         return;
       }
 
+      // Check if repos API call was successful
+      if (!reposRes.ok) {
+        console.error("Repositories API error:", reposRes.status, reposRes.statusText);
+        // Still try to parse evidence data even if repos fail
+      }
+
       const evidenceData = await evidenceRes.json();
-      const reposData = await reposRes.json();
+      const reposData = reposRes.ok ? await reposRes.json().catch(() => ({ repositories: [] })) : { repositories: [] };
 
       // Validate evidence data structure
-      if (evidenceData.error || !evidenceData.controls) {
-        console.error("Invalid evidence data:", evidenceData);
+      if (evidenceData.error) {
+        console.error("Evidence API returned error:", evidenceData);
         setData(null);
+        setRepositories([]);
+        return;
+      }
+
+      // Ensure controls is an array (default to empty if missing)
+      if (!Array.isArray(evidenceData.controls)) {
+        console.error("Invalid evidence data structure - controls is not an array:", evidenceData);
+        setData(null);
+        setRepositories([]);
         return;
       }
 
@@ -127,6 +143,7 @@ export default function EvidencePage() {
     } catch (error) {
       console.error("Failed to fetch data:", error);
       setData(null);
+      setRepositories([]);
     } finally {
       setLoading(false);
     }
@@ -180,7 +197,8 @@ export default function EvidencePage() {
 
   const filteredControls = useMemo(() => {
     if (!data || !Array.isArray(data.controls)) return [];
-    return data.controls.filter((control) => {
+    const controls = data.controls;
+    return controls.filter((control) => {
       if (selectedFramework && control.frameworkName !== selectedFramework) return false;
       if (selectedStatus !== "all" && control.status !== selectedStatus) return false;
       // Note: Repository filtering is done server-side via API, but we also filter client-side
@@ -215,7 +233,7 @@ export default function EvidencePage() {
     );
   }
 
-  if (!data || !Array.isArray(data.controls) || !data.summary) {
+  if (!data) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600">Failed to load evidence data</p>
@@ -228,6 +246,18 @@ export default function EvidencePage() {
       </div>
     );
   }
+
+  // Ensure data has required structure, with defaults
+  const controls = Array.isArray(data.controls) ? data.controls : [];
+  const frameworks = Array.isArray(data.frameworks) ? data.frameworks : [];
+  const summary = data.summary || {
+    total: 0,
+    withEvidence: 0,
+    partial: 0,
+    limited: 0,
+    noEvidence: 0,
+    score: 0,
+  };
 
   return (
     <div>
@@ -307,7 +337,7 @@ export default function EvidencePage() {
                   >
                     All
                   </FilterButton>
-                  {data.frameworks.map((framework) => (
+                  {frameworks.map((framework) => (
                     <FilterButton
                       key={framework.id}
                       active={selectedFramework === framework.name}
@@ -359,7 +389,7 @@ export default function EvidencePage() {
 
             {/* Results count */}
             <p className="text-sm text-gray-500">
-              Showing {filteredControls.length} of {data.controls.length} controls
+              Showing {filteredControls.length} of {controls.length} controls
             </p>
           </CardContent>
         </Card>
