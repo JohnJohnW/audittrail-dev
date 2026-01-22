@@ -187,7 +187,7 @@ function EmptyGitHubState() {
       </div>
       <p className="text-sm font-medium text-gray-900 mb-1">GitHub not connected</p>
       <p className="text-xs text-gray-500 mb-4">Sign out and sign in with GitHub to connect</p>
-      <Button variant="secondary" href="/api/auth/signout" size="sm">
+      <Button variant="secondary" href="/auth/signout" size="sm">
         Sign out →
       </Button>
     </div>
