@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, getConnectionPoolMetrics } from "@/lib/db";
 
 export async function GET() {
   const checks: Record<string, { status: "healthy" | "degraded" | "unhealthy"; message?: string }> =
@@ -8,11 +8,29 @@ export async function GET() {
   // Database check
   try {
     await db.$queryRaw`SELECT 1`;
-    checks.database = { status: "healthy" };
+    const poolMetrics = getConnectionPoolMetrics();
+    
+    // Check for recent connection pool errors
+    if (poolMetrics.hasRecentErrors) {
+      checks.database = {
+        status: "degraded",
+        message: `Connection pool errors detected (${poolMetrics.errorCount} total, last: ${poolMetrics.lastError?.toISOString()})`,
+      };
+    } else {
+      checks.database = { status: "healthy" };
+    }
   } catch (error) {
+    const isPoolError = error instanceof Error && (
+      error.message.includes("MaxClientsInSessionMode") ||
+      error.message.includes("max clients reached") ||
+      error.message.includes("connection pool")
+    );
+    
     checks.database = {
       status: "unhealthy",
-      message: error instanceof Error ? error.message : "Database connection failed",
+      message: isPoolError
+        ? "Database connection pool exhausted"
+        : error instanceof Error ? error.message : "Database connection failed",
     };
   }
 

@@ -146,6 +146,32 @@ CRON_SECRET=[your-cron-secret-from-local-.env]
 - Verify Supabase allows connections from Vercel IPs
 - Check Supabase connection pooling settings
 
+### Connection Pool Exhaustion (MaxClientsInSessionMode)
+
+If you see "MaxClientsInSessionMode: max clients reached" errors:
+
+1. **Verify Environment Variables**:
+   - `DATABASE_URL` must include `connection_limit=1` for pgbouncer session mode
+   - `DIRECT_URL` should use direct connection (port 5432, no pgbouncer)
+
+2. **Check Connection Pool Configuration**:
+   - The Prisma client uses a singleton pattern to reuse connections
+   - Each serverless function should reuse the same PrismaClient instance
+   - Monitor connection pool errors via `/api/health` endpoint
+
+3. **Optimize Queries**:
+   - Large batch operations (e.g., syncing commits/PRs) are processed in batches
+   - Compliance queries fetch limited data (100 commits, 50 PRs per repo)
+   - Consider reducing batch sizes if errors persist
+
+4. **Automatic Retry**:
+   - The app automatically retries connection pool errors with exponential backoff
+   - Check logs for retry attempts and success rates
+
+5. **Monitor Health**:
+   - Visit `/api/health` to check connection pool error metrics
+   - Recent errors (last 5 minutes) will show as "degraded" status
+
 ### Authentication Not Working
 
 - Verify `NEXTAUTH_SECRET` is set and matches production

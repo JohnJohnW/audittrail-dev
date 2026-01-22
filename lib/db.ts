@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { logger } from "./logger";
 
+// Track connection pool errors for monitoring
+let connectionPoolErrorCount = 0;
+let lastConnectionPoolError: Date | null = null;
+
 // Use a more reliable global pattern for serverless environments
 declare global {
   // eslint-disable-next-line no-var
@@ -14,6 +18,9 @@ export const db =
   globalThis.__prisma ??
   new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    // Connection pool configuration for Supabase pgbouncer (session mode)
+    // connection_limit=1 is required when using pgbouncer in session mode
+    // This is set via DATABASE_URL query params, but we ensure it's documented here
   });
 
 // Always set the global to ensure reuse (critical for serverless to avoid connection pool exhaustion)
@@ -62,8 +69,13 @@ export async function safeDbOperation<T>(
       
       // Retry on connection pool errors with exponential backoff
       if (isConnectionPoolError(error) && attempt < maxRetries) {
+        connectionPoolErrorCount++;
+        lastConnectionPoolError = new Date();
         const delay = Math.min(100 * Math.pow(2, attempt), 1000);
-        logger.warn(`Connection pool error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+        logger.warn(`Connection pool error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`, {
+          errorCount: connectionPoolErrorCount,
+          lastError: lastConnectionPoolError,
+        });
         await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
@@ -102,8 +114,13 @@ export async function dbOperation<T>(
       
       // Retry on connection pool errors with exponential backoff
       if (isConnectionPoolError(error) && attempt < maxRetries) {
+        connectionPoolErrorCount++;
+        lastConnectionPoolError = new Date();
         const delay = Math.min(100 * Math.pow(2, attempt), 1000);
-        logger.warn(`Connection pool error in ${context}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+        logger.warn(`Connection pool error in ${context}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`, {
+          errorCount: connectionPoolErrorCount,
+          lastError: lastConnectionPoolError,
+        });
         await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
@@ -233,4 +250,30 @@ export async function hasProSubscription(orgId: string): Promise<boolean> {
     subscription?.plan === "pro" &&
     (subscription?.status === "active" || subscription?.status === "free")
   );
+}
+
+// =============================================================================
+// Connection Pool Monitoring
+// =============================================================================
+
+/**
+ * Get connection pool error metrics for monitoring.
+ * Useful for health checks and alerting.
+ */
+export function getConnectionPoolMetrics() {
+  return {
+    errorCount: connectionPoolErrorCount,
+    lastError: lastConnectionPoolError,
+    hasRecentErrors: lastConnectionPoolError
+      ? Date.now() - lastConnectionPoolError.getTime() < 5 * 60 * 1000 // Last 5 minutes
+      : false,
+  };
+}
+
+/**
+ * Reset connection pool error metrics (useful for testing or after resolving issues).
+ */
+export function resetConnectionPoolMetrics() {
+  connectionPoolErrorCount = 0;
+  lastConnectionPoolError = null;
 }
