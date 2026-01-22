@@ -5,13 +5,18 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+// Prisma Client singleton pattern for serverless environments
+// This ensures we reuse the same connection pool across function invocations
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+// Always reuse the same instance (critical for serverless to avoid connection pool exhaustion)
+if (!globalForPrisma.prisma) {
+  globalForPrisma.prisma = db;
+}
 
 // =============================================================================
 // Error Handling Utilities

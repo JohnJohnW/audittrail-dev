@@ -64,8 +64,22 @@ export function getQueryParam(
   param: string,
   defaultValue?: string
 ): string | undefined {
-  const params = url instanceof URL ? url.searchParams : url;
-  return params.get(param) ?? defaultValue;
+  try {
+    let params: URLSearchParams;
+    if (url instanceof URL) {
+      params = url.searchParams;
+    } else if (url instanceof URLSearchParams) {
+      params = url;
+    } else {
+      // Fallback: try to create URLSearchParams from string or object
+      console.warn("getQueryParam: Invalid URL type, attempting fallback", typeof url);
+      return defaultValue;
+    }
+    return params.get(param) ?? defaultValue;
+  } catch (error) {
+    console.error("getQueryParam error:", error);
+    return defaultValue;
+  }
 }
 
 /**

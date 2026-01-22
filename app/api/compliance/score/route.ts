@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     logger.info("Auth successful", { orgId });
 
     // Parse repository filter from query params
-    const repoIdsParam = getQueryParam(request.nextUrl, "repositoryIds");
+    // Use request.nextUrl.searchParams directly to avoid type issues
+    const repoIdsParam = request.nextUrl.searchParams.get("repositoryIds");
     const repositoryIds = repoIdsParam
       ? repoIdsParam.split(",").filter((id) => id.trim().length > 0)
       : undefined;
