@@ -3,12 +3,15 @@ import { NextResponse } from "next/server";
 import { requireAuth, getNumericQueryParam } from "@/lib/api";
 import { db } from "@/lib/db";
 import { subDays, startOfDay } from "date-fns";
-import { handleApiError } from "@/lib/error-handler";
+import { handleApiError, AppError } from "@/lib/error-handler";
 import { TRENDS_CONFIG } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
     const { orgId } = await requireAuth();
+    
+    logger.info("Trends API request", { orgId });
 
     // Validate and clamp days parameter using helper
     const days = getNumericQueryParam(request.nextUrl, "days", {
@@ -56,13 +59,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Get stored compliance snapshots for the date range
-    const snapshots = await db.complianceSnapshot.findMany({
-      where: {
-        orgId,
-        snapshotDate: { gte: startDate },
-      },
-      orderBy: { snapshotDate: "asc" },
-    });
+    // Note: If compliance_snapshots table doesn't exist, this will return empty array
+    let snapshots: Array<{ snapshotDate: Date; overallScore: number; withEvidence: number; partial: number; limited: number }> = [];
+    try {
+      snapshots = await db.complianceSnapshot.findMany({
+        where: {
+          orgId,
+          snapshotDate: { gte: startDate },
+        },
+        orderBy: { snapshotDate: "asc" },
+      });
+    } catch (snapshotError) {
+      // If snapshots table doesn't exist or has issues, continue without snapshots
+      logger.error("Could not fetch compliance snapshots, using fallback", snapshotError);
+    }
 
     // Create a map of date -> snapshot for quick lookup
     const snapshotMap = new Map(
@@ -135,6 +145,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Ensure all arrays have the same length
+    if (
+      dates.length !== commits.length ||
+      dates.length !== pullRequests.length ||
+      dates.length !== complianceScores.length ||
+      dates.length !== evidenceCounts.length
+    ) {
+      logger.error("Trends API: Array length mismatch", {
+        dates: dates.length,
+        commits: commits.length,
+        pullRequests: pullRequests.length,
+        complianceScores: complianceScores.length,
+        evidenceCounts: evidenceCounts.length,
+      });
+      throw new AppError("Data aggregation error", 500, "DATA_MISMATCH");
+    }
+
     return NextResponse.json({
       dates,
       commits,
@@ -143,6 +170,7 @@ export async function GET(request: NextRequest) {
       evidenceCounts,
     });
   } catch (error) {
+    logger.error("Trends API error", error, { orgId: "unknown" });
     return handleApiError(error);
   }
 }

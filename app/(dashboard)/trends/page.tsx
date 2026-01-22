@@ -40,14 +40,36 @@ export default function TrendsPage() {
       const response = await fetch(`/api/trends?days=${days}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch trends: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || errorData.message || `Failed to fetch trends: ${response.status} ${response.statusText}`
+        );
       }
       
       const result = await response.json();
       
+      // Check if response is an error response
+      if (result.error) {
+        throw new Error(result.error || "Failed to fetch trends data");
+      }
+      
       // Validate response structure
-      if (!result || !Array.isArray(result.dates)) {
-        throw new Error("Invalid response format from trends API");
+      if (!result || typeof result !== "object") {
+        throw new Error("Invalid response format from trends API: not an object");
+      }
+      
+      if (!Array.isArray(result.dates)) {
+        throw new Error("Invalid response format from trends API: dates is not an array");
+      }
+      
+      // Ensure all required arrays exist
+      if (
+        !Array.isArray(result.commits) ||
+        !Array.isArray(result.pullRequests) ||
+        !Array.isArray(result.complianceScores) ||
+        !Array.isArray(result.evidenceCounts)
+      ) {
+        throw new Error("Invalid response format from trends API: missing required arrays");
       }
       
       setData(result);
