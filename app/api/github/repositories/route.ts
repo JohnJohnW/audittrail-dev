@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getGitHubClientForOrg } from "@/lib/github";
 import { handleApiError, AppError } from "@/lib/error-handler";
 import { PLAN_LIMITS } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -21,10 +22,26 @@ export async function GET() {
     // Get repositories from GitHub
     const client = await getGitHubClientForOrg(orgId);
     if (!client) {
-      return NextResponse.json({ connected: false, repositories: [] });
+      logger.warn("GitHub client creation failed", { orgId });
+      return NextResponse.json({
+        connected: false,
+        repositories: [],
+        error: "GitHub connection invalid. Please reconnect.",
+      });
     }
 
-    const githubRepos = await client.getAllRepositories();
+    let githubRepos;
+    try {
+      githubRepos = await client.getAllRepositories();
+    } catch (error) {
+      // If GitHub API call fails, connection might be invalid
+      logger.error("Failed to fetch GitHub repositories", error, { orgId });
+      return NextResponse.json({
+        connected: false,
+        repositories: [],
+        error: "GitHub connection invalid. Please reconnect.",
+      });
+    }
 
     // Get tracked repos from database
     const trackedRepos = await db.repository.findMany({

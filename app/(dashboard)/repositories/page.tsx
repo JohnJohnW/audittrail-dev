@@ -130,7 +130,11 @@ export default function RepositoriesPage() {
             <p className="text-gray-500 mb-8 max-w-md mx-auto">
               Connect your GitHub account to start tracking repositories for compliance evidence.
             </p>
-            <Button variant="primary" href="/api/github/connect" size="lg">
+            <Button
+              variant="primary"
+              href="/api/auth/signin/github?callbackUrl=/repositories"
+              size="lg"
+            >
               <GitHubIcon className="w-5 h-5 mr-2" />
               Connect GitHub
             </Button>
