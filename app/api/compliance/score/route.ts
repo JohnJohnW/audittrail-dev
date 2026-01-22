@@ -51,6 +51,13 @@ export async function GET() {
 
     return NextResponse.json({
       overall: summary.score,
+      overallSummary: {
+        total: summary.total,
+        withEvidence: summary.withEvidence,
+        partial: summary.partial,
+        limited: summary.limited,
+        noEvidence: summary.noEvidence,
+      },
       byFramework,
       byCategory,
     });

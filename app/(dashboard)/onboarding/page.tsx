@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
+import { getLoadingPhrase } from "@/lib/utils/loading-phrases";
 
 interface OnboardingStep {
   id: string;
@@ -52,7 +53,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-gray-500">{getLoadingPhrase()}</div>
       </div>
     );
   }

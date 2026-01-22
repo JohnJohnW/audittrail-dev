@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { FadeIn } from "@/components/ui/Motion";
+import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
 
 interface SubscriptionData {
   plan: string;
@@ -91,7 +92,7 @@ function SettingsContent() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
-          <p className="text-gray-500">Loading...</p>
+          <p className="text-gray-500">{getContextualLoadingPhrase("settings")}</p>
         </div>
       </div>
     );
@@ -313,7 +314,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
-            <p className="text-gray-500">Loading...</p>
+            <p className="text-gray-500">{getContextualLoadingPhrase("settings")}</p>
           </div>
         </div>
       }

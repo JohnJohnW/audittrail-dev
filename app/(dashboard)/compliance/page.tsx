@@ -17,20 +17,35 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
 import { chart, chartStyles, progress } from "@/lib/design-tokens";
+import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
 
 interface PieLabelProps {
-  name?: string;
+  cx?: number;
+  cy?: number;
+  midAngle?: number;
+  innerRadius?: number;
+  outerRadius?: number;
   percent?: number;
+  index?: number;
+  name?: string;
+  value?: number;
 }
 
 interface ComplianceScore {
   overall: number;
+  overallSummary?: {
+    total: number;
+    withEvidence: number;
+    partial: number;
+    limited: number;
+    noEvidence: number;
+  };
   byFramework: { framework: string; score: number; total: number; withEvidence: number }[];
   byCategory: { category: string; score: number }[];
 }
 
 // Monochromatic accent palette for consistent, professional look
-const PIE_COLORS = [chart.primary, chart.tertiary];
+const PIE_COLORS = [chart.primary, chart.secondary, chart.tertiary];
 
 export default function CompliancePage() {
   const [score, setScore] = useState<ComplianceScore | null>(null);
@@ -57,7 +72,7 @@ export default function CompliancePage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
-          <p className="text-gray-500">Loading compliance score...</p>
+          <p className="text-gray-500">{getContextualLoadingPhrase("compliance")}</p>
         </div>
       </div>
     );
@@ -71,16 +86,34 @@ export default function CompliancePage() {
     );
   }
 
-  const pieData = [
-    {
-      name: "With Evidence",
-      value: score.byFramework.reduce((sum, f) => sum + f.withEvidence, 0),
-    },
-    {
-      name: "Missing",
-      value: score.byFramework.reduce((sum, f) => sum + (f.total - f.withEvidence), 0),
-    },
-  ];
+  // Calculate pie chart data from overall summary if available, otherwise fallback to framework sum
+  const pieData = score.overallSummary
+    ? [
+        {
+          name: "With Evidence",
+          value: score.overallSummary.withEvidence,
+        },
+        {
+          name: "Partial",
+          value: score.overallSummary.partial + score.overallSummary.limited,
+        },
+        {
+          name: "Missing",
+          value: score.overallSummary.noEvidence,
+        },
+      ].filter((item) => item.value > 0) // Filter out zero values
+    : [
+        {
+          name: "With Evidence",
+          value: score.byFramework.reduce((sum, f) => sum + f.withEvidence, 0),
+        },
+        {
+          name: "Missing",
+          value: score.byFramework.reduce((sum, f) => sum + (f.total - f.withEvidence), 0),
+        },
+      ].filter((item) => item.value > 0); // Filter out zero values
+
+  const hasPieData = pieData.length > 0 && pieData.some((item) => item.value > 0);
 
   return (
     <div>
@@ -146,30 +179,44 @@ export default function CompliancePage() {
               <CardTitle>Evidence Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(props: PieLabelProps) => {
-                      const { name, percent } = props;
-                      return `${name || ""} ${percent ? (percent * 100).toFixed(0) : 0}%`;
-                    }}
-                    outerRadius={100}
-                    innerRadius={60}
-                    fill={chart.primary}
-                    dataKey="value"
-                    strokeWidth={2}
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={chartStyles.tooltip.contentStyle} />
-                </PieChart>
-              </ResponsiveContainer>
+              {hasPieData ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={true}
+                      label={(props: PieLabelProps) => {
+                        const { name, percent } = props;
+                        // Only show label if segment is significant (>5%)
+                        if (!percent || percent < 0.05) return "";
+                        return `${name || ""}\n${(percent * 100).toFixed(0)}%`;
+                      }}
+                      outerRadius={100}
+                      innerRadius={60}
+                      fill={chart.primary}
+                      dataKey="value"
+                      strokeWidth={2}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={chartStyles.tooltip.contentStyle}
+                      formatter={(value: unknown) => {
+                        const numValue = typeof value === "number" ? value : 0;
+                        return `${numValue} controls`;
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-gray-500">
+                  <p>No evidence data available</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </FadeIn>

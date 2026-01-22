@@ -19,6 +19,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { StatCard, StatCardGrid } from "@/components/ui/StatCard";
 import { FadeIn } from "@/components/ui/Motion";
 import { chart, chartStyles } from "@/lib/design-tokens";
+import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
 
 interface TrendData {
   dates: string[];
@@ -55,7 +56,7 @@ export default function TrendsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
-          <p className="text-gray-500">Loading trends...</p>
+          <p className="text-gray-500">{getContextualLoadingPhrase("trends")}</p>
         </div>
       </div>
     );

@@ -8,3 +8,4 @@ export * from "./cn";
 export * from "./validation";
 export * from "./security";
 export * from "./math";
+export * from "./loading-phrases";

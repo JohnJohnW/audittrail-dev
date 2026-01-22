@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { FadeIn } from "@/components/ui/Motion";
 import { cn } from "@/lib/utils";
+import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
 
 interface Repository {
   id: number;
@@ -111,7 +112,7 @@ export default function RepositoriesPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
-          <p className="text-gray-500">Loading repositories...</p>
+          <p className="text-gray-500">{getContextualLoadingPhrase("repositories")}</p>
         </div>
       </div>
     );

@@ -37,6 +37,24 @@ export async function GET(request: NextRequest) {
 
     const repoIds = repositories.map((r) => r.id);
 
+    // Early return if no repositories
+    if (repoIds.length === 0) {
+      // Return empty data for all dates
+      for (let i = 0; i < days; i++) {
+        commits.push(0);
+        pullRequests.push(0);
+        complianceScores.push(0);
+        evidenceCounts.push(0);
+      }
+      return NextResponse.json({
+        dates,
+        commits,
+        pullRequests,
+        complianceScores,
+        evidenceCounts,
+      });
+    }
+
     // Get stored compliance snapshots for the date range
     const snapshots = await db.complianceSnapshot.findMany({
       where: {
@@ -51,48 +69,49 @@ export async function GET(request: NextRequest) {
       snapshots.map((s) => [s.snapshotDate.toISOString().split("T")[0], s])
     );
 
-    // Batch query: Get all commits grouped by date using raw SQL for efficiency
-    const commitsByDate = await db.$queryRaw<Array<{ date: string; count: bigint }>>`
-      SELECT DATE(committed_at) as date, COUNT(*)::bigint as count
-      FROM commits
-      WHERE repo_id = ANY(${repoIds})
-        AND committed_at >= ${startDate}
-      GROUP BY DATE(committed_at)
-      ORDER BY date
-    `;
+    // Get commits grouped by date using Prisma (only fetch date field for efficiency)
+    const allCommits = await db.commit.findMany({
+      where: {
+        repoId: { in: repoIds },
+        committedAt: { gte: startDate },
+      },
+      select: { committedAt: true },
+    });
 
-    // Batch query: Get all PRs grouped by date
-    const prsByDate = await db.$queryRaw<Array<{ date: string; count: bigint }>>`
-      SELECT DATE(merged_at) as date, COUNT(*)::bigint as count
-      FROM pull_requests
-      WHERE repo_id = ANY(${repoIds})
-        AND merged_at >= ${startDate}
-        AND merged_at IS NOT NULL
-      GROUP BY DATE(merged_at)
-      ORDER BY date
-    `;
+    // Get PRs grouped by date using Prisma (only fetch date field for efficiency)
+    const allPRs = await db.pullRequest.findMany({
+      where: {
+        repoId: { in: repoIds },
+        mergedAt: { gte: startDate, not: null },
+      },
+      select: { mergedAt: true },
+    });
 
-    // Convert to Maps for O(1) lookup
-    const commitsMap = new Map(
-      commitsByDate.map((r) => [r.date.toString().split("T")[0], Number(r.count)])
-    );
-    const prsMap = new Map(
-      prsByDate.map((r) => [r.date.toString().split("T")[0], Number(r.count)])
-    );
+    // Group commits by date
+    const commitsMap = new Map<string, number>();
+    for (const commit of allCommits) {
+      if (commit.committedAt) {
+        const dateKey = commit.committedAt.toISOString().split("T")[0];
+        commitsMap.set(dateKey, (commitsMap.get(dateKey) || 0) + 1);
+      }
+    }
+
+    // Group PRs by date
+    const prsMap = new Map<string, number>();
+    for (const pr of allPRs) {
+      if (pr.mergedAt) {
+        const dateKey = pr.mergedAt.toISOString().split("T")[0];
+        prsMap.set(dateKey, (prsMap.get(dateKey) || 0) + 1);
+      }
+    }
 
     // Get total cumulative counts for fallback calculation (single query each)
-    const totalCommits =
-      repoIds.length > 0
-        ? await db.commit.count({
-            where: { repoId: { in: repoIds } },
-          })
-        : 0;
-    const totalPRs =
-      repoIds.length > 0
-        ? await db.pullRequest.count({
-            where: { repoId: { in: repoIds }, mergedAt: { not: null } },
-          })
-        : 0;
+    const totalCommits = await db.commit.count({
+      where: { repoId: { in: repoIds } },
+    });
+    const totalPRs = await db.pullRequest.count({
+      where: { repoId: { in: repoIds }, mergedAt: { not: null } },
+    });
 
     // Aggregate data by date using pre-fetched data
     for (const dateStr of dates) {

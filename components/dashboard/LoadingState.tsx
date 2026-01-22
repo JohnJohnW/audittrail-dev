@@ -1,11 +1,13 @@
 import { Skeleton } from "@/components/ui/Skeleton";
+import { getLoadingPhrase } from "@/lib/utils/loading-phrases";
 
 interface LoadingStateProps {
   message?: string;
   showSkeleton?: boolean;
 }
 
-export function LoadingState({ message = "Loading...", showSkeleton = false }: LoadingStateProps) {
+export function LoadingState({ message, showSkeleton = false }: LoadingStateProps) {
+  const displayMessage = message || getLoadingPhrase();
   if (showSkeleton) {
     return (
       <div className="space-y-4">
@@ -20,7 +22,7 @@ export function LoadingState({ message = "Loading...", showSkeleton = false }: L
     <div className="flex items-center justify-center min-h-[400px]">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
-        <p className="text-gray-500">{message}</p>
+        <p className="text-gray-500">{displayMessage}</p>
       </div>
     </div>
   );

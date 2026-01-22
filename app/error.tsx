@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 export default function Error({
@@ -10,9 +11,36 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const pathname = usePathname();
+  const [homeHref, setHomeHref] = useState("/");
+
   useEffect(() => {
     console.error("App error:", error);
   }, [error]);
+
+  useEffect(() => {
+    // Check if we're in a dashboard route
+    const isDashboardRoute =
+      pathname?.startsWith("/dashboard") ||
+      pathname?.startsWith("/repositories") ||
+      pathname?.startsWith("/evidence") ||
+      pathname?.startsWith("/compliance") ||
+      pathname?.startsWith("/exports") ||
+      pathname?.startsWith("/trends") ||
+      pathname?.startsWith("/settings") ||
+      pathname?.startsWith("/onboarding");
+
+    // Check for session cookie (only in browser)
+    let hasSession = false;
+    if (typeof document !== "undefined") {
+      hasSession =
+        document.cookie.includes("authjs.session-token") ||
+        document.cookie.includes("__Secure-authjs.session-token");
+    }
+
+    // If in dashboard route or has session, go to dashboard, otherwise landing page
+    setHomeHref(isDashboardRoute || hasSession ? "/dashboard" : "/");
+  }, [pathname]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -44,7 +72,7 @@ export default function Error({
             Try Again
           </button>
           <Link
-            href="/"
+            href={homeHref}
             className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
           >
             Go Home
