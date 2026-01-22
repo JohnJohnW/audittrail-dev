@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   BarChart,
@@ -57,6 +58,7 @@ export default function CompliancePage() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [selectedRepositories, setSelectedRepositories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -82,6 +84,7 @@ export default function CompliancePage() {
       if (!scoreRes.ok) {
         const errorData = await scoreRes.json().catch(() => ({}));
         console.error("Compliance score API error:", errorData);
+        setError(errorData.error || "Failed to load compliance score");
         setScore(null);
         setRepositories([]);
         return;
@@ -99,6 +102,7 @@ export default function CompliancePage() {
       // Validate score data structure
       if (scoreData.error) {
         console.error("Compliance score API returned error:", scoreData);
+        setError(scoreData.error || "Invalid score data");
         setScore(null);
         setRepositories([]);
         return;
@@ -128,8 +132,10 @@ export default function CompliancePage() {
       } else {
         setRepositories([]);
       }
+      setError(null); // Clear error on success
     } catch (error) {
       console.error("Failed to fetch data:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch compliance score");
       setScore(null);
       setRepositories([]);
     } finally {
@@ -182,13 +188,33 @@ export default function CompliancePage() {
   if (!score || typeof score.overall !== "number" || !Array.isArray(score.byFramework)) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Failed to load compliance score</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
-        >
-          Retry
-        </button>
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          {error ? "Error Loading Compliance Score" : "No Compliance Data Available"}
+        </h2>
+        <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+          {error 
+            ? error
+            : "Connect your GitHub repositories and sync them to start tracking compliance."}
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors text-sm font-medium"
+          >
+            Retry
+          </button>
+          <Link
+            href="/repositories"
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+          >
+            Go to Repositories
+          </Link>
+        </div>
       </div>
     );
   }

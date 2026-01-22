@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -73,6 +74,7 @@ export default function EvidencePage() {
   const [data, setData] = useState<EvidenceData | null>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("all");
   const [selectedRepositories, setSelectedRepositories] = useState<string[]>([]);
@@ -94,6 +96,7 @@ export default function EvidencePage() {
       if (!evidenceRes.ok) {
         const errorData = await evidenceRes.json().catch(() => ({}));
         console.error("Evidence API error:", errorData);
+        setError(errorData.error || "Failed to load evidence data");
         setData(null);
         setRepositories([]);
         return;
@@ -111,6 +114,7 @@ export default function EvidencePage() {
       // Validate evidence data structure
       if (evidenceData.error) {
         console.error("Evidence API returned error:", evidenceData);
+        setError(evidenceData.error || "Invalid evidence data");
         setData(null);
         setRepositories([]);
         return;
@@ -140,8 +144,10 @@ export default function EvidencePage() {
       } else {
         setRepositories([]);
       }
+      setError(null); // Clear error on success
     } catch (error) {
       console.error("Failed to fetch data:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch evidence data");
       setData(null);
       setRepositories([]);
     } finally {
@@ -236,13 +242,33 @@ export default function EvidencePage() {
   if (!data) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Failed to load evidence data</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
-        >
-          Retry
-        </button>
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          {error ? "Error Loading Evidence" : "No Evidence Data Available"}
+        </h2>
+        <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+          {error 
+            ? error
+            : "Connect your GitHub repositories and sync them to start collecting compliance evidence."}
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors text-sm font-medium"
+          >
+            Retry
+          </button>
+          <Link
+            href="/repositories"
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+          >
+            Go to Repositories
+          </Link>
+        </div>
       </div>
     );
   }
