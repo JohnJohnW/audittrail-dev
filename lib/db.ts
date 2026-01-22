@@ -1,65 +1,120 @@
 import { PrismaClient } from "@prisma/client";
 import { logger } from "./logger";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+// Use a more reliable global pattern for serverless environments
+declare global {
+  // eslint-disable-next-line no-var
+  var __prisma: PrismaClient | undefined;
+}
 
 // Prisma Client singleton pattern for serverless environments
 // This ensures we reuse the same connection pool across function invocations
+// In Vercel/serverless, we need to use globalThis to persist across invocations
 export const db =
-  globalForPrisma.prisma ??
+  globalThis.__prisma ??
   new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
-// Always reuse the same instance (critical for serverless to avoid connection pool exhaustion)
-if (!globalForPrisma.prisma) {
-  globalForPrisma.prisma = db;
-}
+// Always set the global to ensure reuse (critical for serverless to avoid connection pool exhaustion)
+// This must be set in both dev and production for serverless environments
+globalThis.__prisma = db;
 
 // =============================================================================
 // Error Handling Utilities
 // =============================================================================
 
 /**
- * Execute a database operation with error handling and fallback.
+ * Check if error is a connection pool exhaustion error
+ */
+function isConnectionPoolError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return (
+      error.message.includes("MaxClientsInSessionMode") ||
+      error.message.includes("max clients reached") ||
+      error.message.includes("connection pool") ||
+      error.message.includes("too many clients")
+    );
+  }
+  return false;
+}
+
+/**
+ * Execute a database operation with retry logic for connection pool errors.
  *
  * @param operation - The database operation to execute
  * @param fallback - Value to return if the operation fails
+ * @param maxRetries - Maximum number of retries (default: 2)
  * @returns The operation result or fallback
  */
 export async function safeDbOperation<T>(
   operation: () => Promise<T>,
-  fallback: T
+  fallback: T,
+  maxRetries: number = 2
 ): Promise<T> {
-  try {
-    return await operation();
-  } catch (error) {
-    logger.error("Database operation failed", error);
-    return fallback;
+  let lastError: unknown;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      
+      // Retry on connection pool errors with exponential backoff
+      if (isConnectionPoolError(error) && attempt < maxRetries) {
+        const delay = Math.min(100 * Math.pow(2, attempt), 1000);
+        logger.warn(`Connection pool error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      logger.error("Database operation failed", error);
+      return fallback;
+    }
   }
+  
+  logger.error("Database operation failed after retries", lastError);
+  return fallback;
 }
 
 /**
- * Execute a database operation with error handling.
+ * Execute a database operation with error handling and retry logic.
  * Throws the error after logging it.
  *
  * @param operation - The database operation to execute
  * @param context - Context string for error logging
+ * @param maxRetries - Maximum number of retries for connection pool errors (default: 2)
  * @returns The operation result
  * @throws The original error after logging
  */
 export async function dbOperation<T>(
   operation: () => Promise<T>,
-  context: string
+  context: string,
+  maxRetries: number = 2
 ): Promise<T> {
-  try {
-    return await operation();
-  } catch (error) {
-    logger.error(`Database operation failed: ${context}`, error);
-    throw error;
+  let lastError: unknown;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      
+      // Retry on connection pool errors with exponential backoff
+      if (isConnectionPoolError(error) && attempt < maxRetries) {
+        const delay = Math.min(100 * Math.pow(2, attempt), 1000);
+        logger.warn(`Connection pool error in ${context}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      logger.error(`Database operation failed: ${context}`, error);
+      throw error;
+    }
   }
+  
+  logger.error(`Database operation failed after retries: ${context}`, lastError);
+  throw lastError;
 }
 
 // =============================================================================

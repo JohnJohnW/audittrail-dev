@@ -211,29 +211,30 @@ export async function getComplianceEvidence(
 
     logger.info("Fetching repositories", { orgId, repoWhere });
     // Get org's active repositories
+    // Optimize query to reduce connection usage - fetch less data per repo
     const repositories = await db.repository.findMany({
-    where: repoWhere,
-    include: {
-      commits: {
-        where: commitWhere,
-        orderBy: { committedAt: "desc" },
-        take: 200, // Increased for better evidence collection
-      },
-      pullRequests: {
-        where: prWhere,
-        include: {
-          reviews: {
-            where: { state: "APPROVED" },
-          },
+      where: repoWhere,
+      include: {
+        commits: {
+          where: commitWhere,
+          orderBy: { committedAt: "desc" },
+          take: 100, // Reduced from 200 to limit connection usage
         },
-        orderBy: { mergedAt: "desc" },
-        take: 100,
+        pullRequests: {
+          where: prWhere,
+          include: {
+            reviews: {
+              where: { state: "APPROVED" },
+            },
+          },
+          orderBy: { mergedAt: "desc" },
+          take: 50, // Reduced from 100 to limit connection usage
+        },
+        branchProtections: {
+          orderBy: { snapshotAt: "desc" },
+          take: 1,
+        },
       },
-      branchProtections: {
-        orderBy: { snapshotAt: "desc" },
-        take: 1,
-      },
-    },
     });
 
     logger.info("Repositories fetched", { count: repositories.length });
