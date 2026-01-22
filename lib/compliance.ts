@@ -218,6 +218,27 @@ export async function getComplianceEvidence(
     },
   });
 
+  // Create maps to track which repository each commit/PR belongs to
+  const commitToRepo = new Map<string, { id: string; name: string; fullName: string }>();
+  const prToRepo = new Map<string, { id: string; name: string; fullName: string }>();
+  
+  for (const repo of repositories) {
+    for (const commit of repo.commits) {
+      commitToRepo.set(commit.id, {
+        id: repo.id,
+        name: repo.name,
+        fullName: repo.fullName,
+      });
+    }
+    for (const pr of repo.pullRequests) {
+      prToRepo.set(pr.id, {
+        id: repo.id,
+        name: repo.name,
+        fullName: repo.fullName,
+      });
+    }
+  }
+
   // Aggregate data
   const allCommits = repositories.flatMap((r) => r.commits);
   const allPRs = repositories.flatMap((r) => r.pullRequests);
@@ -308,6 +329,7 @@ export async function getComplianceEvidence(
               ? ` [Signed: ${commit.verificationReason || "verified"}]`
               : "";
 
+            const repoInfo = commitToRepo.get(commit.id);
             evidence.push({
               type: "commit",
               title: `Commit: ${commit.sha.slice(0, 7)}${commit.verified ? " ✓" : ""}`,
@@ -322,6 +344,9 @@ export async function getComplianceEvidence(
                 verificationReason: commit.verificationReason,
               },
               relevance,
+              repositoryId: repoInfo?.id,
+              repositoryName: repoInfo?.name,
+              repositoryFullName: repoInfo?.fullName,
             });
           }
 
@@ -364,6 +389,7 @@ export async function getComplianceEvidence(
 
             const automatedNote = isAutomatedDependency ? " [Automated]" : "";
 
+            const prRepoInfo = prToRepo.get(pr.id);
             evidence.push({
               type: "pr",
               title: `PR #${pr.number}: ${pr.title.slice(0, 60)}`,
@@ -378,6 +404,9 @@ export async function getComplianceEvidence(
                 isAutomatedDependency,
               },
               relevance,
+              repositoryId: prRepoInfo?.id,
+              repositoryName: prRepoInfo?.name,
+              repositoryFullName: prRepoInfo?.fullName,
             });
           }
 
@@ -418,6 +447,9 @@ export async function getComplianceEvidence(
               },
               relevance:
                 protectionStrength >= 4 ? "high" : protectionStrength >= 2 ? "medium" : "low",
+              repositoryId: repo?.id,
+              repositoryName: repo?.name,
+              repositoryFullName: repo?.fullName,
             });
           }
 

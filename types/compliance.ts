@@ -23,6 +23,9 @@ export interface EvidenceItem {
   url?: string;
   metadata?: Record<string, unknown>;
   relevance?: EvidenceRelevance;
+  repositoryId?: string;
+  repositoryName?: string;
+  repositoryFullName?: string;
 }
 
 /**
@@ -36,6 +39,9 @@ export interface EvidenceItemSerialized {
   timestamp: string;
   url?: string;
   relevance?: EvidenceRelevance;
+  repositoryId?: string;
+  repositoryName?: string;
+  repositoryFullName?: string;
 }
 
 /**

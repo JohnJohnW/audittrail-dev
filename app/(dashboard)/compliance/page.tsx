@@ -47,17 +47,59 @@ interface ComplianceScore {
 // Monochromatic accent palette for consistent, professional look
 const PIE_COLORS = [chart.primary, chart.secondary, chart.tertiary];
 
+interface Repository {
+  id: string;
+  fullName: string;
+}
+
 export default function CompliancePage() {
   const [score, setScore] = useState<ComplianceScore | null>(null);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [selectedRepositories, setSelectedRepositories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchScore();
+    fetchData();
   }, []);
 
-  const fetchScore = async () => {
+  useEffect(() => {
+    if (repositories.length > 0) {
+      fetchScore();
+    }
+  }, [selectedRepositories]);
+
+  const fetchData = async () => {
     try {
-      const response = await fetch("/api/compliance/score");
+      const [scoreRes, reposRes] = await Promise.all([
+        fetch("/api/compliance/score"),
+        fetch("/api/github/repositories"),
+      ]);
+
+      const scoreData = await scoreRes.json();
+      const reposData = await reposRes.json();
+
+      setScore(scoreData);
+      setRepositories(
+        (reposData.tracked || []).map((r: { id: string; full_name: string }) => ({
+          id: r.id,
+          fullName: r.full_name,
+        }))
+      );
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchScore = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedRepositories.length > 0) {
+        params.set("repositoryIds", selectedRepositories.join(","));
+      }
+      const response = await fetch(`/api/compliance/score?${params.toString()}`);
       const data = await response.json();
       setScore(data);
     } catch (error) {
@@ -124,6 +166,52 @@ export default function CompliancePage() {
           <p className="text-sm sm:text-base text-gray-500 mt-1">Overall compliance status and framework breakdown</p>
         </div>
       </FadeIn>
+
+      {/* Repository Filter */}
+      {repositories.length > 0 && (
+        <FadeIn delay={0.05}>
+          <Card variant="elevated" className="mb-6 sm:mb-8">
+            <CardContent className="py-4">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Filter by Repository
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {repositories.map((repo) => (
+                  <motion.button
+                    key={repo.id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setSelectedRepositories((prev) =>
+                        prev.includes(repo.id)
+                          ? prev.filter((id) => id !== repo.id)
+                          : [...prev, repo.id]
+                      );
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      selectedRepositories.includes(repo.id)
+                        ? "bg-accent text-white shadow-sm"
+                        : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {repo.fullName}
+                  </motion.button>
+                ))}
+                {selectedRepositories.length > 0 && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedRepositories([])}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                  >
+                    Clear All
+                  </motion.button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      )}
 
       {/* Overall Score */}
       <FadeIn delay={0.1}>

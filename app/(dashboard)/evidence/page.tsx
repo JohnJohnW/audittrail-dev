@@ -17,6 +17,9 @@ interface EvidenceItem {
   description: string;
   timestamp: string;
   url?: string;
+  repositoryId?: string;
+  repositoryName?: string;
+  repositoryFullName?: string;
 }
 
 interface ControlEvidence {
@@ -61,21 +64,57 @@ const statusLabels = {
   no_evidence: "Missing",
 };
 
+interface Repository {
+  id: string;
+  fullName: string;
+}
+
 export default function EvidencePage() {
   const [data, setData] = useState<EvidenceData | null>(null);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("all");
+  const [selectedRepositories, setSelectedRepositories] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedControl, setExpandedControl] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchEvidence();
+    fetchData();
   }, []);
 
-  const fetchEvidence = async () => {
+  const fetchData = async () => {
     try {
-      const response = await fetch("/api/evidence");
+      const [evidenceRes, reposRes] = await Promise.all([
+        fetch("/api/evidence"),
+        fetch("/api/github/repositories"),
+      ]);
+
+      const evidenceData = await evidenceRes.json();
+      const reposData = await reposRes.json();
+
+      setData(evidenceData);
+      setRepositories(
+        (reposData.tracked || []).map((r: { id: string; full_name: string }) => ({
+          id: r.id,
+          fullName: r.full_name,
+        }))
+      );
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchEvidence = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedRepositories.length > 0) {
+        params.set("repositoryIds", selectedRepositories.join(","));
+      }
+      const response = await fetch(`/api/evidence?${params.toString()}`);
       const result = await response.json();
       setData(result);
     } catch (error) {
@@ -85,11 +124,33 @@ export default function EvidencePage() {
     }
   };
 
+  useEffect(() => {
+    if (repositories.length > 0) {
+      fetchEvidence();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRepositories]);
+
+  const toggleRepository = (repoId: string) => {
+    setSelectedRepositories((prev) =>
+      prev.includes(repoId) ? prev.filter((id) => id !== repoId) : [...prev, repoId]
+    );
+  };
+
   const filteredControls = useMemo(() => {
     if (!data) return [];
     return data.controls.filter((control) => {
       if (selectedFramework && control.frameworkName !== selectedFramework) return false;
       if (selectedStatus !== "all" && control.status !== selectedStatus) return false;
+      // Note: Repository filtering is done server-side via API, but we also filter client-side
+      // for evidence items that might span multiple repositories
+      if (selectedRepositories.length > 0) {
+        // Filter by repository - check if any evidence item matches selected repositories
+        const hasMatchingRepo = control.evidence.some(
+          (item) => item.repositoryId && selectedRepositories.includes(item.repositoryId)
+        );
+        if (!hasMatchingRepo) return false;
+      }
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesCode = control.controlCode.toLowerCase().includes(query);
@@ -100,7 +161,7 @@ export default function EvidencePage() {
       }
       return true;
     });
-  }, [data, selectedFramework, selectedStatus, searchQuery]);
+  }, [data, selectedFramework, selectedStatus, selectedRepositories, searchQuery]);
 
   if (loading) {
     return (
@@ -154,6 +215,30 @@ export default function EvidencePage() {
       {/* Search and Filters */}
       <FadeIn delay={0.2}>
         <Card className="mb-6">
+          {/* Repository Filter */}
+          {repositories.length > 0 && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Filter by Repository
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {repositories.map((repo) => (
+                  <FilterButton
+                    key={repo.id}
+                    active={selectedRepositories.includes(repo.id)}
+                    onClick={() => toggleRepository(repo.id)}
+                  >
+                    {repo.fullName}
+                  </FilterButton>
+                ))}
+                {selectedRepositories.length > 0 && (
+                  <FilterButton active={false} onClick={() => setSelectedRepositories([])}>
+                    Clear All
+                  </FilterButton>
+                )}
+              </div>
+            </div>
+          )}
           <CardContent className="space-y-4">
             {/* Search Input */}
             <Input
@@ -390,9 +475,16 @@ function ControlItem({
                           </a>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400 mt-2">
-                        {new Date(item.timestamp).toLocaleString()}
-                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-gray-400">
+                          {new Date(item.timestamp).toLocaleString()}
+                        </p>
+                        {item.repositoryFullName && (
+                          <Badge variant="info" className="text-xs">
+                            {item.repositoryFullName}
+                          </Badge>
+                        )}
+                      </div>
                     </motion.div>
                   ))}
                 </div>

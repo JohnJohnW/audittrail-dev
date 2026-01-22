@@ -180,6 +180,7 @@ export async function POST(request: NextRequest) {
             "Evidence Timestamp",
             "Evidence URL",
             "Evidence Relevance",
+            "Repository",
           ].join(",")
         );
 
@@ -195,6 +196,7 @@ export async function POST(request: NextRequest) {
                 escapeCSV(control.status),
                 "0",
                 escapeCSV(control.evidenceType),
+                "",
                 "",
                 "",
                 "",
@@ -218,6 +220,7 @@ export async function POST(request: NextRequest) {
                   new Date(item.timestamp).toISOString(),
                   escapeCSV(item.url || ""),
                   escapeCSV((item as { relevance?: string }).relevance || ""),
+                  escapeCSV((item as { repositoryFullName?: string }).repositoryFullName || ""),
                 ].join(",")
               );
             }
