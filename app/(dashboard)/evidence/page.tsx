@@ -179,7 +179,7 @@ export default function EvidencePage() {
   };
 
   const filteredControls = useMemo(() => {
-    if (!data) return [];
+    if (!data || !Array.isArray(data.controls)) return [];
     return data.controls.filter((control) => {
       if (selectedFramework && control.frameworkName !== selectedFramework) return false;
       if (selectedStatus !== "all" && control.status !== selectedStatus) return false;
@@ -215,10 +215,16 @@ export default function EvidencePage() {
     );
   }
 
-  if (!data) {
+  if (!data || !Array.isArray(data.controls) || !data.summary) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600">Failed to load evidence data</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }

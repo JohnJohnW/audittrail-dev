@@ -162,10 +162,16 @@ export default function CompliancePage() {
     );
   }
 
-  if (!score) {
+  if (!score || typeof score.overall !== "number" || !Array.isArray(score.byFramework)) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600">Failed to load compliance score</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -175,25 +181,25 @@ export default function CompliancePage() {
     ? [
         {
           name: "With Evidence",
-          value: score.overallSummary.withEvidence,
+          value: score.overallSummary.withEvidence || 0,
         },
         {
           name: "Partial",
-          value: score.overallSummary.partial + score.overallSummary.limited,
+          value: (score.overallSummary.partial || 0) + (score.overallSummary.limited || 0),
         },
         {
           name: "Missing",
-          value: score.overallSummary.noEvidence,
+          value: score.overallSummary.noEvidence || 0,
         },
       ].filter((item) => item.value > 0) // Filter out zero values
     : [
         {
           name: "With Evidence",
-          value: score.byFramework.reduce((sum, f) => sum + f.withEvidence, 0),
+          value: score.byFramework.reduce((sum, f) => sum + (f.withEvidence || 0), 0),
         },
         {
           name: "Missing",
-          value: score.byFramework.reduce((sum, f) => sum + (f.total - f.withEvidence), 0),
+          value: score.byFramework.reduce((sum, f) => sum + ((f.total || 0) - (f.withEvidence || 0)), 0),
         },
       ].filter((item) => item.value > 0); // Filter out zero values
 
