@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   SettingsIcon,
-  TrendsIcon,
   LogoutIcon,
   ChevronDownIcon,
 } from "./NavIcons";
@@ -75,13 +74,6 @@ export function UserMenu({ user, isOpen, onToggle, onClose }: UserMenuProps) {
                   onClick={onClose}
                 >
                   Settings
-                </DropdownLink>
-                <DropdownLink
-                  href="/trends"
-                  icon={TrendsIcon}
-                  onClick={onClose}
-                >
-                  Trends
                 </DropdownLink>
               </div>
               <div className="border-t border-gray-100 py-1">

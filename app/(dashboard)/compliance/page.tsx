@@ -79,12 +79,21 @@ export default function CompliancePage() {
       const reposData = await reposRes.json();
 
       setScore(scoreData);
-      setRepositories(
-        (reposData.tracked || []).map((r: { id: string; full_name: string }) => ({
-          id: r.id,
-          fullName: r.full_name,
-        }))
-      );
+      
+      // Extract tracked repositories from the API response
+      // The API returns { connected: boolean, repositories: [...] }
+      // We only want active/tracked repositories with database IDs
+      if (reposData.repositories && Array.isArray(reposData.repositories)) {
+        const trackedRepos = reposData.repositories
+          .filter((r: { isActive: boolean; dbId?: string }) => r.isActive && r.dbId)
+          .map((r: { dbId: string; fullName: string }) => ({
+            id: r.dbId, // Use database ID for filtering
+            fullName: r.fullName,
+          }));
+        setRepositories(trackedRepos);
+      } else {
+        setRepositories([]);
+      }
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
