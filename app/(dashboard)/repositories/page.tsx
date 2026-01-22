@@ -128,7 +128,9 @@ export default function RepositoriesPage() {
             </div>
             <h1 className="text-2xl font-semibold text-gray-900 mb-3">Connect GitHub</h1>
             <p className="text-gray-500 mb-8 max-w-md mx-auto">
-              Connect your GitHub account to start tracking repositories for compliance evidence.
+              {data?.error
+                ? data.error
+                : "Connect your GitHub account to start tracking repositories for compliance evidence."}
             </p>
             <Button
               variant="primary"
@@ -136,7 +138,7 @@ export default function RepositoriesPage() {
               size="lg"
             >
               <GitHubIcon className="w-5 h-5 mr-2" />
-              Connect GitHub
+              {data?.error ? "Reconnect GitHub" : "Connect GitHub"}
             </Button>
             <p className="text-sm text-gray-400 mt-4">
               We request read-only access to your repositories.
