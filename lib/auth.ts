@@ -14,12 +14,24 @@ if (!process.env.NEXTAUTH_SECRET) {
   console.warn("Warning: NEXTAUTH_SECRET is not set. Authentication may not work correctly.");
 }
 
+// Validate NEXTAUTH_URL - critical for OAuth to work
+if (!process.env.NEXTAUTH_URL) {
+  const errorMsg = 
+    "NEXTAUTH_URL is required for OAuth to work. " +
+    "Set it to your production URL (e.g., https://audittrail-dev.vercel.app) in Vercel environment variables.";
+  console.error(errorMsg);
+  // Don't throw in production to avoid breaking the app, but log the error
+  if (process.env.NODE_ENV === "development") {
+    throw new Error(errorMsg);
+  }
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(db),
   providers: [
     GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       authorization: {
         params: {
           scope: "read:user user:email repo",
@@ -31,6 +43,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/auth/signin",
     error: "/auth/error",
   },
+  debug: process.env.NODE_ENV === "development",
   callbacks: {
     async jwt({ token, user, account }) {
       // On initial sign in, add user info and access token to JWT
