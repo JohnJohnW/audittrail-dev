@@ -533,7 +533,7 @@ function buildProtectionDescription(bp: {
   return parts.length > 0 ? parts.join(" • ") : "Basic protection enabled";
 }
 
-export function getEvidenceSummary(controls: ControlEvidence[]) {
+export function getEvidenceSummary(controls: ControlEvidence[]): EvidenceSummary {
   const total = controls.length;
   const withEvidence = controls.filter((c) => c.status === "has_evidence").length;
   const partial = controls.filter((c) => c.status === "partial").length;
@@ -541,8 +541,11 @@ export function getEvidenceSummary(controls: ControlEvidence[]) {
   const noEvidence = controls.filter((c) => c.status === "no_evidence").length;
 
   // Calculate score (limited counts as partial)
+  // Handle division by zero when there are no controls
   const effectivePartial = partial + limited;
-  const score = Math.round(((withEvidence + effectivePartial * 0.5) / total) * 100);
+  const score = total > 0 
+    ? Math.round(((withEvidence + effectivePartial * 0.5) / total) * 100)
+    : 0;
 
   return {
     total,
