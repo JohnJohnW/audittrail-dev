@@ -395,11 +395,12 @@ export async function getComplianceEvidence(
 
           for (const pr of approvedPRs.slice(0, 30)) {
             // Detect automated dependency PRs (Dependabot, Renovate)
+            const authorLogin = pr.authorLogin || "";
             const isAutomatedDependency =
-              pr.authorLogin.includes("dependabot") ||
-              pr.authorLogin.includes("renovate") ||
-              pr.authorLogin === "dependabot[bot]" ||
-              pr.authorLogin === "renovate[bot]" ||
+              authorLogin.includes("dependabot") ||
+              authorLogin.includes("renovate") ||
+              authorLogin === "dependabot[bot]" ||
+              authorLogin === "renovate[bot]" ||
               matchesPatterns(pr.title, AUTOMATED_DEPENDENCY_PATTERNS);
 
             // Determine relevance
@@ -422,9 +423,9 @@ export async function getComplianceEvidence(
               url: pr.url || undefined,
               metadata: {
                 number: pr.number,
-                author: pr.authorLogin,
-                approvers: pr.reviews.map((r) => r.reviewerLogin),
-                baseBranch: pr.baseBranch,
+                author: authorLogin,
+                approvers: pr.reviews.map((r) => r.reviewerLogin || "").filter(Boolean),
+                baseBranch: pr.baseBranch || "",
                 isAutomatedDependency,
               },
               relevance,
