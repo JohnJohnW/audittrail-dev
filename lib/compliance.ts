@@ -571,6 +571,116 @@ function buildProtectionDescription(bp: {
   return parts.length > 0 ? parts.join(" • ") : "Basic protection enabled";
 }
 
+/**
+ * Enrich compliance controls with agent activity evidence.
+ * Agent events are mapped to controls via their controlMappings field.
+ */
+export async function enrichWithAgentEvidence(
+  orgId: string,
+  controls: ControlEvidence[],
+  options: ComplianceEvidenceOptions = {}
+): Promise<ControlEvidence[]> {
+  try {
+    const dateFilter: Record<string, unknown> = {};
+    if (options.dateFrom) dateFilter.gte = new Date(options.dateFrom);
+    if (options.dateTo) dateFilter.lte = new Date(options.dateTo);
+
+    const where: Record<string, unknown> = { orgId };
+    if (Object.keys(dateFilter).length > 0) {
+      where.timestamp = dateFilter;
+    }
+
+    const agentEvents = await db.agentEvent.findMany({
+      where,
+      select: {
+        id: true,
+        category: true,
+        action: true,
+        summary: true,
+        riskLevel: true,
+        riskScore: true,
+        controlMappings: true,
+        timestamp: true,
+        session: {
+          select: {
+            externalId: true,
+            agentFramework: true,
+          },
+        },
+      },
+      orderBy: { timestamp: "desc" },
+      take: 500,
+    });
+
+    if (agentEvents.length === 0) return controls;
+
+    logger.info("Enriching with agent evidence", { orgId, agentEventCount: agentEvents.length });
+
+    // Build a map: controlCode -> evidence items
+    const controlEvidenceMap = new Map<string, EvidenceItem[]>();
+
+    for (const event of agentEvents) {
+      const mappings = event.controlMappings as Array<{
+        controlCode: string;
+        controlTitle: string;
+        frameworkName: string;
+        relevance: string;
+      }> | null;
+
+      if (!mappings || !Array.isArray(mappings)) continue;
+
+      for (const mapping of mappings) {
+        const items = controlEvidenceMap.get(mapping.controlCode) || [];
+        items.push({
+          type: "agent_activity" as EvidenceItem["type"],
+          title: `Agent: ${event.summary}`,
+          description: `${event.session.agentFramework} agent action (${event.category}) — Risk: ${event.riskLevel}`,
+          timestamp: event.timestamp,
+          relevance: mapping.relevance as "high" | "medium" | "low",
+          metadata: {
+            category: event.category,
+            action: event.action,
+            riskLevel: event.riskLevel,
+            riskScore: event.riskScore,
+            agentFramework: event.session.agentFramework,
+            sessionId: event.session.externalId,
+          },
+        });
+        controlEvidenceMap.set(mapping.controlCode, items);
+      }
+    }
+
+    // Merge agent evidence into existing controls
+    return controls.map((control) => {
+      const agentEvidence = controlEvidenceMap.get(control.controlCode) || [];
+      if (agentEvidence.length === 0) return control;
+
+      const mergedEvidence = [...control.evidence, ...agentEvidence]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 20);
+
+      // Re-evaluate status with combined evidence
+      const highRelevance = mergedEvidence.filter((e) => e.relevance === "high").length;
+      let newStatus = control.status;
+      if (control.status === "no_evidence" && mergedEvidence.length > 0) {
+        newStatus = highRelevance >= 3 ? "has_evidence" : "partial";
+      } else if (control.status === "partial" && highRelevance >= 3) {
+        newStatus = "has_evidence";
+      }
+
+      return {
+        ...control,
+        evidence: mergedEvidence,
+        evidenceCount: control.evidenceCount + agentEvidence.length,
+        status: newStatus,
+      };
+    });
+  } catch (error) {
+    logger.error("Error enriching with agent evidence", error, { orgId });
+    return controls; // Return unchanged on error
+  }
+}
+
 export function getEvidenceSummary(controls: ControlEvidence[]): EvidenceSummary {
   const total = controls.length;
   const withEvidence = controls.filter((c) => c.status === "has_evidence").length;

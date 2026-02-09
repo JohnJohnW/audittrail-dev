@@ -86,6 +86,8 @@ model Organization {
   subscription         Subscription?
   exports              Export[]
   complianceSnapshots  ComplianceSnapshot[]
+  apiKeys              ApiKey[]
+  agentSessions        AgentSession[]
 
   @@map("organizations")
 }
@@ -311,4 +313,76 @@ model Export {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("exports")
+}
+
+// ============================================
+// API KEYS
+// ============================================
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  orgId      String    @map("org_id")
+  name       String
+  keyHash    String    @unique @map("key_hash")
+  keyPrefix  String    @map("key_prefix")
+  lastUsedAt DateTime? @map("last_used_at")
+  expiresAt  DateTime? @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("api_keys")
+}
+
+// ============================================
+// AGENT GOVERNANCE
+// ============================================
+
+model AgentSession {
+  id             String    @id @default(cuid())
+  orgId          String    @map("org_id")
+  externalId     String    @map("external_id")
+  agentFramework String    @default("openclaw") @map("agent_framework")
+  agentId        String?   @map("agent_id")
+  status         String    @default("running")
+  riskLevel      String    @default("low") @map("risk_level")
+  riskScore      Int       @default(0) @map("risk_score")
+  summary        String?
+  startedAt      DateTime  @default(now()) @map("started_at")
+  endedAt        DateTime? @map("ended_at")
+  metadata       Json?
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  events       AgentEvent[]
+
+  @@unique([orgId, externalId])
+  @@index([orgId, startedAt])
+  @@map("agent_sessions")
+}
+
+model AgentEvent {
+  id              String   @id @default(cuid())
+  sessionId       String   @map("session_id")
+  orgId           String   @map("org_id")
+  category        String
+  action          String
+  summary         String
+  riskLevel       String   @default("low") @map("risk_level")
+  riskScore       Int      @default(0) @map("risk_score")
+  input           Json?
+  output          Json?
+  metadata        Json?
+  controlMappings Json?    @map("control_mappings")
+  timestamp       DateTime @default(now())
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  session AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, timestamp])
+  @@index([sessionId])
+  @@index([category])
+  @@map("agent_events")
 }

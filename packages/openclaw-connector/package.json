@@ -1,0 +1,28 @@
+{
+  "name": "@audittrail/openclaw-connector",
+  "version": "0.1.0",
+  "description": "AuditTrail.dev connector for OpenClaw autonomous agents — governance and audit telemetry",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "audittrail-connect": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "keywords": ["audittrail", "openclaw", "governance", "audit", "compliance", "agent"],
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -19,6 +19,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/repositories") ||
     pathname.startsWith("/evidence") ||
     pathname.startsWith("/exports") ||
+    pathname.startsWith("/agents") ||
     pathname.startsWith("/settings");
 
   // Redirect logged-in users away from auth pages
@@ -42,6 +43,7 @@ export const config = {
     "/repositories/:path*",
     "/evidence/:path*",
     "/exports/:path*",
+    "/agents/:path*",
     "/settings/:path*",
     "/auth/:path*",
   ],

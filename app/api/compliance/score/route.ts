@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { requireAuth, getQueryParam } from "@/lib/api";
-import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
+import { getComplianceEvidence, getEvidenceSummary, enrichWithAgentEvidence } from "@/lib/compliance";
 import { handleApiError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
 
@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
       frameworkCount: evidence.frameworks.length,
       controlCount: evidence.controls.length 
     });
+
+    // Enrich with agent activity evidence
+    evidence.controls = await enrichWithAgentEvidence(orgId, evidence.controls);
 
     const summary = getEvidenceSummary(evidence.controls);
     logger.info("Summary calculated", { summary });
@@ -59,7 +62,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate scores by category using pre-grouped data
-    const categories = ["commit_history", "pr_approvals", "branch_protection"];
+    const categories = ["commit_history", "pr_approvals", "branch_protection", "agent_activity"];
     const byCategory = categories.map((category) => {
       const categoryControls = controlsByCategory.get(category) || [];
       const categorySummary = getEvidenceSummary(categoryControls);

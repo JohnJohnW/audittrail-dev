@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +9,16 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { FadeIn } from "@/components/ui/Motion";
 import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
+
+interface ApiKeyData {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+}
 
 interface SubscriptionData {
   plan: string;
@@ -30,13 +40,31 @@ function SettingsContent() {
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
   const [managingBilling, setManagingBilling] = useState(false);
+  const [apiKeys, setApiKeys] = useState<ApiKeyData[]>([]);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
 
+  const fetchApiKeys = useCallback(async () => {
+    try {
+      const res = await fetch("/api/keys");
+      if (res.ok) {
+        const data = await res.json();
+        setApiKeys(data.keys || []);
+      }
+    } catch {
+      // Silently fail - keys section is supplementary
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
-  }, []);
+    fetchApiKeys();
+  }, [fetchApiKeys]);
 
   const fetchData = async () => {
     try {
@@ -264,6 +292,147 @@ function SettingsContent() {
                   </ul>
                 </motion.div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      </FadeIn>
+
+      {/* API Keys for Agent Connector */}
+      <FadeIn delay={0.3}>
+        <Card variant="elevated" className="mt-6">
+          <CardHeader>
+            <CardTitle>API Keys</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 mb-4">
+              Create API keys to connect the OpenClaw agent connector to AuditTrail.dev.
+            </p>
+
+            {/* Create new key */}
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                placeholder="Key name (e.g., Production)"
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+              />
+              <Button
+                variant="accent"
+                size="sm"
+                loading={creatingKey}
+                disabled={creatingKey || !newKeyName.trim()}
+                onClick={async () => {
+                  setCreatingKey(true);
+                  try {
+                    const res = await fetch("/api/keys", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: newKeyName.trim() }),
+                    });
+                    if (res.ok) {
+                      const data = await res.json();
+                      setNewlyCreatedKey(data.key);
+                      setNewKeyName("");
+                      fetchApiKeys();
+                    }
+                  } finally {
+                    setCreatingKey(false);
+                  }
+                }}
+              >
+                Create Key
+              </Button>
+            </div>
+
+            {/* Newly created key (show once) */}
+            <AnimatePresence>
+              {newlyCreatedKey && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4"
+                >
+                  <p className="text-sm font-medium text-green-800 mb-2">
+                    API key created. Copy it now — it won't be shown again.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-white border border-green-200 rounded px-3 py-2 font-mono text-green-900 break-all">
+                      {newlyCreatedKey}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(newlyCreatedKey);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="px-3 py-2 text-xs font-medium bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors"
+                    >
+                      {copied ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setNewlyCreatedKey(null)}
+                    className="text-xs text-green-600 hover:text-green-800 mt-2"
+                  >
+                    Dismiss
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Existing keys */}
+            {apiKeys.length > 0 ? (
+              <div className="divide-y divide-gray-100 border border-gray-100 rounded-lg">
+                {apiKeys.map((key) => (
+                  <div key={key.id} className="flex items-center justify-between px-4 py-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900">{key.name}</span>
+                        {key.revokedAt && (
+                          <Badge variant="error" size="sm">Revoked</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        <span className="font-mono">{key.keyPrefix}</span>
+                        {" · Created "}
+                        {new Date(key.createdAt).toLocaleDateString()}
+                        {key.lastUsedAt && (
+                          <> · Last used {new Date(key.lastUsedAt).toLocaleDateString()}</>
+                        )}
+                      </p>
+                    </div>
+                    {!key.revokedAt && (
+                      <button
+                        onClick={async () => {
+                          if (!confirm("Revoke this API key? This cannot be undone.")) return;
+                          await fetch(`/api/keys/${key.id}`, { method: "DELETE" });
+                          fetchApiKeys();
+                        }}
+                        className="text-xs text-red-500 hover:text-red-700 font-medium ml-4"
+                      >
+                        Revoke
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-4">
+                No API keys yet. Create one to connect the agent connector.
+              </p>
+            )}
+
+            {/* Quick start hint */}
+            <div className="mt-4 bg-gray-50 rounded-lg p-4">
+              <p className="text-xs font-medium text-gray-600 mb-2">Quick Start</p>
+              <p className="text-xs font-mono text-gray-500">
+                $ npm install -g @audittrail/openclaw-connector
+              </p>
+              <p className="text-xs font-mono text-gray-500">
+                $ audittrail-connect --api-key &lt;your-key&gt;
+              </p>
             </div>
           </CardContent>
         </Card>

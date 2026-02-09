@@ -11,6 +11,7 @@ import {
   RepoIcon,
   ShieldIcon,
   CheckIcon,
+  AgentIcon,
   ExportIcon,
   MenuIcon,
   CloseIcon,
@@ -36,6 +37,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
       { name: "Repositories", href: "/repositories", icon: RepoIcon },
       { name: "Evidence", href: "/evidence", icon: ShieldIcon },
       { name: "Compliance", href: "/compliance", icon: CheckIcon },
+      { name: "Agents", href: "/agents", icon: AgentIcon },
       { name: "Exports", href: "/exports", icon: ExportIcon },
     ],
     []
