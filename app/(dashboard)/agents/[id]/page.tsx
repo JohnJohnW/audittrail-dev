@@ -132,7 +132,7 @@ export default function SessionDetailPage() {
         <p className="text-gray-500">Session not found</p>
         <Link href="/agents">
           <Button variant="secondary" size="sm" className="mt-4">
-            Back to Agents
+            Back to Agents (beta)
           </Button>
         </Link>
       </div>
@@ -148,7 +148,7 @@ export default function SessionDetailPage() {
             href="/agents"
             className="text-xs text-gray-400 hover:text-gray-600 mb-2 inline-block"
           >
-            ← Back to Agent Activity
+            ← Back to Agent Activity (beta)
           </Link>
           <div className="flex items-center gap-3 mt-1">
             <h1 className="text-xl font-semibold text-gray-900 tracking-tight">

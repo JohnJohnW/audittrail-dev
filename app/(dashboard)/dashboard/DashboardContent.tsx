@@ -138,7 +138,7 @@ export function DashboardContent({
                 <QuickActionLink
                   href="/agents"
                   icon={<AgentIcon />}
-                  title="Agent Activity"
+                  title="Agent Activity (beta)"
                   subtitle="OpenClaw governance"
                 />
               </CardContent>

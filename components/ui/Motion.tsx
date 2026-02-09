@@ -1,6 +1,14 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+  animate,
+  useInView,
+} from "framer-motion";
+import { useRef, useEffect } from "react";
 import type { ReactNode } from "react";
 import {
   fadeInUp,
@@ -253,7 +261,7 @@ export function HoverScale({ children, className, scale = 1.02 }: HoverScaleProp
 }
 
 // ============================================
-// CountUp - Animated number counter
+// CountUp - Animated number counter (in-view)
 // ============================================
 
 interface CountUpProps {
@@ -271,17 +279,32 @@ export function CountUp({
   suffix = "",
   prefix = "",
 }: CountUpProps) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const motionValue = useMotionValue(0);
+  const displayValue = useTransform(motionValue, (v) => Math.round(v));
+
+  useEffect(() => {
+    if (isInView) {
+      const controls = animate(motionValue, value, {
+        duration,
+        ease: "easeOut",
+      });
+      return controls.stop;
+    }
+  }, [isInView, value, duration, motionValue]);
+
   return (
     <motion.span
+      ref={ref}
       className={className}
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       transition={{ duration }}
     >
-      {/* Note: For actual count animation, use a library like react-countup */}
       {prefix}
-      {value}
+      <motion.span>{displayValue}</motion.span>
       {suffix}
     </motion.span>
   );

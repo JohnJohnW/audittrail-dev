@@ -98,7 +98,10 @@ export default function AgentsPage() {
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
-              Agent Activity
+              Agent Activity{" "}
+              <span className="text-sm font-normal text-gray-400 align-middle">
+                (beta)
+              </span>
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               Monitor autonomous agent sessions and compliance
