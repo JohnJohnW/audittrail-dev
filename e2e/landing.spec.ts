@@ -8,14 +8,16 @@ test.describe("Landing Page", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
     // Check for the CTA button
-    await expect(page.getByRole("link", { name: /get started/i })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Get Started", exact: true }).first()
+    ).toBeVisible();
   });
 
   test("should navigate to sign in page", async ({ page }) => {
     await page.goto("/");
 
-    // Click on sign in link
-    await page.getByRole("link", { name: /sign in/i }).click();
+    // Click on Get Started link (navigates to /auth/signin)
+    await page.getByRole("link", { name: "Get Started", exact: true }).first().click();
 
     // Should be on sign in page
     await expect(page).toHaveURL(/\/auth\/signin/);
@@ -31,8 +33,8 @@ test.describe("Landing Page", () => {
       .click();
 
     // Check for pricing plans
-    await expect(page.getByText(/free/i)).toBeVisible();
-    await expect(page.getByText(/pro/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Free", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Pro", exact: true })).toBeVisible();
   });
 
   test("should be responsive on mobile", async ({ page }) => {
