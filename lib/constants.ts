@@ -1,5 +1,5 @@
 /**
- * Application constants for AuditTrail.dev
+ * Application constants for Audit Trail
  */
 
 // API and sync configuration
@@ -145,7 +145,7 @@ export const AGENT_CONFIG = {
   /** Session statuses */
   SESSION_STATUSES: ["running", "completed", "failed", "timeout"] as const,
   /** Agent frameworks */
-  FRAMEWORKS: ["openclaw"] as const,
+  FRAMEWORKS: ["generic"] as const,
 } as const;
 
 export type AgentEventCategory = (typeof AGENT_CONFIG.EVENT_CATEGORIES)[number];

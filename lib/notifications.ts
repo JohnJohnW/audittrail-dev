@@ -38,7 +38,7 @@ export async function sendSyncFailureNotification(
   const org = await db.organization.findUnique({ where: { id: orgId } });
 
   await resend.emails.send({
-    from: process.env.EMAIL_FROM || "AuditTrail <noreply@audittrail.dev>",
+    from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
     to: user.email,
     subject: `Sync Failed: ${escapeHtml(repositoryName)}`,
     html: `
@@ -64,7 +64,7 @@ export async function sendExportReadyNotification(
   if (!user?.email) return;
 
   await resend.emails.send({
-    from: process.env.EMAIL_FROM || "AuditTrail <noreply@audittrail.dev>",
+    from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
     to: user.email,
     subject: `Export Ready: ${escapeHtml(fileName)}`,
     html: `
@@ -95,7 +95,7 @@ export async function sendWeeklyDigest(
   const org = await db.organization.findUnique({ where: { id: orgId } });
 
   await resend.emails.send({
-    from: process.env.EMAIL_FROM || "AuditTrail <noreply@audittrail.dev>",
+    from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
     to: user.email,
     subject: `Weekly Compliance Digest - ${escapeHtml(org?.name || "Organization")}`,
     html: `

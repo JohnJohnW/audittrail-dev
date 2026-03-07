@@ -28,7 +28,7 @@ export default function SignOutPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-8">
             <span className="text-lg font-semibold text-gray-900">
-              AuditTrail<span className="text-accent">.dev</span>
+              Audit <span className="text-accent">Trail</span>
             </span>
           </Link>
           <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -47,7 +47,7 @@ export default function SignOutPage() {
             </svg>
           </div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Signing out</h1>
-          <p className="text-sm text-gray-500">You're being signed out of your account</p>
+          <p className="text-sm text-gray-500">You&apos;re being signed out of your account</p>
         </div>
 
         <div className="space-y-4">
@@ -62,12 +62,7 @@ export default function SignOutPage() {
                 disabled={isSigningOut}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

@@ -9,7 +9,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AuditTrail.dev - GitHub to Compliance Evidence for Australian Businesses",
+  title: "Audit Trail - GitHub to Compliance Evidence for Australian Businesses",
   description:
     "Turn GitHub activity into audit-ready compliance evidence for ISO 27001 and Essential Eight. Built for Australian businesses.",
   keywords: [
@@ -27,14 +27,14 @@ export const metadata: Metadata = {
     icon: "/icon.svg",
   },
   openGraph: {
-    title: "AuditTrail.dev - GitHub to Compliance Evidence for Australian Businesses",
+    title: "Audit Trail - GitHub to Compliance Evidence for Australian Businesses",
     description:
       "Turn GitHub activity into audit-ready compliance evidence for ISO 27001 and Essential Eight.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AuditTrail.dev",
+    title: "Audit Trail",
     description:
       "Turn GitHub activity into audit-ready compliance evidence for ISO 27001 and Essential Eight.",
   },

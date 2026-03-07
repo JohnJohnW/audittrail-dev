@@ -18,12 +18,12 @@ const faqs = [
   {
     question: "Which compliance controls can you evidence?",
     answer:
-      "We map to change management, access control, and audit trail controls. For ISO 27001, that includes A.8.32 (Change Management), A.8.4 (Access to Source Code), and secure development lifecycle controls. For ACSC Essential Eight, we cover application control, patching, and administrative privilege restrictions. Full control mappings are available in the dashboard.",
+      "We map Git activity to controls across eight frameworks. For ISO 27001, that includes A.8.32 (Change Management), A.8.4 (Access to Source Code), and secure development lifecycle controls. For NIST CSF, we cover configuration management (PR.PS-01), software development security (PR.PS-02), and continuous monitoring (DE.CM-09). For GDPR, we evidence privacy-by-design (Art. 25) and security of processing (Art. 32). SOC 2, NIST SP 800-53, SOCI Act, PCI DSS, and Essential Eight are also fully mapped. Full control mappings are available in the dashboard.",
   },
   {
-    question: "Why only Australian frameworks?",
+    question: "Which frameworks do you support?",
     answer:
-      "We've built AuditTrail specifically for Australian businesses. ISO 27001 is the most common information security standard here, and Essential Eight is mandated by the ACSC for government suppliers. By focusing on these frameworks, we provide deeper, more accurate control mappings.",
+      "We support eight frameworks out of the box: ISO 27001:2022, ACSC Essential Eight, NIST CSF 2.0, NIST SP 800-53 Rev 5, SOC 2, GDPR, SOCI Act, and PCI DSS 4.0. Essential Eight is mandated by the ACSC for Australian government suppliers. NIST frameworks are widely required for US federal and enterprise environments. GDPR applies to any organisation handling EU personal data. Enterprise plans include IRAP, HIPAA, and custom framework mappings.",
   },
   {
     question: "Will auditors accept these reports?",
@@ -38,12 +38,12 @@ const faqs = [
   {
     question: "Can I use this for my certification audit?",
     answer:
-      "Yes. AuditTrail generates evidence that supports certification audits for ISO 27001 and Essential Eight assessments. However, we're one part of your compliance program—you'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
+      "Yes. Audit Trail generates evidence that supports certification and compliance audits across ISO 27001, NIST, SOC 2, GDPR, and other frameworks. However, we're one part of your compliance program—you'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
   },
   {
     question: "Do you offer enterprise plans?",
     answer:
-      "Yes. Enterprise includes SSO, custom framework mappings (including IRAP), dedicated support, and SLAs. Contact us at hello@audittrail.dev to discuss your requirements.",
+      "Yes. Enterprise includes SSO, custom framework mappings (including IRAP, HIPAA, and custom frameworks), dedicated support, and SLAs. Contact us at hello@audittrail.dev to discuss your requirements.",
   },
 ];
 

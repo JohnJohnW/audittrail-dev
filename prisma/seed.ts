@@ -173,9 +173,376 @@ async function main() {
     });
   }
 
+  // NIST CSF 2.0 Framework
+  const nistCsf = await prisma.complianceFramework.upsert({
+    where: { name: "NIST CSF" },
+    update: {},
+    create: {
+      name: "NIST CSF",
+      version: "2.0",
+      description:
+        "NIST Cybersecurity Framework 2.0 — a globally recognised voluntary framework for managing and reducing cybersecurity risk.",
+    },
+  });
+
+  // NIST SP 800-53 Framework
+  const nist80053 = await prisma.complianceFramework.upsert({
+    where: { name: "NIST SP 800-53" },
+    update: {},
+    create: {
+      name: "NIST SP 800-53",
+      version: "Rev 5",
+      description:
+        "Security and privacy controls for information systems and organisations. Widely adopted for federal and enterprise environments.",
+    },
+  });
+
+  // SOC 2 Framework
+  const soc2 = await prisma.complianceFramework.upsert({
+    where: { name: "SOC 2" },
+    update: {},
+    create: {
+      name: "SOC 2",
+      version: "2022",
+      description:
+        "AICPA Trust Services Criteria for service organisations. Covers security, availability, processing integrity, confidentiality, and privacy.",
+    },
+  });
+
+  // GDPR Framework
+  const gdpr = await prisma.complianceFramework.upsert({
+    where: { name: "GDPR" },
+    update: {},
+    create: {
+      name: "GDPR",
+      version: "2018",
+      description:
+        "EU General Data Protection Regulation. Governs the processing of personal data of EU residents.",
+    },
+  });
+
+  // SOCI Act Framework
+  const sociAct = await prisma.complianceFramework.upsert({
+    where: { name: "SOCI Act" },
+    update: {},
+    create: {
+      name: "SOCI Act",
+      version: "2018",
+      description:
+        "Australian Security of Critical Infrastructure Act. Positive security obligations for operators of critical infrastructure assets.",
+    },
+  });
+
+  // PCI DSS Framework
+  const pciDss = await prisma.complianceFramework.upsert({
+    where: { name: "PCI DSS" },
+    update: {},
+    create: {
+      name: "PCI DSS",
+      version: "4.0",
+      description:
+        "Payment Card Industry Data Security Standard. Required for organisations that store, process, or transmit cardholder data.",
+    },
+  });
+
+  // NIST CSF 2.0 Controls
+  const nistCsfControls = [
+    {
+      code: "CSF-GV.OC-03",
+      title: "Legal & Regulatory Requirements",
+      description:
+        "Legal, regulatory, and contractual cybersecurity requirements are understood and managed. Pull request reviews and approvals provide evidence that changes are reviewed for compliance.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "CSF-PR.AA-05",
+      title: "Access Permissions Management",
+      description:
+        "Access permissions, entitlements, and authorisations are defined in a policy, managed, enforced, and reviewed. Branch protection rules restrict who can push and merge code.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "CSF-PR.PS-01",
+      title: "Configuration Management",
+      description:
+        "Configuration management practices are established and applied. Branch protection policies enforce configuration governance across repositories.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "CSF-PR.PS-02",
+      title: "Software Development Security Practices",
+      description:
+        "Software development security practices are integrated into the SDLC. Pull request approvals and review processes demonstrate secure development practices.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "CSF-PR.PS-04",
+      title: "Log Records",
+      description:
+        "Log records are created, protected, analysed, and retained. Commit history provides an immutable audit log of all code changes.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "CSF-PR.PS-05",
+      title: "Software & Dependency Management",
+      description:
+        "Installed software and firmware are managed. Dependency update commits and automated patching tools provide evidence of software lifecycle management.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "CSF-DE.CM-09",
+      title: "Computing Systems Monitored",
+      description:
+        "Computing hardware and software are monitored to find potentially adverse events. CI/CD pipeline commits and infrastructure-as-code changes evidence continuous monitoring.",
+      evidenceType: "commit_history",
+    },
+  ];
+
+  for (const control of nistCsfControls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: nistCsf.id, code: control.code } },
+      update: {},
+      create: { frameworkId: nistCsf.id, ...control },
+    });
+  }
+
+  // NIST SP 800-53 Rev 5 Controls
+  const nist80053Controls = [
+    {
+      code: "800-53-SA-10",
+      title: "Developer Configuration Management",
+      description:
+        "The organisation requires the developer to perform configuration management during system, component, or service development. Branch protection and required reviews enforce configuration control.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "800-53-SA-11",
+      title: "Developer Testing and Evaluation",
+      description:
+        "The organisation requires the developer to implement a security and privacy assessment plan. Pull request reviews with security checks provide evidence of developer testing.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "800-53-CM-3",
+      title: "Configuration Change Control",
+      description:
+        "The organisation documents, manages, and controls changes to the system. Pull request approvals with required reviews enforce a formal change control process.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "800-53-CM-4",
+      title: "Security and Privacy Impact Analysis",
+      description:
+        "The organisation analyses changes to the system to determine potential security and privacy impacts. PR review processes provide a mechanism for security impact analysis.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "800-53-AC-2",
+      title: "Account Management",
+      description:
+        "The organisation manages system accounts including establishing, activating, modifying, reviewing, disabling, and removing accounts. Branch protection restricts repository access by role.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "800-53-SI-2",
+      title: "Flaw Remediation",
+      description:
+        "The organisation identifies, reports, and corrects information system flaws. Dependency update commits and security patch PRs provide evidence of flaw remediation.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "800-53-CA-7",
+      title: "Continuous Monitoring",
+      description:
+        "The organisation develops a continuous monitoring strategy. CI/CD security scans and automated test commits provide evidence of ongoing monitoring.",
+      evidenceType: "commit_history",
+    },
+  ];
+
+  for (const control of nist80053Controls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: nist80053.id, code: control.code } },
+      update: {},
+      create: { frameworkId: nist80053.id, ...control },
+    });
+  }
+
+  // SOC 2 Controls
+  const soc2Controls = [
+    {
+      code: "SOC2-CC8.1",
+      title: "Change Management",
+      description:
+        "The entity authorises, designs, develops or acquires, configures, documents, tests, approves, and implements changes to infrastructure, data, software, and procedures. PR approvals enforce this process.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "SOC2-CC6.1",
+      title: "Logical and Physical Access Controls",
+      description:
+        "The entity implements logical access security software, infrastructure, and architectures over protected information assets. Branch protection rules restrict access to production code.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "SOC2-CC6.6",
+      title: "Logical Access Security",
+      description:
+        "The entity implements logical access security measures to protect against threats from sources outside its system boundaries. Repository access controls and required reviews evidence this.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "SOC2-CC7.1",
+      title: "System Component Detection",
+      description:
+        "The entity uses detection and monitoring procedures to identify changes to configurations that result in the introduction of new vulnerabilities. CI/CD and infrastructure commits provide evidence.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "SOC2-CC7.2",
+      title: "Anomaly and Threat Monitoring",
+      description:
+        "The entity monitors system components and the operation of those components for anomalies indicative of malicious acts, natural disasters, and errors affecting the entity's ability to meet its objectives.",
+      evidenceType: "commit_history",
+    },
+  ];
+
+  for (const control of soc2Controls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: soc2.id, code: control.code } },
+      update: {},
+      create: { frameworkId: soc2.id, ...control },
+    });
+  }
+
+  // GDPR Controls
+  const gdprControls = [
+    {
+      code: "GDPR-Art25",
+      title: "Data Protection by Design and by Default",
+      description:
+        "Controllers shall implement appropriate technical measures to implement data-protection principles. PR reviews with privacy checks provide evidence of privacy-by-design in development.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "GDPR-Art32",
+      title: "Security of Processing",
+      description:
+        "Controllers and processors shall implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk. PR reviews and branch protection provide evidence.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "GDPR-Art30",
+      title: "Records of Processing Activities",
+      description:
+        "Controllers shall maintain records of processing activities. Commit history provides a partial audit trail of data processing changes. Supplementary documentation records are required.",
+      evidenceType: "commit_history",
+    },
+  ];
+
+  for (const control of gdprControls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: gdpr.id, code: control.code } },
+      update: {},
+      create: { frameworkId: gdpr.id, ...control },
+    });
+  }
+
+  // SOCI Act Controls
+  const sociControls = [
+    {
+      code: "SOCI-PSO1",
+      title: "Hazard and Risk Management",
+      description:
+        "Responsible entities must identify and manage hazards and risks to critical infrastructure assets. PR reviews for infrastructure changes provide evidence of risk assessment processes.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "SOCI-PSO2",
+      title: "Incident Response Plan",
+      description:
+        "Responsible entities must have an incident response plan and undertake exercises. PR approval processes and documented change controls support incident response readiness.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "SOCI-PSO3",
+      title: "System Security Plan",
+      description:
+        "Responsible entities must develop and maintain a system security plan for their critical infrastructure assets. Branch protection rules enforce the security controls defined in the plan.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "SOCI-PSO4",
+      title: "Access Control",
+      description:
+        "Responsible entities must control access to critical infrastructure assets and associated data. Repository branch protection and required reviews control access to production systems.",
+      evidenceType: "branch_protection",
+    },
+  ];
+
+  for (const control of sociControls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: sociAct.id, code: control.code } },
+      update: {},
+      create: { frameworkId: sociAct.id, ...control },
+    });
+  }
+
+  // PCI DSS 4.0 Controls
+  const pciControls = [
+    {
+      code: "PCI-6.2",
+      title: "Security Vulnerabilities Identified and Managed",
+      description:
+        "Bespoke and custom software are developed securely. Dependency update commits, CVE patches, and security scanning tool commits provide evidence of vulnerability management.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "PCI-6.3",
+      title: "Security Vulnerabilities Addressed",
+      description:
+        "Security vulnerabilities are identified and protected against. Pull request reviews with security checks provide evidence that vulnerabilities are assessed before merging.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "PCI-6.4",
+      title: "Web-Facing Applications Protected",
+      description:
+        "Public-facing web applications are protected against attacks. Security commit patterns and CI/CD security scans evidence ongoing protection of web-facing application code.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "PCI-7.2",
+      title: "Access to System Components and Data",
+      description:
+        "Access to system components and data is appropriately defined and assigned. Branch protection rules restrict who can merge to production branches, controlling system access.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "PCI-8.2",
+      title: "User Identification and Authentication",
+      description:
+        "All users are assigned a unique ID before allowing them to access system components or cardholder data. Branch protection with required reviews enforces authenticated user identity for all code changes.",
+      evidenceType: "branch_protection",
+    },
+  ];
+
+  for (const control of pciControls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: pciDss.id, code: control.code } },
+      update: {},
+      create: { frameworkId: pciDss.id, ...control },
+    });
+  }
+
   console.log("Seeding completed!");
   console.log(`- ISO 27001: ${isoControls.length} controls`);
   console.log(`- Essential Eight: ${e8Controls.length} controls`);
+  console.log(`- NIST CSF 2.0: ${nistCsfControls.length} controls`);
+  console.log(`- NIST SP 800-53 Rev 5: ${nist80053Controls.length} controls`);
+  console.log(`- SOC 2: ${soc2Controls.length} controls`);
+  console.log(`- GDPR: ${gdprControls.length} controls`);
+  console.log(`- SOCI Act: ${sociControls.length} controls`);
+  console.log(`- PCI DSS 4.0: ${pciControls.length} controls`);
 }
 
 main()

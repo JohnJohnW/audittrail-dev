@@ -131,8 +131,12 @@ function SettingsContent() {
       {/* Header */}
       <FadeIn>
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Settings</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1">Manage your organization and subscription</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
+            Settings
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">
+            Manage your organization and subscription
+          </p>
         </div>
       </FadeIn>
 
@@ -305,7 +309,7 @@ function SettingsContent() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500 mb-4">
-              Create API keys to connect the OpenClaw agent connector to AuditTrail.dev.
+              Create API keys to connect an agent connector to Audit Trail.
             </p>
 
             {/* Create new key */}
@@ -355,7 +359,7 @@ function SettingsContent() {
                   className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4"
                 >
                   <p className="text-sm font-medium text-green-800 mb-2">
-                    API key created. Copy it now — it won't be shown again.
+                    API key created. Copy it now — it won&apos;t be shown again.
                   </p>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 text-xs bg-white border border-green-200 rounded px-3 py-2 font-mono text-green-900 break-all">
@@ -391,7 +395,9 @@ function SettingsContent() {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-900">{key.name}</span>
                         {key.revokedAt && (
-                          <Badge variant="error" size="sm">Revoked</Badge>
+                          <Badge variant="error" size="sm">
+                            Revoked
+                          </Badge>
                         )}
                       </div>
                       <p className="text-xs text-gray-500">
@@ -427,9 +433,6 @@ function SettingsContent() {
             {/* Quick start hint */}
             <div className="mt-4 bg-gray-50 rounded-lg p-4">
               <p className="text-xs font-medium text-gray-600 mb-2">Quick Start</p>
-              <p className="text-xs font-mono text-gray-500">
-                $ npm install -g @audittrail/openclaw-connector
-              </p>
               <p className="text-xs font-mono text-gray-500">
                 $ audittrail-connect --api-key &lt;your-key&gt;
               </p>

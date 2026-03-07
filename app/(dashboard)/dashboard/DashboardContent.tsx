@@ -53,7 +53,9 @@ export function DashboardContent({
       {/* Header */}
       <FadeIn>
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Overview</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
+            Overview
+          </h1>
           <p className="text-sm text-gray-500 mt-1">Your compliance evidence at a glance</p>
         </div>
       </FadeIn>
@@ -139,7 +141,7 @@ export function DashboardContent({
                   href="/agents"
                   icon={<AgentIcon />}
                   title="Agent Activity (beta)"
-                  subtitle="OpenClaw governance"
+                  subtitle="Agent governance"
                 />
               </CardContent>
             </Card>

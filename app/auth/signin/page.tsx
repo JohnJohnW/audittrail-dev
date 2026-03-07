@@ -14,7 +14,7 @@ export default function SignInPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-8">
             <span className="text-lg font-semibold text-gray-900">
-              AuditTrail<span className="text-accent">.dev</span>
+              Audit <span className="text-accent">Trail</span>
             </span>
           </Link>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Sign in to your account</h1>

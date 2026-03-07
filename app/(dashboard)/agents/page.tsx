@@ -99,9 +99,7 @@ export default function AgentsPage() {
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
               Agent Activity{" "}
-              <span className="text-sm font-normal text-gray-400 align-middle">
-                (beta)
-              </span>
+              <span className="text-sm font-normal text-gray-400 align-middle">(beta)</span>
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               Monitor autonomous agent sessions and compliance
@@ -140,9 +138,7 @@ export default function AgentsPage() {
               onClick={() => setRiskFilter(level)}
             >
               {level.charAt(0).toUpperCase() + level.slice(1)}
-              {summary?.riskDistribution[level]
-                ? ` (${summary.riskDistribution[level]})`
-                : ""}
+              {summary?.riskDistribution[level] ? ` (${summary.riskDistribution[level]})` : ""}
             </FilterButton>
           ))}
         </div>
@@ -170,13 +166,10 @@ export default function AgentsPage() {
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">No agent sessions yet</h2>
                 <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  Connect the OpenClaw connector to start monitoring agent activity.
-                  Create an API key in Settings, then run the connector.
+                  Connect an agent connector to start monitoring agent activity. Create an API key
+                  in Settings, then run the connector.
                 </p>
                 <div className="bg-gray-50 rounded-lg p-4 max-w-md mx-auto text-left">
-                  <p className="text-xs font-mono text-gray-600 mb-1">
-                    $ npm install -g @audittrail/openclaw-connector
-                  </p>
                   <p className="text-xs font-mono text-gray-600">
                     $ audittrail-connect --api-key atk_your_key
                   </p>
@@ -208,7 +201,10 @@ export default function AgentsPage() {
                           <Badge variant="default" size="sm">
                             {session.agentFramework}
                           </Badge>
-                          <Badge variant={STATUS_BADGE_VARIANT[session.status] || "default"} size="sm">
+                          <Badge
+                            variant={STATUS_BADGE_VARIANT[session.status] || "default"}
+                            size="sm"
+                          >
                             {session.status}
                           </Badge>
                         </div>
@@ -220,7 +216,10 @@ export default function AgentsPage() {
                       </div>
                       <div className="flex items-center gap-3 ml-4">
                         <span className="text-xs text-gray-400">{session.eventCount} events</span>
-                        <Badge variant={RISK_BADGE_VARIANT[session.riskLevel] || "default"} size="sm">
+                        <Badge
+                          variant={RISK_BADGE_VARIANT[session.riskLevel] || "default"}
+                          size="sm"
+                        >
                           {session.riskLevel}
                         </Badge>
                       </div>

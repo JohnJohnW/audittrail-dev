@@ -12,7 +12,7 @@ export function Footer() {
             href="/"
             className="text-sm font-medium text-gray-900 hover:text-accent transition-colors"
           >
-            AuditTrail<span className="text-accent">.dev</span>
+            Audit <span className="text-accent">Trail</span>
           </Link>
 
           <div className="flex items-center gap-6 text-xs text-gray-500">
@@ -33,7 +33,7 @@ export function Footer() {
 
         <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-400">
-            © {new Date().getFullYear()} AuditTrail.dev · Built for Australian businesses
+            © {new Date().getFullYear()} Audit Trail · Built for Australian businesses
           </p>
           <div className="flex items-center gap-6 text-xs text-gray-400">
             <Link href="/terms" className="hover:text-gray-600 transition-colors">

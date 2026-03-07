@@ -92,14 +92,11 @@ export function DashboardNav({ user }: DashboardNavProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo and desktop navigation */}
           <div className="flex items-center min-w-0 shrink-0">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 group shrink-0"
-            >
+            <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
               <div className="relative w-8 h-8 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-200 shrink-0">
                 <Image
                   src="/icon.svg"
-                  alt="AuditTrail.dev"
+                  alt="Audit Trail"
                   width={32}
                   height={32}
                   className="rounded-lg w-full h-full"
@@ -107,7 +104,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                 />
               </div>
               <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                AuditTrail<span className="text-accent">.dev</span>
+                Audit <span className="text-accent">Trail</span>
               </span>
             </Link>
 
@@ -128,10 +125,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                     )}
                   >
                     <Icon
-                      className={cn(
-                        "w-4 h-4 shrink-0",
-                        active ? "text-accent" : "text-gray-400"
-                      )}
+                      className={cn("w-4 h-4 shrink-0", active ? "text-accent" : "text-gray-400")}
                     />
                     {item.name}
                     {active && (

@@ -85,14 +85,15 @@ export async function POST(request: Request) {
       update: {
         status: body.sessionStatus || undefined,
         summary: body.sessionSummary || undefined,
-        endedAt: body.sessionStatus === "completed" || body.sessionStatus === "failed"
-          ? new Date()
-          : undefined,
+        endedAt:
+          body.sessionStatus === "completed" || body.sessionStatus === "failed"
+            ? new Date()
+            : undefined,
       },
       create: {
         orgId,
         externalId: body.sessionId,
-        agentFramework: body.agentFramework || "openclaw",
+        agentFramework: body.agentFramework || "generic",
         agentId: body.agentId || null,
         status: body.sessionStatus || "running",
         summary: body.sessionSummary || null,
@@ -119,18 +120,15 @@ export async function POST(request: Request) {
         summary: event.summary.slice(0, 1000),
         riskLevel: risk.riskLevel,
         riskScore: risk.riskScore,
-        input: event.input
-          ? (truncateJson(event.input) as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
+        input: event.input ? (truncateJson(event.input) as Prisma.InputJsonValue) : Prisma.JsonNull,
         output: event.output
           ? (truncateJson(event.output) as Prisma.InputJsonValue)
           : Prisma.JsonNull,
-        metadata: event.metadata
-          ? (event.metadata as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
-        controlMappings: controlMappings.length > 0
-          ? (controlMappings as unknown as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
+        metadata: event.metadata ? (event.metadata as Prisma.InputJsonValue) : Prisma.JsonNull,
+        controlMappings:
+          controlMappings.length > 0
+            ? (controlMappings as unknown as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
         timestamp: event.timestamp ? new Date(event.timestamp) : new Date(),
       };
     });

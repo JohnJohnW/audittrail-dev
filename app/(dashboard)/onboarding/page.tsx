@@ -103,8 +103,12 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-gray-50 py-6 sm:py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Welcome to AuditTrail.dev</h1>
-          <p className="text-sm sm:text-base text-gray-600">Let&apos;s get you set up in just a few steps</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            Welcome to Audit <span className="text-accent">Trail</span>
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            Let&apos;s get you set up in just a few steps
+          </p>
         </div>
 
         <div className="mb-8">
@@ -145,7 +149,12 @@ export default function OnboardingPage() {
                   }`}
                 >
                   {step.completed ? (
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -158,8 +167,12 @@ export default function OnboardingPage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">{step.title}</h3>
-                  <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">{step.description}</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
+                    {step.description}
+                  </p>
                   {step.action && !step.completed && (
                     <Link
                       href={step.action.href}

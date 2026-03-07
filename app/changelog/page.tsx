@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Changelog - AuditTrail.dev",
-  description: "Recent updates and improvements to AuditTrail.dev",
+  title: "Changelog - Audit Trail",
+  description: "Recent updates and improvements to Audit Trail",
 };
 
 interface ChangelogEntry {
@@ -21,7 +21,7 @@ const changelog: ChangelogEntry[] = [
     type: "feature",
     title: "Initial Release",
     description:
-      "Launch of AuditTrail.dev with GitHub integration, compliance mapping, and export capabilities.",
+      "Launch of Audit Trail with GitHub integration, compliance mapping, and export capabilities.",
   },
 ];
 

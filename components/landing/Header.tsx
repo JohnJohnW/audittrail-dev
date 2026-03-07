@@ -29,9 +29,9 @@ export function Header() {
           <Link
             href="/"
             className="text-lg font-semibold text-gray-900 tracking-tight"
-            aria-label="AuditTrail home"
+            aria-label="Audit Trail home"
           >
-            AuditTrail<span className="text-accent">.dev</span>
+            Audit <span className="text-accent">Trail</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

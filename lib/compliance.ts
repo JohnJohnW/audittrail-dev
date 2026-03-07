@@ -150,6 +150,65 @@ function getCommitRelevance(message: string, controlCode: string): "high" | "med
     return "low";
   }
 
+  // NIST CSF dependency/patching controls (CSF-PR.PS-05)
+  if (controlCode === "CSF-PR.PS-05") {
+    if (matchesPatterns(message, AUTOMATED_DEPENDENCY_PATTERNS)) return "high";
+    if (matchesPatterns(message, DEPENDENCY_PATTERNS)) return "high";
+    if (matchesPatterns(message, INFRASTRUCTURE_PATTERNS)) return "medium";
+    return "low";
+  }
+
+  // NIST CSF log records / audit trail (CSF-PR.PS-04)
+  if (controlCode === "CSF-PR.PS-04") {
+    if (matchesPatterns(message, CICD_SECURITY_PATTERNS)) return "high";
+    if (matchesPatterns(message, INFRASTRUCTURE_PATTERNS)) return "medium";
+    return "medium";
+  }
+
+  // NIST CSF monitoring (CSF-DE.CM-09)
+  if (controlCode === "CSF-DE.CM-09") {
+    if (matchesPatterns(message, CICD_SECURITY_PATTERNS)) return "high";
+    if (matchesPatterns(message, INFRASTRUCTURE_PATTERNS)) return "medium";
+    return "low";
+  }
+
+  // NIST 800-53 flaw remediation (800-53-SI-2)
+  if (controlCode === "800-53-SI-2") {
+    if (matchesPatterns(message, AUTOMATED_DEPENDENCY_PATTERNS)) return "high";
+    if (matchesPatterns(message, DEPENDENCY_PATTERNS)) return "high";
+    if (matchesPatterns(message, SECURITY_PATTERNS)) return "medium";
+    return "low";
+  }
+
+  // NIST 800-53 continuous monitoring (800-53-CA-7)
+  if (controlCode === "800-53-CA-7") {
+    if (matchesPatterns(message, CICD_SECURITY_PATTERNS)) return "high";
+    if (matchesPatterns(message, TEST_PATTERNS)) return "high";
+    if (matchesPatterns(message, INFRASTRUCTURE_PATTERNS)) return "medium";
+    return "low";
+  }
+
+  // SOC 2 monitoring controls
+  if (["SOC2-CC7.1", "SOC2-CC7.2"].includes(controlCode)) {
+    if (matchesPatterns(message, CICD_SECURITY_PATTERNS)) return "high";
+    if (matchesPatterns(message, INFRASTRUCTURE_PATTERNS)) return "medium";
+    return "low";
+  }
+
+  // PCI DSS vulnerability controls
+  if (["PCI-6.2", "PCI-6.4"].includes(controlCode)) {
+    if (matchesPatterns(message, SECURITY_PATTERNS)) return "high";
+    if (matchesPatterns(message, DEPENDENCY_PATTERNS)) return "high";
+    if (matchesPatterns(message, CICD_SECURITY_PATTERNS)) return "high";
+    return "low";
+  }
+
+  // GDPR records of processing (partial git evidence)
+  if (controlCode === "GDPR-Art30") {
+    if (matchesPatterns(message, SECURITY_PATTERNS)) return "high";
+    return "medium";
+  }
+
   // Default relevance for general commit evidence
   return "medium";
 }
@@ -242,22 +301,22 @@ export async function getComplianceEvidence(
     // Create maps to track which repository each commit/PR belongs to
     const commitToRepo = new Map<string, { id: string; name: string; fullName: string }>();
     const prToRepo = new Map<string, { id: string; name: string; fullName: string }>();
-    
+
     for (const repo of repositories) {
-    for (const commit of repo.commits) {
-      commitToRepo.set(commit.id, {
-        id: repo.id,
-        name: repo.name,
-        fullName: repo.fullName,
-      });
-    }
-    for (const pr of repo.pullRequests) {
-      prToRepo.set(pr.id, {
-        id: repo.id,
-        name: repo.name,
-        fullName: repo.fullName,
-      });
-    }
+      for (const commit of repo.commits) {
+        commitToRepo.set(commit.id, {
+          id: repo.id,
+          name: repo.name,
+          fullName: repo.fullName,
+        });
+      }
+      for (const pr of repo.pullRequests) {
+        prToRepo.set(pr.id, {
+          id: repo.id,
+          name: repo.name,
+          fullName: repo.fullName,
+        });
+      }
     }
 
     // Aggregate data
@@ -265,10 +324,10 @@ export async function getComplianceEvidence(
     const allPRs = repositories.flatMap((r) => r.pullRequests);
     const allBranchProtections = repositories.flatMap((r) => r.branchProtections);
 
-    logger.info("Aggregated data", { 
-      commits: allCommits.length, 
-      prs: allPRs.length, 
-      branchProtections: allBranchProtections.length 
+    logger.info("Aggregated data", {
+      commits: allCommits.length,
+      prs: allPRs.length,
+      branchProtections: allBranchProtections.length,
     });
 
     // Categorize commits for smarter matching
@@ -293,225 +352,226 @@ export async function getComplianceEvidence(
     );
 
     // Controls that have limited Git evidence
-    const LIMITED_EVIDENCE_CONTROLS = ["E8-MM", "E8-UAH"];
+    const LIMITED_EVIDENCE_CONTROLS = ["E8-MM", "E8-UAH", "GDPR-Art30"];
 
     // Map controls to evidence
     const controls: ControlEvidence[] = [];
 
     for (const framework of frameworks) {
-    for (const control of framework.controls) {
-      const evidence: EvidenceItem[] = [];
-      let status: "has_evidence" | "partial" | "no_evidence" | "limited" = "no_evidence";
-      let note: string | undefined;
+      for (const control of framework.controls) {
+        const evidence: EvidenceItem[] = [];
+        let status: "has_evidence" | "partial" | "no_evidence" | "limited" = "no_evidence";
+        let note: string | undefined;
 
-      // Check if this control has limited Git evidence
-      if (LIMITED_EVIDENCE_CONTROLS.includes(control.code)) {
-        status = "limited";
-        note =
-          "This control requires supplementary evidence from endpoint management or configuration tools. Git evidence is limited.";
-      }
+        // Check if this control has limited Git evidence
+        if (LIMITED_EVIDENCE_CONTROLS.includes(control.code)) {
+          status = "limited";
+          note =
+            "This control requires supplementary evidence from endpoint management or configuration tools. Git evidence is limited.";
+        }
 
-      switch (control.evidenceType) {
-        case "commit_history": {
-          // Select commits based on control type
-          let relevantCommits = allCommits;
+        switch (control.evidenceType) {
+          case "commit_history": {
+            // Select commits based on control type
+            let relevantCommits = allCommits;
 
-          // Use more specific commits for certain controls
-          if (["E8-PA", "A.8.8", "A.8.30"].includes(control.code)) {
-            // Prioritize automated dependency updates (Dependabot/Renovate) then manual dependency updates
-            relevantCommits =
-              automatedDependencyCommits.length > 0
-                ? [...automatedDependencyCommits, ...dependencyCommits]
-                : dependencyCommits.length > 0
-                  ? dependencyCommits
+            // Use more specific commits for certain controls
+            if (["E8-PA", "A.8.8", "A.8.30"].includes(control.code)) {
+              // Prioritize automated dependency updates (Dependabot/Renovate) then manual dependency updates
+              relevantCommits =
+                automatedDependencyCommits.length > 0
+                  ? [...automatedDependencyCommits, ...dependencyCommits]
+                  : dependencyCommits.length > 0
+                    ? dependencyCommits
+                    : allCommits;
+            } else if (control.code === "E8-PO") {
+              relevantCommits =
+                infrastructureCommits.length > 0 ? infrastructureCommits : allCommits;
+            } else if (["A.8.28", "A.8.26"].includes(control.code)) {
+              relevantCommits =
+                securityCommits.length > 0
+                  ? [...securityCommits, ...allCommits.slice(0, 10)]
                   : allCommits;
-          } else if (control.code === "E8-PO") {
-            relevantCommits = infrastructureCommits.length > 0 ? infrastructureCommits : allCommits;
-          } else if (["A.8.28", "A.8.26"].includes(control.code)) {
-            relevantCommits =
-              securityCommits.length > 0
-                ? [...securityCommits, ...allCommits.slice(0, 10)]
-                : allCommits;
-          } else if (control.code === "A.8.29") {
-            // Security testing - prioritize CI/CD security commits and test commits
-            relevantCommits =
-              cicdSecurityCommits.length > 0 || testCommits.length > 0
-                ? [...cicdSecurityCommits, ...testCommits, ...allCommits.slice(0, 10)]
-                : allCommits;
-          } else if (control.code === "A.8.33") {
-            relevantCommits =
-              testCommits.length > 0 ? [...testCommits, ...allCommits.slice(0, 10)] : allCommits;
-          }
-
-          // Build evidence items
-          for (const commit of relevantCommits.slice(0, 30)) {
-            let relevance = getCommitRelevance(commit.message, control.code);
-
-            // Signed commits are high relevance for auth controls
-            if (["A.5.17", "E8-MFA"].includes(control.code) && commit.verified) {
-              relevance = "high";
+            } else if (control.code === "A.8.29") {
+              // Security testing - prioritize CI/CD security commits and test commits
+              relevantCommits =
+                cicdSecurityCommits.length > 0 || testCommits.length > 0
+                  ? [...cicdSecurityCommits, ...testCommits, ...allCommits.slice(0, 10)]
+                  : allCommits;
+            } else if (control.code === "A.8.33") {
+              relevantCommits =
+                testCommits.length > 0 ? [...testCommits, ...allCommits.slice(0, 10)] : allCommits;
             }
 
-            const signedNote = commit.verified
-              ? ` [Signed: ${commit.verificationReason || "verified"}]`
-              : "";
+            // Build evidence items
+            for (const commit of relevantCommits.slice(0, 30)) {
+              let relevance = getCommitRelevance(commit.message, control.code);
 
-            const repoInfo = commitToRepo.get(commit.id);
-            evidence.push({
-              type: "commit",
-              title: `Commit: ${commit.sha.slice(0, 7)}${commit.verified ? " ✓" : ""}`,
-              description: commit.message.split("\n")[0].slice(0, 100) + signedNote,
-              timestamp: commit.committedAt,
-              url: commit.url || undefined,
-              metadata: {
-                sha: commit.sha,
-                author: commit.authorName,
-                email: commit.authorEmail,
-                verified: commit.verified,
-                verificationReason: commit.verificationReason,
-              },
-              relevance,
-              repositoryId: repoInfo?.id,
-              repositoryName: repoInfo?.name,
-              repositoryFullName: repoInfo?.fullName,
-            });
-          }
+              // Signed commits are high relevance for auth controls
+              if (["A.5.17", "E8-MFA"].includes(control.code) && commit.verified) {
+                relevance = "high";
+              }
 
-          // Determine status based on evidence quality
-          const highRelevanceCount = evidence.filter((e) => e.relevance === "high").length;
+              const signedNote = commit.verified
+                ? ` [Signed: ${commit.verificationReason || "verified"}]`
+                : "";
 
-          if (status !== "limited") {
-            if (highRelevanceCount >= 3) {
-              status = "has_evidence";
-            } else if (evidence.length >= 10 || highRelevanceCount >= 1) {
-              status = "partial";
-            } else if (evidence.length > 0) {
-              status = "partial";
+              const repoInfo = commitToRepo.get(commit.id);
+              evidence.push({
+                type: "commit",
+                title: `Commit: ${commit.sha.slice(0, 7)}${commit.verified ? " ✓" : ""}`,
+                description: commit.message.split("\n")[0].slice(0, 100) + signedNote,
+                timestamp: commit.committedAt,
+                url: commit.url || undefined,
+                metadata: {
+                  sha: commit.sha,
+                  author: commit.authorName,
+                  email: commit.authorEmail,
+                  verified: commit.verified,
+                  verificationReason: commit.verificationReason,
+                },
+                relevance,
+                repositoryId: repoInfo?.id,
+                repositoryName: repoInfo?.name,
+                repositoryFullName: repoInfo?.fullName,
+              });
             }
+
+            // Determine status based on evidence quality
+            const highRelevanceCount = evidence.filter((e) => e.relevance === "high").length;
+
+            if (status !== "limited") {
+              if (highRelevanceCount >= 3) {
+                status = "has_evidence";
+              } else if (evidence.length >= 10 || highRelevanceCount >= 1) {
+                status = "partial";
+              } else if (evidence.length > 0) {
+                status = "partial";
+              }
+            }
+            break;
           }
-          break;
+
+          case "pr_approvals": {
+            // Merged PRs with approvals show change control
+            const approvedPRs = allPRs.filter((pr) => pr.reviews.length > 0);
+
+            for (const pr of approvedPRs.slice(0, 30)) {
+              // Detect automated dependency PRs (Dependabot, Renovate)
+              const authorLogin = pr.authorLogin || "";
+              const isAutomatedDependency =
+                authorLogin.includes("dependabot") ||
+                authorLogin.includes("renovate") ||
+                authorLogin === "dependabot[bot]" ||
+                authorLogin === "renovate[bot]" ||
+                matchesPatterns(pr.title, AUTOMATED_DEPENDENCY_PATTERNS);
+
+              // Determine relevance
+              let relevance: "high" | "medium" | "low" =
+                pr.baseBranch === "main" || pr.baseBranch === "master" ? "high" : "medium";
+
+              // Automated dependency PRs are highly relevant for certain controls
+              if (isAutomatedDependency) {
+                relevance = "high";
+              }
+
+              const automatedNote = isAutomatedDependency ? " [Automated]" : "";
+
+              const prRepoInfo = prToRepo.get(pr.id);
+              evidence.push({
+                type: "pr",
+                title: `PR #${pr.number}: ${pr.title.slice(0, 60)}`,
+                description: `Approved by ${pr.reviews.map((r) => r.reviewerLogin).join(", ")}${automatedNote}`,
+                timestamp: pr.mergedAt || pr.createdAt,
+                url: pr.url || undefined,
+                metadata: {
+                  number: pr.number,
+                  author: authorLogin,
+                  approvers: pr.reviews.map((r) => r.reviewerLogin || "").filter(Boolean),
+                  baseBranch: pr.baseBranch || "",
+                  isAutomatedDependency,
+                },
+                relevance,
+                repositoryId: prRepoInfo?.id,
+                repositoryName: prRepoInfo?.name,
+                repositoryFullName: prRepoInfo?.fullName,
+              });
+            }
+
+            if (status !== "limited") {
+              if (evidence.length >= 5) {
+                status = "has_evidence";
+              } else if (evidence.length > 0) {
+                status = "partial";
+              }
+            }
+            break;
+          }
+
+          case "branch_protection": {
+            // Branch protection rules show access control
+            const effectiveProtections = allBranchProtections.filter(
+              (bp) => bp.requirePullRequest || bp.requiredApprovals > 0
+            );
+
+            for (const bp of effectiveProtections) {
+              const repo = repositories.find((r) => r.id === bp.repoId);
+              const protectionStrength = calculateProtectionStrength(bp);
+
+              evidence.push({
+                type: "branch_protection",
+                title: `${repo?.fullName || "Unknown"}: ${bp.branch}`,
+                description: buildProtectionDescription(bp),
+                timestamp: bp.snapshotAt,
+                metadata: {
+                  branch: bp.branch,
+                  requirePullRequest: bp.requirePullRequest,
+                  requiredApprovals: bp.requiredApprovals,
+                  dismissStaleReviews: bp.dismissStaleReviews,
+                  requireCodeOwners: bp.requireCodeOwners,
+                  enforceAdmins: bp.enforceAdmins,
+                  requireStatusChecks: bp.requireStatusChecks,
+                  protectionStrength,
+                },
+                relevance:
+                  protectionStrength >= 4 ? "high" : protectionStrength >= 2 ? "medium" : "low",
+                repositoryId: repo?.id,
+                repositoryName: repo?.name,
+                repositoryFullName: repo?.fullName,
+              });
+            }
+
+            if (status !== "limited") {
+              const hasStrongProtection = evidence.some((e) => e.relevance === "high");
+              if (evidence.length > 0 && hasStrongProtection) {
+                status = "has_evidence";
+              } else if (evidence.length > 0) {
+                status = "partial";
+              }
+            }
+            break;
+          }
         }
 
-        case "pr_approvals": {
-          // Merged PRs with approvals show change control
-          const approvedPRs = allPRs.filter((pr) => pr.reviews.length > 0);
+        // Sort evidence by relevance (high first)
+        evidence.sort((a, b) => {
+          const order = { high: 0, medium: 1, low: 2 };
+          return (order[a.relevance || "low"] || 2) - (order[b.relevance || "low"] || 2);
+        });
 
-          for (const pr of approvedPRs.slice(0, 30)) {
-            // Detect automated dependency PRs (Dependabot, Renovate)
-            const authorLogin = pr.authorLogin || "";
-            const isAutomatedDependency =
-              authorLogin.includes("dependabot") ||
-              authorLogin.includes("renovate") ||
-              authorLogin === "dependabot[bot]" ||
-              authorLogin === "renovate[bot]" ||
-              matchesPatterns(pr.title, AUTOMATED_DEPENDENCY_PATTERNS);
-
-            // Determine relevance
-            let relevance: "high" | "medium" | "low" =
-              pr.baseBranch === "main" || pr.baseBranch === "master" ? "high" : "medium";
-
-            // Automated dependency PRs are highly relevant for certain controls
-            if (isAutomatedDependency) {
-              relevance = "high";
-            }
-
-            const automatedNote = isAutomatedDependency ? " [Automated]" : "";
-
-            const prRepoInfo = prToRepo.get(pr.id);
-            evidence.push({
-              type: "pr",
-              title: `PR #${pr.number}: ${pr.title.slice(0, 60)}`,
-              description: `Approved by ${pr.reviews.map((r) => r.reviewerLogin).join(", ")}${automatedNote}`,
-              timestamp: pr.mergedAt || pr.createdAt,
-              url: pr.url || undefined,
-              metadata: {
-                number: pr.number,
-                author: authorLogin,
-                approvers: pr.reviews.map((r) => r.reviewerLogin || "").filter(Boolean),
-                baseBranch: pr.baseBranch || "",
-                isAutomatedDependency,
-              },
-              relevance,
-              repositoryId: prRepoInfo?.id,
-              repositoryName: prRepoInfo?.name,
-              repositoryFullName: prRepoInfo?.fullName,
-            });
-          }
-
-          if (status !== "limited") {
-            if (evidence.length >= 5) {
-              status = "has_evidence";
-            } else if (evidence.length > 0) {
-              status = "partial";
-            }
-          }
-          break;
-        }
-
-        case "branch_protection": {
-          // Branch protection rules show access control
-          const effectiveProtections = allBranchProtections.filter(
-            (bp) => bp.requirePullRequest || bp.requiredApprovals > 0
-          );
-
-          for (const bp of effectiveProtections) {
-            const repo = repositories.find((r) => r.id === bp.repoId);
-            const protectionStrength = calculateProtectionStrength(bp);
-
-            evidence.push({
-              type: "branch_protection",
-              title: `${repo?.fullName || "Unknown"}: ${bp.branch}`,
-              description: buildProtectionDescription(bp),
-              timestamp: bp.snapshotAt,
-              metadata: {
-                branch: bp.branch,
-                requirePullRequest: bp.requirePullRequest,
-                requiredApprovals: bp.requiredApprovals,
-                dismissStaleReviews: bp.dismissStaleReviews,
-                requireCodeOwners: bp.requireCodeOwners,
-                enforceAdmins: bp.enforceAdmins,
-                requireStatusChecks: bp.requireStatusChecks,
-                protectionStrength,
-              },
-              relevance:
-                protectionStrength >= 4 ? "high" : protectionStrength >= 2 ? "medium" : "low",
-              repositoryId: repo?.id,
-              repositoryName: repo?.name,
-              repositoryFullName: repo?.fullName,
-            });
-          }
-
-          if (status !== "limited") {
-            const hasStrongProtection = evidence.some((e) => e.relevance === "high");
-            if (evidence.length > 0 && hasStrongProtection) {
-              status = "has_evidence";
-            } else if (evidence.length > 0) {
-              status = "partial";
-            }
-          }
-          break;
-        }
+        controls.push({
+          controlId: control.id,
+          controlCode: control.code,
+          controlTitle: control.title,
+          controlDescription: control.description,
+          frameworkName: framework.name,
+          evidenceType: control.evidenceType,
+          status,
+          evidenceCount: evidence.length,
+          evidence: evidence.slice(0, 15), // Top 15 most relevant
+          note,
+        });
       }
-
-      // Sort evidence by relevance (high first)
-      evidence.sort((a, b) => {
-        const order = { high: 0, medium: 1, low: 2 };
-        return (order[a.relevance || "low"] || 2) - (order[b.relevance || "low"] || 2);
-      });
-
-      controls.push({
-        controlId: control.id,
-        controlCode: control.code,
-        controlTitle: control.title,
-        controlDescription: control.description,
-        frameworkName: framework.name,
-        evidenceType: control.evidenceType,
-        status,
-        evidenceCount: evidence.length,
-        evidence: evidence.slice(0, 15), // Top 15 most relevant
-        note,
-      });
-    }
     }
 
     logger.info("Controls processed", { count: controls.length });
@@ -691,9 +751,7 @@ export function getEvidenceSummary(controls: ControlEvidence[]): EvidenceSummary
   // Calculate score (limited counts as partial)
   // Handle division by zero when there are no controls
   const effectivePartial = partial + limited;
-  const score = total > 0 
-    ? Math.round(((withEvidence + effectivePartial * 0.5) / total) * 100)
-    : 0;
+  const score = total > 0 ? Math.round(((withEvidence + effectivePartial * 0.5) / total) * 100) : 0;
 
   return {
     total,
