@@ -65,7 +65,7 @@ const RISK_BADGE: Record<string, "success" | "warning" | "error" | "info"> = {
   critical: "error",
 };
 
-const CATEGORY_ICONS: Record<string, string> = {
+const _CATEGORY_ICONS: Record<string, string> = {
   shell_exec: "terminal",
   file_write: "pencil",
   file_read: "eye",
@@ -197,21 +197,13 @@ export default function SessionDetailPage() {
                 <CardContent>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {riskBreakdown.map((rb) => (
-                      <div
-                        key={rb.category}
-                        className="bg-gray-50 rounded-lg p-3"
-                      >
+                      <div key={rb.category} className="bg-gray-50 rounded-lg p-3">
                         <p className="text-xs text-gray-500 mb-1">
                           {CATEGORY_LABELS[rb.category] || rb.category}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {rb.count}
-                          </span>
-                          <Badge
-                            variant={RISK_BADGE[rb.maxRisk] || "default"}
-                            size="sm"
-                          >
+                          <span className="text-sm font-semibold text-gray-900">{rb.count}</span>
+                          <Badge variant={RISK_BADGE[rb.maxRisk] || "default"} size="sm">
                             {rb.maxRisk}
                           </Badge>
                         </div>
@@ -357,9 +349,7 @@ export default function SessionDetailPage() {
                   <div className="space-y-4">
                     {groupByFramework(complianceRefs).map((group) => (
                       <div key={group.framework}>
-                        <p className="text-xs font-medium text-gray-500 mb-2">
-                          {group.framework}
-                        </p>
+                        <p className="text-xs font-medium text-gray-500 mb-2">{group.framework}</p>
                         <div className="space-y-1.5">
                           {group.controls.map((ctrl) => (
                             <div

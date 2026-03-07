@@ -39,6 +39,7 @@ export default function Error({
     }
 
     // If in dashboard route or has session, go to dashboard, otherwise landing page
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHomeHref(isDashboardRoute || hasSession ? "/dashboard" : "/");
   }, [pathname]);
 

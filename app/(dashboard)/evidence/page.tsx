@@ -109,7 +109,9 @@ export default function EvidencePage() {
       }
 
       const evidenceData = await evidenceRes.json();
-      const reposData = reposRes.ok ? await reposRes.json().catch(() => ({ repositories: [] })) : { repositories: [] };
+      const reposData = reposRes.ok
+        ? await reposRes.json().catch(() => ({ repositories: [] }))
+        : { repositories: [] };
 
       // Validate evidence data structure
       if (evidenceData.error) {
@@ -129,7 +131,7 @@ export default function EvidencePage() {
       }
 
       setData(evidenceData);
-      
+
       // Extract tracked repositories from the API response
       // The API returns { connected: boolean, repositories: [...] }
       // We only want active/tracked repositories with database IDs
@@ -163,21 +165,21 @@ export default function EvidencePage() {
         params.set("repositoryIds", selectedRepositories.join(","));
       }
       const response = await fetch(`/api/evidence?${params.toString()}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("Evidence API error:", errorData);
         return;
       }
-      
+
       const result = await response.json();
-      
+
       // Validate data structure before setting
       if (result.error || !result.controls) {
         console.error("Invalid evidence data:", result);
         return;
       }
-      
+
       setData(result);
     } catch (error) {
       console.error("Failed to fetch evidence:", error);
@@ -243,15 +245,25 @@ export default function EvidencePage() {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <svg
+            className="w-8 h-8 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
           </svg>
         </div>
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
           {error ? "Error Loading Evidence" : "No Evidence Data Available"}
         </h2>
         <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-          {error 
+          {error
             ? error
             : "Connect your GitHub repositories and sync them to start collecting compliance evidence."}
         </p>
@@ -276,7 +288,7 @@ export default function EvidencePage() {
   // Ensure data has required structure, with defaults
   const controls = Array.isArray(data.controls) ? data.controls : [];
   const frameworks = Array.isArray(data.frameworks) ? data.frameworks : [];
-  const summary = data.summary || {
+  const _summary = data.summary || {
     total: 0,
     withEvidence: 0,
     partial: 0,
@@ -466,9 +478,7 @@ function FilterButton({
       onClick={onClick}
       className={cn(
         "px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200",
-        active
-          ? "bg-accent text-white"
-          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+        active ? "bg-accent text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
       )}
     >
       {children}

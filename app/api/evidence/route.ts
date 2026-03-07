@@ -1,7 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { requireAuth, getQueryParam } from "@/lib/api";
-import { getComplianceEvidence, getEvidenceSummary, enrichWithAgentEvidence } from "@/lib/compliance";
+import { requireAuth } from "@/lib/api";
+import {
+  getComplianceEvidence,
+  getEvidenceSummary,
+  enrichWithAgentEvidence,
+} from "@/lib/compliance";
 import { handleApiError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
 
@@ -22,9 +26,9 @@ export async function GET(request: NextRequest) {
 
     logger.info("Fetching compliance evidence", { orgId, repositoryIds });
     const evidence = await getComplianceEvidence(orgId, { repositoryIds });
-    logger.info("Evidence fetched", { 
+    logger.info("Evidence fetched", {
       frameworkCount: evidence.frameworks.length,
-      controlCount: evidence.controls.length 
+      controlCount: evidence.controls.length,
     });
 
     // Enrich with agent activity evidence
