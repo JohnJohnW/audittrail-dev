@@ -279,21 +279,21 @@ Billing is handled entirely by Stripe. The application reacts to Stripe webhook 
 
 ```mermaid
 stateDiagram-v2
+    direction LR
+    state "Checkout Pending" as Checkout
+    state "Past Due" as PastDue
+
     [*] --> Free : GitHub sign-up
 
-    Free --> CheckoutPending : Click Upgrade
-    CheckoutPending --> Free : User abandons checkout
-    CheckoutPending --> Pro : checkout.session.completed
+    Free --> Checkout : click Upgrade
+    Checkout --> Free : abandoned
+    Checkout --> Pro : checkout.session.completed
 
-    Pro --> Pro : invoice.payment_succeeded (monthly renewal)
     Pro --> PastDue : invoice.payment_failed
-    PastDue --> Pro : Stripe retries, payment succeeds
-    PastDue --> Free : customer.subscription.deleted
+    PastDue --> Pro : payment retry succeeded
+    PastDue --> Free : subscription.deleted
 
-    Pro --> Free : User cancels (subscription.deleted)
-
-    Free --> [*]
-    Pro --> [*]
+    Pro --> Free : user cancels
 ```
 
 Stripe events handled by `/api/webhooks/stripe`:
@@ -325,49 +325,48 @@ Audit Trail supports **8 frameworks** covering **63 controls** in total.
 ### Control Coverage Map
 
 ```mermaid
+%%{init: {'theme': 'neutral'}}%%
 mindmap
-  root((Audit Trail\n63 controls))
+  root((Audit Trail - 63 Controls))
     ISO 27001
-      A.5 Org Controls
-        A.5.15 Access Control
-        A.5.16 Identity Mgmt
-        A.5.17 Auth Information
-        A.5.18 Access Rights
-      A.8 Tech Controls
-        A.8.4 Source Code Access
-        A.8.9 Config Management
-        A.8.25 Secure Dev Lifecycle
-        A.8.28 Secure Coding
-        A.8.32 Change Management
-        9 more controls
+      A.5.15 Access Control
+      A.5.16 Identity Mgmt
+      A.5.17 Auth Information
+      A.5.18 Access Rights
+      A.8.4 Source Code Access
+      A.8.9 Config Management
+      A.8.25 Dev Lifecycle
+      A.8.28 Secure Coding
+      A.8.32 Change Management
+      9 more controls
     Essential Eight
-      E8-AC Application Control
-      E8-PA Patch Applications
-      E8-RAP Restrict Admin
-      E8-PO Patch OS
-      E8-RB Regular Backups
-      E8-MFA Authentication
+      Application Control
+      Patch Applications
+      Restrict Admin
+      Patch OS
+      Regular Backups
+      MFA
     NIST CSF 2.0
-      CSF-PR.PS-01 Policy
-      CSF-PR.PS-02 Processes
-      CSF-DE.CM-09 Monitoring
+      PR.PS-01 Policy
+      PR.PS-02 Processes
+      DE.CM-09 Monitoring
     NIST 800-53
-      AC-2 Account Management
-      CM-3 Config Change Control
-      SA-10 Developer Config Mgmt
+      AC-2 Accounts
+      CM-3 Config Changes
+      SA-10 Dev Config
     SOC 2
       CC6 Logical Access
-      CC7 System Operations
-      CC8 Change Management
+      CC7 Operations
+      CC8 Change Mgmt
     GDPR
       Art 25 Privacy by Design
-      Art 32 Security Measures
+      Art 32 Security
     SOCI Act
-      PSO 1-4 Security Obligations
+      PSO 1-4 Obligations
     PCI DSS 4.0
       Req 6 Secure Systems
       Req 7 Access Control
-      Req 8 Identity Management
+      Req 8 Identity Mgmt
 ```
 
 ---
@@ -379,24 +378,24 @@ The compliance engine maps four types of GitHub artifacts to control requirement
 ```mermaid
 flowchart LR
     subgraph Artifacts ["GitHub Artifacts"]
-        C["Commits\nsha, message, author\ntimestamp, GPG verified"]
-        PR["Pull Requests\nreview count, approvals\nmerge strategy, labels"]
-        BP["Branch Protection\nrequired reviews\nstatus checks, admin enforce"]
-        CI["CI Workflow Names\nbuild, test, scan\ndeploy, lint"]
+        C["Commits\nsha, message, GPG"]
+        PR["Pull Requests\nreviews, approvals"]
+        BP["Branch Protection\nrules, status checks"]
+        CI["CI Workflows\nbuild, test, deploy"]
     end
 
     subgraph Engine ["Compliance Engine"]
-        KW["Keyword matching\non commit messages"]
-        RC["Review count\nthreshold checks"]
-        BP2["Branch protection\nproperty checks"]
-        WF["Workflow name\npattern matching"]
+        KW["Keyword matching"]
+        RC["Review thresholds"]
+        BP2["Protection checks"]
+        WF["Workflow patterns"]
     end
 
-    subgraph Score ["Evidence Status"]
-        HE["Has Evidence\nStrong direct evidence"]
-        PA["Partial\nSome but incomplete"]
-        LI["Limited\nMinimal activity"]
-        NE["No Evidence\nGap analysis actions"]
+    subgraph Status ["Evidence Status"]
+        HE["Has Evidence"]
+        PA["Partial"]
+        LI["Limited"]
+        NE["No Evidence"]
     end
 
     C --> KW
@@ -404,14 +403,10 @@ flowchart LR
     BP --> BP2
     CI --> WF
 
-    KW --> HE
-    KW --> PA
-    RC --> HE
-    RC --> PA
-    BP2 --> HE
-    BP2 --> LI
-    WF --> HE
-    WF --> NE
+    KW --> HE & PA
+    RC --> HE & PA
+    BP2 --> HE & LI
+    WF --> HE & NE
 ```
 
 ### Gap Analysis
