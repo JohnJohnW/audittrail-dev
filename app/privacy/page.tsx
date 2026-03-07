@@ -144,10 +144,16 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Contact</h2>
             <p>
-              For privacy-related questions, contact us at{" "}
-              <a href="mailto:privacy@audittrail.dev" className="text-gray-900 hover:underline">
-                privacy@audittrail.dev
+              For privacy-related questions,{" "}
+              <a
+                href="https://github.com/JohnJohnW/audittrail-dev/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-900 hover:underline"
+              >
+                open an issue on GitHub
               </a>
+              .
             </p>
           </section>
         </div>

@@ -43,7 +43,7 @@ const faqs = [
   {
     question: "Do you offer enterprise plans?",
     answer:
-      "Yes. Enterprise includes SSO, custom framework mappings (including IRAP, HIPAA, and custom frameworks), dedicated support, and SLAs. Contact us at hello@audittrail.dev to discuss your requirements.",
+      "Yes. Enterprise includes SSO, custom framework mappings (including IRAP, HIPAA, and custom frameworks), dedicated support, and SLAs. Open an issue on GitHub to discuss your requirements.",
   },
 ];
 
@@ -117,8 +117,13 @@ export function FAQ() {
           <div className="mt-10 text-center">
             <p className="text-sm text-gray-500">
               More questions?{" "}
-              <a href="mailto:hello@audittrail.dev" className="text-accent hover:underline">
-                Get in touch
+              <a
+                href="https://github.com/JohnJohnW/audittrail-dev/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent hover:underline"
+              >
+                Open an issue on GitHub
               </a>
             </p>
           </div>

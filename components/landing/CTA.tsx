@@ -25,10 +25,12 @@ export function CTA() {
             Get started free
           </Link>
           <a
-            href="mailto:hello@audittrail.dev"
+            href="https://github.com/JohnJohnW/audittrail-dev/issues"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-sm text-gray-500 hover:text-accent transition-colors"
           >
-            Questions? Email us
+            Questions? Open an issue
           </a>
         </div>
       </FadeIn>

@@ -105,10 +105,16 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">9. Contact</h2>
             <p>
-              For questions about these terms, contact us at{" "}
-              <a href="mailto:legal@audittrail.dev" className="text-gray-900 hover:underline">
-                legal@audittrail.dev
+              For questions about these terms,{" "}
+              <a
+                href="https://github.com/JohnJohnW/audittrail-dev/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-900 hover:underline"
+              >
+                open an issue on GitHub
               </a>
+              .
             </p>
           </section>
         </div>

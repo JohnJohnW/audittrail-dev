@@ -135,7 +135,12 @@ export function Pricing() {
         <FadeIn direction="up" delay={0.4}>
           <p className="text-center text-sm text-gray-500 mt-8">
             Need enterprise features?{" "}
-            <a href="mailto:hello@audittrail.dev" className="text-accent hover:underline">
+            <a
+              href="https://github.com/JohnJohnW/audittrail-dev/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+            >
               Let&apos;s talk
             </a>
           </p>

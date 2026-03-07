@@ -32,9 +32,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-400">
-            © {new Date().getFullYear()} Audit Trail · Built for Australian businesses
-          </p>
+          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Audit Trail</p>
           <div className="flex items-center gap-6 text-xs text-gray-400">
             <Link href="/terms" className="hover:text-gray-600 transition-colors">
               Terms
@@ -42,7 +40,12 @@ export function Footer() {
             <Link href="/privacy" className="hover:text-gray-600 transition-colors">
               Privacy
             </Link>
-            <a href="mailto:hello@audittrail.dev" className="hover:text-accent transition-colors">
+            <a
+              href="https://github.com/JohnJohnW/audittrail-dev/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-accent transition-colors"
+            >
               Contact
             </a>
           </div>

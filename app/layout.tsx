@@ -9,34 +9,39 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Audit Trail - GitHub to Compliance Evidence for Australian Businesses",
+  title: "Audit Trail - GitHub to Compliance Evidence",
   description:
-    "Turn GitHub activity into audit-ready compliance evidence for ISO 27001 and Essential Eight. Built for Australian businesses.",
+    "Automatically map GitHub activity to compliance controls for ISO 27001, NIST CSF, SOC 2, GDPR, Essential Eight and more. Audit-ready evidence in minutes.",
   keywords: [
     "compliance",
     "audit",
     "ISO 27001",
+    "NIST CSF",
+    "SOC 2",
+    "GDPR",
     "Essential Eight",
+    "PCI DSS",
+    "SOCI Act",
     "GitHub",
     "security",
     "GRC",
-    "Australia",
-    "ACSC",
+    "compliance evidence",
+    "audit trail",
   ],
   icons: {
     icon: "/icon.svg",
   },
   openGraph: {
-    title: "Audit Trail - GitHub to Compliance Evidence for Australian Businesses",
+    title: "Audit Trail - GitHub to Compliance Evidence",
     description:
-      "Turn GitHub activity into audit-ready compliance evidence for ISO 27001 and Essential Eight.",
+      "Automatically map GitHub activity to compliance controls for ISO 27001, NIST CSF, SOC 2, GDPR and more.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Audit Trail",
     description:
-      "Turn GitHub activity into audit-ready compliance evidence for ISO 27001 and Essential Eight.",
+      "Automatically map GitHub activity to compliance controls for ISO 27001, NIST CSF, SOC 2, GDPR and more.",
   },
 };
 

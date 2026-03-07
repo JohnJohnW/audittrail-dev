@@ -16,12 +16,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    date: "2026-03-07",
+    version: "1.1.0",
+    type: "feature",
+    title: "Expanded Compliance Framework Coverage",
+    description:
+      "Added six new compliance frameworks: NIST CSF 2.0, NIST SP 800-53 Rev 5, SOC 2, GDPR, SOCI Act, and PCI DSS 4.0. Audit Trail now maps GitHub activity to 63 controls across 8 frameworks. Also rebranded from AuditTrail.dev to Audit Trail.",
+  },
+  {
     date: "2026-01-20",
     version: "1.0.0",
     type: "feature",
     title: "Initial Release",
     description:
-      "Launch of Audit Trail with GitHub integration, compliance mapping, and export capabilities.",
+      "Launch of Audit Trail with GitHub integration, compliance mapping for ISO 27001 and Essential Eight, and PDF/CSV export capabilities.",
   },
 ];
 
