@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -26,12 +27,13 @@ export function Header() {
     >
       <nav className="max-w-5xl mx-auto px-6" aria-label="Main navigation">
         <div className="flex items-center justify-between h-14">
-          <Link
-            href="/"
-            className="text-lg font-semibold text-gray-900 tracking-tight"
-            aria-label="Audit Trail home"
-          >
-            Audit <span className="text-accent">Trail</span>
+          <Link href="/" className="flex items-center gap-2" aria-label="Audit Trail home">
+            <div className="relative w-6 h-6 rounded-md overflow-hidden flex-shrink-0">
+              <Image src="/icon.svg" alt="" width={24} height={24} />
+            </div>
+            <span className="text-lg font-semibold text-gray-900 tracking-tight">
+              Audit <span className="text-accent">Trail</span>
+            </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

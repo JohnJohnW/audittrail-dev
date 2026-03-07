@@ -94,6 +94,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } catch (error) {
           logger.error("Error fetching user organization", error);
         }
+      } else if (token.id && !token.orgId) {
+        // Token exists but orgId is absent — this happens with stale tokens issued
+        // before orgId was persisted, or if the initial DB write failed. Re-hydrate
+        // from the database so the dashboard doesn't incorrectly prompt reconnection.
+        try {
+          const membership = await db.orgMembership.findFirst({
+            where: { userId: token.id as string },
+            include: { organization: true },
+          });
+          if (membership) {
+            token.orgId = membership.organization.id;
+            token.orgSlug = membership.organization.slug;
+            token.orgRole = membership.role;
+          }
+        } catch (error) {
+          logger.error("Error re-hydrating org info in JWT", error);
+        }
       }
       return token;
     },

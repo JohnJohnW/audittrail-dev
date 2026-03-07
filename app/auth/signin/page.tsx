@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function SignInPage() {
   const handleGitHubSignIn = () => {
@@ -12,7 +13,10 @@ export default function SignInPage() {
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="max-w-sm w-full">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 mb-8">
+            <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+              <Image src="/icon.svg" alt="" width={32} height={32} />
+            </div>
             <span className="text-lg font-semibold text-gray-900">
               Audit <span className="text-accent">Trail</span>
             </span>

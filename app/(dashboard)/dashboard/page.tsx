@@ -51,6 +51,7 @@ export default async function DashboardPage() {
 
   // Fetch data with error handling
   let githubConnection = null;
+  let githubConnectionFetchFailed = false;
   type RepositoryWithCount = Prisma.RepositoryGetPayload<{
     include: { _count: { select: { commits: true; pullRequests: true } } };
   }>;
@@ -62,7 +63,11 @@ export default async function DashboardPage() {
   try {
     [githubConnection, repositories, subscription, recentExports, complianceSnapshots] =
       await Promise.all([
-        db.gitHubConnection.findUnique({ where: { orgId } }).catch(() => null),
+        db.gitHubConnection.findUnique({ where: { orgId } }).catch((err) => {
+          logger.error("Failed to fetch GitHub connection", err);
+          githubConnectionFetchFailed = true;
+          return null;
+        }),
         db.repository
           .findMany({
             where: { orgId, isActive: true },
@@ -134,6 +139,7 @@ export default async function DashboardPage() {
     <DashboardContent
       repositories={repositories}
       githubConnection={githubConnection}
+      githubConnectionFetchFailed={githubConnectionFetchFailed}
       subscription={subscription}
       recentExports={recentExports}
       totalCommits={totalCommits}

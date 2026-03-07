@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FadeIn } from "@/components/ui/Motion";
 
 export function Footer() {
@@ -8,11 +9,13 @@ export function Footer() {
     <footer className="border-t border-gray-200 py-10 px-6 bg-gray-50">
       <FadeIn direction="up" className="max-w-5xl mx-auto">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-          <Link
-            href="/"
-            className="text-sm font-medium text-gray-900 hover:text-accent transition-colors"
-          >
-            Audit <span className="text-accent">Trail</span>
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div className="relative w-5 h-5 rounded overflow-hidden flex-shrink-0">
+              <Image src="/icon.svg" alt="" width={20} height={20} />
+            </div>
+            <span className="text-sm font-medium text-gray-900">
+              Audit <span className="text-accent">Trail</span>
+            </span>
           </Link>
 
           <div className="flex items-center gap-6 text-xs text-gray-500">

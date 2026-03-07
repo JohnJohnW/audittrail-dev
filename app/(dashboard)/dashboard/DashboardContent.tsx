@@ -34,6 +34,7 @@ interface Export {
 interface DashboardContentProps {
   repositories: Repository[];
   githubConnection: GitHubConnection | null;
+  githubConnectionFetchFailed?: boolean;
   subscription: Subscription | null;
   recentExports: Export[];
   totalCommits: number;
@@ -47,6 +48,7 @@ interface DashboardContentProps {
 export function DashboardContent({
   repositories,
   githubConnection,
+  githubConnectionFetchFailed = false,
   subscription,
   recentExports,
   totalCommits,
@@ -133,7 +135,11 @@ export function DashboardContent({
             </CardHeader>
             <CardContent>
               {!githubConnection ? (
-                <EmptyGitHubState />
+                githubConnectionFetchFailed ? (
+                  <ConnectionErrorState />
+                ) : (
+                  <EmptyGitHubState />
+                )
               ) : repositories.length === 0 ? (
                 <NoReposState githubLogin={githubConnection.githubAccountLogin} />
               ) : (
@@ -241,6 +247,35 @@ function EmptyGitHubState() {
       <p className="text-xs text-gray-500 mb-4">Sign out and sign in with GitHub to connect</p>
       <Button variant="secondary" href="/auth/signout" size="sm">
         Sign out →
+      </Button>
+    </div>
+  );
+}
+
+function ConnectionErrorState() {
+  return (
+    <div className="text-center py-8">
+      <div className="w-14 h-14 bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+        <svg
+          className="w-7 h-7 text-amber-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+      </div>
+      <p className="text-sm font-medium text-gray-900 mb-1">Unable to load connection data</p>
+      <p className="text-xs text-gray-500 mb-4">
+        There was a temporary issue. Refresh the page to try again.
+      </p>
+      <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
+        Refresh page
       </Button>
     </div>
   );

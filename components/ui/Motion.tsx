@@ -63,7 +63,7 @@ export function FadeIn({
       variants={directionVariants[direction]}
       initial="initial"
       whileInView="animate"
-      viewport={{ once, margin: "-50px" }}
+      viewport={{ once, margin: "100px" }}
       transition={{ duration, delay, ease: [0.25, 0.1, 0.25, 1] }}
       className={className}
     >
@@ -96,7 +96,7 @@ export function StaggerContainer({
       variants={variants}
       initial="initial"
       whileInView="animate"
-      viewport={{ once: true, margin: "-50px" }}
+      viewport={{ once: true, margin: "100px" }}
       transition={{ delayChildren: delay }}
       className={className}
     >
@@ -157,7 +157,7 @@ export function AnimatedList({ children, className, staggerDelay = 0.1 }: Animat
     <motion.ul
       initial="initial"
       whileInView="animate"
-      viewport={{ once: true }}
+      viewport={{ once: true, margin: "100px" }}
       variants={{
         initial: {},
         animate: { transition: { staggerChildren: staggerDelay } },
@@ -199,7 +199,7 @@ export function Reveal({ children, className, width = "fit" }: RevealProps) {
         variants={fadeInUp}
         initial="initial"
         whileInView="animate"
-        viewport={{ once: true, margin: "-100px" }}
+        viewport={{ once: true, margin: "50px" }}
         transition={slowReveal}
         className={className}
       >
@@ -359,7 +359,7 @@ export function StaggerChildren({ children, className, staggerDelay = 0.1 }: Sta
     <motion.div
       initial="initial"
       whileInView="animate"
-      viewport={{ once: true, margin: "-50px" }}
+      viewport={{ once: true, margin: "100px" }}
       variants={{
         initial: { opacity: 0 },
         animate: {
