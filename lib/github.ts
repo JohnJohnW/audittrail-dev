@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { GITHUB_CONFIG } from "./constants";
 import { logger } from "./logger";
+import { decrypt } from "./encryption";
 
 const GITHUB_API_BASE = GITHUB_CONFIG.API_BASE;
 
@@ -226,7 +227,7 @@ export async function getGitHubClientForOrg(orgId: string): Promise<GitHubClient
     // For now, still return the client and let it fail with a clear error
   }
 
-  return new GitHubClient(connection.accessToken);
+  return new GitHubClient(decrypt(connection.accessToken));
 }
 
 /**
@@ -248,7 +249,7 @@ export async function validateGitHubConnection(orgId: string): Promise<{
     return { connected: false, valid: false, error: "No GitHub connection found" };
   }
 
-  const client = new GitHubClient(connection.accessToken);
+  const client = new GitHubClient(decrypt(connection.accessToken));
   const validation = await client.validateToken();
 
   return {

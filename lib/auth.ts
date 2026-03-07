@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import GitHub from "next-auth/providers/github";
 import { db } from "./db";
 import { logger } from "./logger";
+import { encrypt } from "./encryption";
 
 // Validate required environment variables at startup
 if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
@@ -76,7 +77,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               await db.gitHubConnection.upsert({
                 where: { orgId: membership.organization.id },
                 update: {
-                  accessToken: account.access_token,
+                  accessToken: encrypt(account.access_token),
                   scope: account.scope || "read:user user:email repo",
                 },
                 create: {
@@ -84,7 +85,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                   githubAccountId: 0, // Will be updated on first API call
                   githubAccountLogin: user.email?.split("@")[0] || "unknown",
                   githubAccountType: "User",
-                  accessToken: account.access_token,
+                  accessToken: encrypt(account.access_token),
                   scope: account.scope || "read:user user:email repo",
                 },
               });
