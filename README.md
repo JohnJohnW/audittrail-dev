@@ -61,16 +61,17 @@ graph LR
     end
 
     subgraph Product ["Audit Trail"]
-        AT["GitHub activity → mapped automatically\nto 63 controls across 8 frameworks"]
+        AT["GitHub activity mapped automatically\nto 63 controls across 8 frameworks"]
     end
 
     subgraph Value ["The Outcome"]
         V1["Always audit-ready,\nnot just once a year"]
-        V2["PDF / CSV handed\ndirectly to an auditor"]
+        V2["PDF and CSV handed\ndirectly to an auditor"]
         V3["Same evidence base\nreused across all frameworks"]
     end
 
-    Pain --> Product --> Value
+    P1 & P2 & P3 --> AT
+    AT --> V1 & V2 & V3
 ```
 
 ### Freemium Tiers
@@ -99,13 +100,13 @@ sequenceDiagram
     Stripe-->>User: Hosted checkout page
     User->>Stripe: Enters card details
     Stripe->>App: checkout.session.completed webhook
-    App->>App: Upsert subscription → Pro in DB
+    App->>App: Upsert subscription to Pro in DB
     Stripe-->>User: Confirmation email
 
     Note over User,App: Monthly billing thereafter
-    Stripe->>App: invoice.payment_succeeded → remain Pro
-    Stripe->>App: invoice.payment_failed → grace period
-    Stripe->>App: subscription.deleted → downgrade to Free
+    Stripe->>App: invoice.payment_succeeded, remain Pro
+    Stripe->>App: invoice.payment_failed, grace period
+    Stripe->>App: subscription.deleted, downgrade to Free
 ```
 
 ---
@@ -141,49 +142,50 @@ sequenceDiagram
 
 ```mermaid
 graph TB
-    subgraph Client ["Browser (React Client Components)"]
+    subgraph Client ["Browser - React Client Components"]
         LP[Landing Page]
         DB[Dashboard]
         EV[Evidence Explorer]
         CO[Compliance Score]
         EX[Export Builder]
-        ST[Settings & Billing]
-        PR[Public Report\n/report/:token]
+        ST["Settings and Billing"]
+        PR["Public Report - /report/:token"]
     end
 
-    subgraph Server ["Next.js App Router (Server)"]
-        MW[Middleware\nauth guard]
-        SC[Server Components\nlayout · report page]
-        AR[API Routes\n/api/...]
-        CJ[Cron Job\n/api/cron/sync]
+    subgraph Server ["Next.js App Router - Server"]
+        MW["Middleware - auth guard"]
+        SC["Server Components"]
+        AR["API Routes"]
+        CJ["Cron Job - daily sync"]
     end
 
     subgraph Lib ["Core Libraries"]
-        CE[compliance.ts\nevidence mapping]
-        GA[gap-analysis.ts\naction recommendations]
-        GH[github.ts\nAPI client]
-        NF[notifications.ts\nemail dispatch]
-        SL[stripe.ts\nbilling]
-        LG[logger.ts\nstructured logging]
+        CE["compliance.ts - evidence mapping"]
+        GA["gap-analysis.ts - recommendations"]
+        GH["github.ts - API client"]
+        NF["notifications.ts - email"]
+        SL["stripe.ts - billing"]
+        LG["logger.ts - structured logging"]
     end
 
     subgraph Ext ["External Services"]
         GitHub[(GitHub API)]
-        Supa[(Supabase\nPostgres)]
+        Supa[(Supabase Postgres)]
         Stripe[(Stripe)]
-        Resend[(Resend\nemail)]
-        Redis[(Upstash Redis\noptional)]
+        Resend[(Resend Email)]
+        Redis[(Upstash Redis)]
     end
 
-    Client --> MW
-    MW --> Server
-    Server --> Lib
+    LP & DB & EV & CO & EX & ST & PR --> MW
+    MW --> SC & AR
+    CJ --> GH
+    AR --> CE & GA & GH & NF & SL & LG
     GH --> GitHub
     CE --> Supa
     AR --> Supa
     SL --> Stripe
     NF --> Resend
-    AR -.->|cache + rate-limit| Redis
+    AR -.->|cache and rate-limit| Redis
 ```
 
 ---
@@ -201,22 +203,22 @@ sequenceDiagram
     User->>App: Sign in with GitHub OAuth
     App->>GH: Request read:user + repo scopes
     GH-->>App: Access token
-    App->>DB: Store token, create org & subscription
+    App->>DB: Store token, create org and subscription
 
     User->>App: Add repositories
     App->>GH: List user repos
     GH-->>App: Repository list
     App->>DB: Save selected repos
 
-    User->>App: Sync Now (or daily cron runs)
-    App->>GH: GET commits, PRs, reviews,\nbranch protection
+    User->>App: Sync Now or daily cron runs
+    App->>GH: GET commits, PRs, reviews, branch protection
     GH-->>App: Raw metadata
-    App->>DB: Upsert commits, pull_requests,\nreviews, branch_protection
+    App->>DB: Upsert commits, pull_requests, reviews, branch_protection
 
     User->>App: View Compliance Score
     App->>Engine: getComplianceEvidence(orgId)
     Engine->>DB: Load all activity
-    DB-->>Engine: Commits · PRs · reviews · branch rules
+    DB-->>Engine: Commits, PRs, reviews, branch rules
     Engine-->>App: 63 scored controls + gap recommendations
     App-->>User: Dashboard with score, evidence, gaps
 
@@ -247,9 +249,9 @@ sequenceDiagram
 
     User->>Browser: Visit /dashboard (protected route)
     Browser->>Middleware: Request with no session cookie
-    Middleware-->>Browser: Redirect → /auth/signin
+    Middleware-->>Browser: Redirect to /auth/signin
 
-    User->>Browser: Click "Sign in with GitHub"
+    User->>Browser: Click Sign in with GitHub
     Browser->>NextAuth: GET /api/auth/signin/github
     NextAuth-->>Browser: Redirect to GitHub consent screen
     User->>GitHub: Authorise Audit Trail (read-only scopes)
@@ -264,7 +266,7 @@ sequenceDiagram
 
     Browser->>Middleware: Subsequent request with session cookie
     Middleware->>Middleware: Validate session cookie
-    Middleware-->>Browser: Allow through → /dashboard
+    Middleware-->>Browser: Allow through to /dashboard
 ```
 
 Session tokens contain `userId`, `orgId`, and `plan`. Enough context for every API route to authorise requests without an extra database round-trip.
@@ -337,7 +339,7 @@ mindmap
         A.8.25 Secure Dev Lifecycle
         A.8.28 Secure Coding
         A.8.32 Change Management
-        +9 more
+        9 more controls
     Essential Eight
       E8-AC Application Control
       E8-PA Patch Applications
@@ -377,24 +379,24 @@ The compliance engine maps four types of GitHub artifacts to control requirement
 ```mermaid
 flowchart LR
     subgraph Artifacts ["GitHub Artifacts"]
-        C[Commits\nsha · message · author\ntimestamp · GPG verified]
-        PR[Pull Requests\nreview count · approvals\nmerge strategy · labels]
-        BP[Branch Protection\nrequired reviews\nstatus checks · admin enforce]
-        CI[CI Workflow Names\nbuild · test · scan\ndeploy · lint]
+        C["Commits\nsha, message, author\ntimestamp, GPG verified"]
+        PR["Pull Requests\nreview count, approvals\nmerge strategy, labels"]
+        BP["Branch Protection\nrequired reviews\nstatus checks, admin enforce"]
+        CI["CI Workflow Names\nbuild, test, scan\ndeploy, lint"]
     end
 
-    subgraph Engine ["Compliance Engine\ncompliance.ts"]
-        KW[Keyword matching\non commit messages]
-        RC[Review count\nthreshold checks]
-        BP2[Branch protection\nproperty checks]
-        WF[Workflow name\npattern matching]
+    subgraph Engine ["Compliance Engine"]
+        KW["Keyword matching\non commit messages"]
+        RC["Review count\nthreshold checks"]
+        BP2["Branch protection\nproperty checks"]
+        WF["Workflow name\npattern matching"]
     end
 
     subgraph Score ["Evidence Status"]
         HE["Has Evidence\nStrong direct evidence"]
         PA["Partial\nSome but incomplete"]
         LI["Limited\nMinimal activity"]
-        NE["No Evidence\n+ Gap analysis actions"]
+        NE["No Evidence\nGap analysis actions"]
     end
 
     C --> KW
@@ -431,16 +433,16 @@ flowchart TD
     A[Repository sync completes] --> B & C & D & E
 
     subgraph Artifacts ["Artifacts loaded from DB"]
-        B[Commits\nmessage · author · GPG signature]
-        C[Pull Requests\nreviews · approvals · merge strategy]
-        D[Branch Protection\nrules · status checks · admin enforcement]
-        E[CI Workflow Names\ndetected from check run names]
+        B["Commits\nmessage, author, GPG signature"]
+        C["Pull Requests\nreviews, approvals, merge strategy"]
+        D["Branch Protection\nrules, status checks, admin enforcement"]
+        E["CI Workflow Names\ndetected from check run names"]
     end
 
     B & C & D & E --> F
 
-    subgraph Engine ["Compliance Engine: lib/compliance.ts"]
-        F[Pattern matching\nfor each of 63 controls]
+    subgraph Engine ["Compliance Engine"]
+        F["Pattern matching\nfor each of 63 controls"]
         F --> G{Evidence strength}
     end
 
@@ -449,9 +451,9 @@ flowchart TD
     G -->|Weak match| J["limited (30%)"]
     G -->|No match| K["no_evidence (0%)"]
 
-    H & I & J & K --> L[Weighted average\nper framework]
+    H & I & J & K --> L["Weighted average\nper framework"]
     L --> M[Overall compliance score]
-    K --> N[Gap Analysis: lib/gap-analysis.ts\nActionable next steps per control]
+    K --> N["Gap Analysis\nActionable next steps per control"]
 ```
 
 Framework scores are periodically snapshotted into the `ComplianceSnapshot` table, enabling the trend chart on the dashboard to show score changes over time.
@@ -506,7 +508,7 @@ erDiagram
     PullRequest {
         string id PK
         string repoId FK
-        bigint githubPrId
+        int githubPrId
         string state
         datetime mergedAt
     }
@@ -529,7 +531,7 @@ erDiagram
         string orgId FK
         date snapshotDate
         int overallScore
-        json frameworkScores
+        string frameworkScores
     }
 ```
 
@@ -542,26 +544,26 @@ All API routes live under `/app/api/`. Dashboard routes require a valid NextAuth
 ```mermaid
 graph TB
     subgraph Public ["Public - no auth required"]
-        P1[GET /api/health]
-        P2[GET /api/reports/public/:token]
-        P3[POST /api/webhooks/stripe]
+        P1["GET /api/health"]
+        P2["GET /api/reports/public/:token"]
+        P3["POST /api/webhooks/stripe"]
     end
 
     subgraph Auth ["Session-gated - NextAuth cookie required"]
-        A1[GET /api/compliance/score]
-        A2[GET /api/evidence]
-        A3[GET /api/github/repos]
-        A4[POST /api/github/sync]
-        A5[GET · POST /api/exports]
-        A6[GET · POST · DELETE /api/reports/shareable]
-        A7[GET · PUT /api/settings]
-        A8[GET · POST · DELETE /api/keys]
-        A9[POST /api/stripe/checkout\nGET /api/stripe/portal]
-        A10[POST /api/onboarding]
+        A1["GET /api/compliance/score"]
+        A2["GET /api/evidence"]
+        A3["GET /api/github/repos"]
+        A4["POST /api/github/sync"]
+        A5["GET, POST /api/exports"]
+        A6["GET, POST, DELETE /api/reports/shareable"]
+        A7["GET, PUT /api/settings"]
+        A8["GET, POST, DELETE /api/keys"]
+        A9["POST /api/stripe/checkout\nGET /api/stripe/portal"]
+        A10["POST /api/onboarding"]
     end
 
     subgraph Cron ["Cron - Bearer CRON_SECRET"]
-        C1[POST /api/cron/sync\ndaily at 02:00 UTC]
+        C1["POST /api/cron/sync\ndaily at 02:00 UTC"]
     end
 ```
 
@@ -691,10 +693,10 @@ graph TB
 
     subgraph Services ["External Services"]
         GH["GitHub API\nread-only OAuth"]
-        SB[("Supabase\nPostgres + pgbouncer")]
+        SB["Supabase\nPostgres + pgbouncer"]
         STR["Stripe\nbilling + webhooks"]
         RSD["Resend\nweekly digest email"]
-        RDS[("Upstash Redis\noptional cache + rate-limit")]
+        RDS["Upstash Redis\noptional cache + rate-limit"]
     end
 
     USR -->|HTTPS| EDG
