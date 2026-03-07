@@ -1,6 +1,7 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { logger } from "./logger";
+import { RATE_LIMIT_CONFIG } from "./constants";
 
 // Only create Redis client if both URL and TOKEN are configured
 const redis =
@@ -24,7 +25,7 @@ export const rateLimiters = {
   api: redis
     ? new Ratelimit({
         redis,
-        limiter: Ratelimit.slidingWindow(100, "10 m"),
+        limiter: Ratelimit.slidingWindow(RATE_LIMIT_CONFIG.API.limit, RATE_LIMIT_CONFIG.API.window),
         analytics: true,
       })
     : null,
@@ -33,7 +34,10 @@ export const rateLimiters = {
   auth: redis
     ? new Ratelimit({
         redis,
-        limiter: Ratelimit.slidingWindow(10, "1 m"),
+        limiter: Ratelimit.slidingWindow(
+          RATE_LIMIT_CONFIG.AUTH.limit,
+          RATE_LIMIT_CONFIG.AUTH.window
+        ),
         analytics: true,
       })
     : null,
@@ -42,7 +46,10 @@ export const rateLimiters = {
   sync: redis
     ? new Ratelimit({
         redis,
-        limiter: Ratelimit.slidingWindow(5, "1 m"),
+        limiter: Ratelimit.slidingWindow(
+          RATE_LIMIT_CONFIG.SYNC.limit,
+          RATE_LIMIT_CONFIG.SYNC.window
+        ),
         analytics: true,
       })
     : null,
@@ -51,7 +58,10 @@ export const rateLimiters = {
   export: redis
     ? new Ratelimit({
         redis,
-        limiter: Ratelimit.slidingWindow(10, "1 h"),
+        limiter: Ratelimit.slidingWindow(
+          RATE_LIMIT_CONFIG.EXPORT.limit,
+          RATE_LIMIT_CONFIG.EXPORT.window
+        ),
         analytics: true,
       })
     : null,

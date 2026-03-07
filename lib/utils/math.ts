@@ -1,7 +1,7 @@
 /**
  * Math Utilities
  *
- * Common mathematical operations.
+ * Common mathematical operations and array helpers.
  */
 
 /**
@@ -38,4 +38,17 @@ export function round(value: number, decimals: number = 0): number {
 export function percentage(value: number, total: number): number {
   if (total === 0) return 0;
   return round((value / total) * 100, 1);
+}
+
+/**
+ * Splits an array into chunks of a specified size.
+ *
+ * @param array - Array to split
+ * @param size - Maximum chunk size
+ * @returns Array of chunks
+ */
+export function chunk<T>(array: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
+    array.slice(i * size, i * size + size)
+  );
 }

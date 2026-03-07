@@ -655,3 +655,36 @@ export function getEvidenceSummary(controls: ControlEvidence[]): EvidenceSummary
     score,
   };
 }
+
+/**
+ * Calculate per-framework compliance scores from evidence.
+ *
+ * Shared by the compliance score API, public report API, and cron snapshot logic.
+ * Uses a Map for O(n) grouping instead of repeated O(n*m) filter calls.
+ *
+ * @param evidence - Evidence object returned by getComplianceEvidence
+ * @returns Array of per-framework score breakdowns
+ */
+export function calculateFrameworkScores(evidence: {
+  frameworks: Array<{ name: string }>;
+  controls: ControlEvidence[];
+}): Array<{ framework: string; score: number; total: number; withEvidence: number }> {
+  // Pre-group controls by framework for O(n) instead of O(n*m) filtering
+  const controlsByFramework = new Map<string, ControlEvidence[]>();
+  for (const control of evidence.controls) {
+    const existing = controlsByFramework.get(control.frameworkName) ?? [];
+    existing.push(control);
+    controlsByFramework.set(control.frameworkName, existing);
+  }
+
+  return evidence.frameworks.map((framework) => {
+    const frameworkControls = controlsByFramework.get(framework.name) ?? [];
+    const frameworkSummary = getEvidenceSummary(frameworkControls);
+    return {
+      framework: framework.name,
+      score: frameworkSummary.score,
+      total: frameworkSummary.total,
+      withEvidence: frameworkSummary.withEvidence,
+    };
+  });
+}

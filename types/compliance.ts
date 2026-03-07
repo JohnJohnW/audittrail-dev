@@ -94,7 +94,7 @@ export interface EvidenceSummary {
 export interface Framework {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   controlCount: number;
 }
 

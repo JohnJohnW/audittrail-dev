@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { FadeIn } from "@/components/ui/Motion";
 import { cn } from "@/lib/utils";
 import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
+import type { Framework, RepositoryRef } from "@/types";
 
 interface ExportRecord {
   id: string;
@@ -19,22 +20,11 @@ interface ExportRecord {
   createdAt: string;
 }
 
-interface Framework {
-  id: string;
-  name: string;
-  controlCount: number;
-}
-
-interface Repository {
-  id: string;
-  fullName: string;
-}
-
 export default function ExportsPage() {
   const [exports, setExports] = useState<ExportRecord[]>([]);
   const [canExport, setCanExport] = useState(false);
   const [frameworks, setFrameworks] = useState<Framework[]>([]);
-  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [repositories, setRepositories] = useState<RepositoryRef[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [selectedFramework, setSelectedFramework] = useState<string>("");

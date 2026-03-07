@@ -1,7 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
-import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
+import {
+  getComplianceEvidence,
+  getEvidenceSummary,
+  calculateFrameworkScores,
+} from "@/lib/compliance";
 import { handleApiError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
 
@@ -14,7 +18,6 @@ export async function GET(request: NextRequest) {
     logger.info("Auth successful", { orgId });
 
     // Parse repository filter from query params
-    // Use request.nextUrl.searchParams directly to avoid type issues
     const repoIdsParam = request.nextUrl.searchParams.get("repositoryIds");
     const repositoryIds = repoIdsParam
       ? repoIdsParam.split(",").filter((id) => id.trim().length > 0)
@@ -30,35 +33,16 @@ export async function GET(request: NextRequest) {
     const summary = getEvidenceSummary(evidence.controls);
     logger.info("Summary calculated", { summary });
 
-    // Pre-group controls by framework for O(n) instead of O(n*m) filtering
-    const controlsByFramework = new Map<string, typeof evidence.controls>();
-    for (const control of evidence.controls) {
-      const existing = controlsByFramework.get(control.frameworkName) || [];
-      existing.push(control);
-      controlsByFramework.set(control.frameworkName, existing);
-    }
+    // Per-framework scores (shared helper — O(n) grouping)
+    const byFramework = calculateFrameworkScores(evidence);
 
-    // Pre-group controls by evidence type for O(n) instead of O(n*m) filtering
+    // Calculate scores by category
     const controlsByCategory = new Map<string, typeof evidence.controls>();
     for (const control of evidence.controls) {
       const existing = controlsByCategory.get(control.evidenceType) || [];
       existing.push(control);
       controlsByCategory.set(control.evidenceType, existing);
     }
-
-    // Calculate scores by framework using pre-grouped data
-    const byFramework = evidence.frameworks.map((framework) => {
-      const frameworkControls = controlsByFramework.get(framework.name) || [];
-      const frameworkSummary = getEvidenceSummary(frameworkControls);
-      return {
-        framework: framework.name,
-        score: frameworkSummary.score,
-        total: frameworkSummary.total,
-        withEvidence: frameworkSummary.withEvidence,
-      };
-    });
-
-    // Calculate scores by category using pre-grouped data
     const categories = ["commit_history", "pr_approvals", "branch_protection", "agent_activity"];
     const byCategory = categories.map((category) => {
       const categoryControls = controlsByCategory.get(category) || [];

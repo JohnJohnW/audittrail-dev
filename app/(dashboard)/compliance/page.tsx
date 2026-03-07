@@ -21,6 +21,7 @@ import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
 import { chart, chartStyles, progress } from "@/lib/design-tokens";
 import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
 import { ShareReportButton } from "@/components/compliance/ShareReportButton";
+import type { RepositoryRef } from "@/types";
 
 interface PieLabelProps {
   cx?: number;
@@ -50,14 +51,9 @@ interface ComplianceScore {
 // Monochromatic accent palette for consistent, professional look
 const PIE_COLORS = [chart.primary, chart.secondary, chart.tertiary];
 
-interface Repository {
-  id: string;
-  fullName: string;
-}
-
 export default function CompliancePage() {
   const [score, setScore] = useState<ComplianceScore | null>(null);
-  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [repositories, setRepositories] = useState<RepositoryRef[]>([]);
   const [selectedRepositories, setSelectedRepositories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

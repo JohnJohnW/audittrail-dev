@@ -13,30 +13,10 @@ import { FadeIn } from "@/components/ui/Motion";
 import { cn } from "@/lib/utils";
 import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
 import { getGapRecommendation } from "@/lib/gap-analysis";
+import type { ComplianceControl } from "@/types";
 
-interface EvidenceItem {
-  type: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  url?: string;
-  repositoryId?: string;
-  repositoryName?: string;
-  repositoryFullName?: string;
-}
-
-interface ControlEvidence {
-  controlId: string;
-  controlCode: string;
-  controlTitle: string;
-  controlDescription: string | null;
-  frameworkName: string;
-  evidenceType: string;
-  status: "has_evidence" | "partial" | "no_evidence" | "limited";
-  evidenceCount: number;
-  evidence: EvidenceItem[];
-  note?: string;
-}
+// Local alias to keep existing code readable; matches ComplianceControl from @/types
+type ControlEvidence = ComplianceControl;
 
 interface EvidenceData {
   frameworks: { id: string; name: string; controlCount: number }[];

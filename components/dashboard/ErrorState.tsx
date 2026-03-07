@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 interface ErrorStateProps {
   title?: string;
@@ -33,19 +33,23 @@ export function ErrorState({ title = "Something went wrong", message, action }: 
       <p className="text-sm text-gray-500 mb-4 max-w-sm">{message}</p>
       {action &&
         (action.href ? (
-          <Link
+          <Button
+            variant="ghost"
+            size="sm"
             href={action.href}
-            className="text-sm font-medium text-accent hover:text-accent-hover"
+            className="text-accent hover:text-accent-hover"
           >
             {action.label}
-          </Link>
+          </Button>
         ) : (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={action.onClick}
-            className="text-sm font-medium text-accent hover:text-accent-hover"
+            className="text-accent hover:text-accent-hover"
           >
             {action.label}
-          </button>
+          </Button>
         ))}
     </div>
   );

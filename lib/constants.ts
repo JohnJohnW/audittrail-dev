@@ -116,6 +116,24 @@ export const HEALTH_CHECK_CONFIG = {
   TIMEOUT_MS: 5000,
 } as const;
 
+// Stripe configuration
+export const STRIPE_CONFIG = {
+  /** Stripe API version pinned for compatibility */
+  API_VERSION: "2025-02-24.acacia" as const,
+} as const;
+
+// Rate limiting configuration (values passed to Upstash slidingWindow)
+export const RATE_LIMIT_CONFIG = {
+  /** General API endpoints: 100 requests per 10 minutes */
+  API: { limit: 100, window: "10 m" as const },
+  /** Auth endpoints: 10 requests per minute */
+  AUTH: { limit: 10, window: "1 m" as const },
+  /** Sync endpoints: 5 requests per minute */
+  SYNC: { limit: 5, window: "1 m" as const },
+  /** Export endpoints: 10 requests per hour */
+  EXPORT: { limit: 10, window: "1 h" as const },
+} as const;
+
 // HTTP status codes for consistency
 export const HTTP_STATUS = {
   OK: 200,

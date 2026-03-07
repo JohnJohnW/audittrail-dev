@@ -2,11 +2,15 @@ import { timingSafeEqual } from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import type { GitHubClient } from "@/lib/github";
 import { getGitHubClientForOrg } from "@/lib/github";
-import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
+import {
+  getComplianceEvidence,
+  getEvidenceSummary,
+  calculateFrameworkScores,
+} from "@/lib/compliance";
 import { sendWeeklyDigest } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
+import { syncRepository, CRON_SYNC_OPTIONS } from "@/lib/github-sync";
 
 // Cron job endpoint for automatic syncing
 // Protected by CRON_SECRET to prevent unauthorized access
@@ -81,39 +85,14 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        let syncedRepos = 0;
+        // Sync each repository using the shared lib helper with cron-optimised options
+        const syncResults = await Promise.allSettled(
+          org.repositories.map((repo) => syncRepository(client, repo, CRON_SYNC_OPTIONS))
+        );
 
-        for (const repo of org.repositories) {
-          try {
-            if (!repo.fullName || !repo.fullName.includes("/")) {
-              continue;
-            }
-
-            const [owner, repoName] = repo.fullName.split("/");
-            if (!owner || !repoName) continue;
-
-            const since = repo.lastSyncedAt || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-
-            // Sync commits (limited for cron)
-            await syncCommitsForCron(client, repo.id, owner, repoName, since);
-
-            // Sync pull requests
-            await syncPRsForCron(client, repo.id, owner, repoName);
-
-            // Sync branch protection
-            await syncBranchProtectionForCron(client, repo.id, owner, repoName, repo.defaultBranch);
-
-            // Update last synced timestamp
-            await db.repository.update({
-              where: { id: repo.id },
-              data: { lastSyncedAt: new Date() },
-            });
-
-            syncedRepos++;
-          } catch (error) {
-            logger.error(`Error syncing repo ${repo.fullName}`, error);
-          }
-        }
+        const syncedRepos = syncResults.filter(
+          (r) => r.status === "fulfilled" && !r.value.error
+        ).length;
 
         // Store daily compliance snapshot after sync
         await storeComplianceSnapshot(org.id);
@@ -160,205 +139,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Chunk array into smaller arrays for batch processing
-function chunk<T>(arr: T[], size: number): T[][] {
-  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
-    arr.slice(i * size, i * size + size)
-  );
-}
-
-// Simplified sync functions for cron (fewer pages to avoid timeouts)
-async function syncCommitsForCron(
-  client: GitHubClient,
-  repoId: string,
-  owner: string,
-  repoName: string,
-  since: Date
-) {
-  const maxPages = 3; // Limit pages for cron
-  const BATCH_SIZE = 25;
-
-  for (let page = 1; page <= maxPages; page++) {
-    const commits = await client.getCommits(owner, repoName, since, page);
-    if (commits.length === 0) break;
-
-    // Process in batches using Promise.allSettled
-    const batches = chunk(commits, BATCH_SIZE);
-    for (const batch of batches) {
-      await Promise.allSettled(
-        batch.map((commit) =>
-          db.commit.upsert({
-            where: {
-              repoId_sha: { repoId, sha: commit.sha },
-            },
-            update: {
-              verified: commit.commit.verification?.verified || false,
-              verificationReason: commit.commit.verification?.reason || null,
-            },
-            create: {
-              repoId,
-              sha: commit.sha,
-              message: commit.commit.message.slice(0, 5000),
-              authorName: commit.commit.author.name,
-              authorEmail: commit.commit.author.email,
-              committedAt: new Date(commit.commit.author.date),
-              url: commit.html_url,
-              verified: commit.commit.verification?.verified || false,
-              verificationReason: commit.commit.verification?.reason || null,
-            },
-          })
-        )
-      );
-    }
-
-    if (commits.length < 100) break;
-  }
-}
-
-async function syncPRsForCron(
-  client: GitHubClient,
-  repoId: string,
-  owner: string,
-  repoName: string
-) {
-  const maxPages = 2; // Limit for cron
-  const REVIEW_LIMIT = 10;
-
-  for (let page = 1; page <= maxPages; page++) {
-    const prs = await client.getPullRequests(owner, repoName, "all", page);
-    if (prs.length === 0) break;
-
-    for (const pr of prs) {
-      try {
-        const dbPr = await db.pullRequest.upsert({
-          where: {
-            repoId_githubPrId: { repoId, githubPrId: BigInt(pr.id) },
-          },
-          update: {
-            title: pr.title,
-            state: pr.merged_at ? "merged" : pr.state,
-            mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
-          },
-          create: {
-            repoId,
-            githubPrId: BigInt(pr.id),
-            number: pr.number,
-            title: pr.title,
-            body: pr.body?.slice(0, 10000) || null,
-            state: pr.merged_at ? "merged" : pr.state,
-            authorLogin: pr.user.login,
-            baseBranch: pr.base.ref,
-            headBranch: pr.head.ref,
-            mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
-            closedAt: pr.closed_at ? new Date(pr.closed_at) : null,
-            url: pr.html_url,
-          },
-        });
-
-        // Sync reviews for merged PRs only - batch with Promise.allSettled
-        if (pr.merged_at) {
-          const reviews = await client.getReviews(owner, repoName, pr.number);
-          await Promise.allSettled(
-            reviews.slice(0, REVIEW_LIMIT).map((review) =>
-              db.review.upsert({
-                where: {
-                  prId_githubReviewId: {
-                    prId: dbPr.id,
-                    githubReviewId: BigInt(review.id),
-                  },
-                },
-                update: {},
-                create: {
-                  prId: dbPr.id,
-                  githubReviewId: BigInt(review.id),
-                  reviewerLogin: review.user.login,
-                  state: review.state,
-                  body: review.body?.slice(0, 5000) || null,
-                  submittedAt: new Date(review.submitted_at),
-                },
-              })
-            )
-          );
-        }
-      } catch (_error) {
-        // Skip individual PR errors
-      }
-    }
-
-    if (prs.length < 100) break;
-  }
-}
-
-async function syncBranchProtectionForCron(
-  client: GitHubClient,
-  repoId: string,
-  owner: string,
-  repoName: string,
-  branch: string
-) {
-  try {
-    const protection = await client.getBranchProtection(owner, repoName, branch);
-    if (!protection) return null;
-
-    const snapshotAt = new Date();
-    await db.branchProtection.upsert({
-      where: {
-        repoId_branch_snapshotAt: {
-          repoId,
-          branch,
-          snapshotAt,
-        },
-      },
-      update: {
-        requirePullRequest: !!protection.required_pull_request_reviews,
-        requiredApprovals:
-          protection.required_pull_request_reviews?.required_approving_review_count || 0,
-        dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
-        requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
-        enforceAdmins: protection.enforce_admins?.enabled || false,
-        requireStatusChecks: !!protection.required_status_checks,
-      },
-      create: {
-        repoId,
-        branch,
-        requirePullRequest: !!protection.required_pull_request_reviews,
-        requiredApprovals:
-          protection.required_pull_request_reviews?.required_approving_review_count || 0,
-        dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
-        requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
-        enforceAdmins: protection.enforce_admins?.enabled || false,
-        requireStatusChecks: !!protection.required_status_checks,
-        snapshotAt,
-      },
-    });
-
-    return protection;
-  } catch (_error) {
-    // Branch protection not configured or no access - this is okay
-    return null;
-  }
-}
-
 async function storeComplianceSnapshot(orgId: string) {
   try {
     const evidence = await getComplianceEvidence(orgId);
     const summary = getEvidenceSummary(evidence.controls);
 
-    // Calculate per-framework scores
+    // Per-framework scores (shared helper — O(n) grouping)
+    const frameworkScoreArray = calculateFrameworkScores(evidence);
     const frameworkScores: Record<string, { score: number; total: number; withEvidence: number }> =
       {};
-    for (const framework of evidence.frameworks) {
-      const frameworkControls = evidence.controls.filter((c) => c.frameworkName === framework.name);
-      const frameworkSummary = getEvidenceSummary(frameworkControls);
-      frameworkScores[framework.name] = {
-        score: frameworkSummary.score,
-        total: frameworkSummary.total,
-        withEvidence: frameworkSummary.withEvidence,
-      };
+    for (const { framework, score, total, withEvidence } of frameworkScoreArray) {
+      frameworkScores[framework] = { score, total, withEvidence };
     }
 
     // Use today's date for the snapshot (UTC)

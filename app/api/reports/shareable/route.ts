@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { db } from "@/lib/db";
-import { handleApiError } from "@/lib/error-handler";
+import { handleApiError, AppError } from "@/lib/error-handler";
 
 export const dynamic = "force-dynamic";
 
@@ -31,9 +31,10 @@ export async function POST() {
     // Pro-only: check subscription
     const subscription = await db.subscription.findUnique({ where: { orgId } });
     if (!subscription || subscription.plan !== "pro") {
-      return NextResponse.json(
-        { error: "Shareable reports are a Pro feature. Upgrade to share your compliance report." },
-        { status: 403 }
+      throw new AppError(
+        "Shareable reports are a Pro feature. Upgrade to share your compliance report.",
+        403,
+        "PLAN_REQUIRED"
       );
     }
 
@@ -69,13 +70,13 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "Missing report id" }, { status: 400 });
+      throw new AppError("Missing report id", 400, "INVALID_REQUEST");
     }
 
     // Verify ownership before deleting
     const report = await db.shareableReport.findFirst({ where: { id, orgId } });
     if (!report) {
-      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+      throw new AppError("Report not found", 404, "NOT_FOUND");
     }
 
     await db.shareableReport.delete({ where: { id } });

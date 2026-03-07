@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import type { GitHubClient } from "@/lib/github";
 import { logger } from "@/lib/logger";
 import { SYNC_CONFIG, DATA_LIMITS, GITHUB_CONFIG } from "@/lib/constants";
+import { chunk } from "@/lib/utils";
 
 // =============================================================================
 // Types
@@ -69,15 +70,6 @@ export const CRON_SYNC_OPTIONS: Required<SyncOptions> = {
 // =============================================================================
 // Utility Functions
 // =============================================================================
-
-/**
- * Split an array into chunks of a specified size.
- */
-export function chunk<T>(array: T[], size: number): T[][] {
-  return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
-    array.slice(i * size, i * size + size)
-  );
-}
 
 /**
  * Parse repository fullName into owner and repo name.

@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { AppError } from "./error-handler";
 import { logger } from "./logger";
+import { STRIPE_CONFIG } from "./constants";
 
 let stripeInstance: Stripe | null = null;
 
@@ -10,7 +11,7 @@ export function getStripe(): Stripe {
       throw new AppError("STRIPE_SECRET_KEY is not configured", 500, "STRIPE_CONFIG_ERROR");
     }
     stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-02-24.acacia",
+      apiVersion: STRIPE_CONFIG.API_VERSION,
       typescript: true,
     });
   }

@@ -9,19 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { FadeIn } from "@/components/ui/Motion";
 import { cn } from "@/lib/utils";
 import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
-
-interface Repository {
-  id: number;
-  name: string;
-  fullName: string;
-  private: boolean;
-  defaultBranch: string;
-  url: string;
-  description: string | null;
-  pushedAt: string;
-  isTracked: boolean;
-  isActive: boolean;
-}
+import type { Repository } from "@/types";
 
 interface RepoData {
   connected: boolean;

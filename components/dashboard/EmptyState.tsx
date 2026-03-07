@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -32,35 +32,23 @@ export function EmptyState({ icon, title, description, action, secondaryAction }
         <div className="flex gap-3 justify-center">
           {action &&
             (action.href ? (
-              <Link
-                href={action.href}
-                className="inline-flex items-center bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
-              >
+              <Button variant="primary" size="md" href={action.href}>
                 {action.label}
-              </Link>
+              </Button>
             ) : (
-              <button
-                onClick={action.onClick}
-                className="inline-flex items-center bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
-              >
+              <Button variant="primary" size="md" onClick={action.onClick}>
                 {action.label}
-              </button>
+              </Button>
             ))}
           {secondaryAction &&
             (secondaryAction.href ? (
-              <Link
-                href={secondaryAction.href}
-                className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900"
-              >
+              <Button variant="ghost" size="md" href={secondaryAction.href}>
                 {secondaryAction.label}
-              </Link>
+              </Button>
             ) : (
-              <button
-                onClick={secondaryAction.onClick}
-                className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900"
-              >
+              <Button variant="ghost" size="md" onClick={secondaryAction.onClick}>
                 {secondaryAction.label}
-              </button>
+              </Button>
             ))}
         </div>
       )}
