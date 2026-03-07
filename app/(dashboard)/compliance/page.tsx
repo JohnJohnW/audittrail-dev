@@ -19,6 +19,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
 import { chart, chartStyles, progress } from "@/lib/design-tokens";
 import { getContextualLoadingPhrase } from "@/lib/utils/loading-phrases";
+import { ShareReportButton } from "@/components/compliance/ShareReportButton";
 
 interface PieLabelProps {
   cx?: number;
@@ -267,13 +268,18 @@ export default function CompliancePage() {
     <div>
       {/* Header */}
       <FadeIn>
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
-            Compliance Score
-          </h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1">
-            Overall compliance status and framework breakdown
-          </p>
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
+              Compliance Score
+            </h1>
+            <p className="text-sm sm:text-base text-gray-500 mt-1">
+              Overall compliance status and framework breakdown
+            </p>
+          </div>
+          <div className="shrink-0">
+            <ShareReportButton />
+          </div>
         </div>
       </FadeIn>
 

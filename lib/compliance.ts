@@ -339,9 +339,8 @@ export async function getComplianceEvidence(
     );
     const securityCommits = allCommits.filter((c) => matchesPatterns(c.message, SECURITY_PATTERNS));
     const testCommits = allCommits.filter((c) => matchesPatterns(c.message, TEST_PATTERNS));
-    // Signed commits provide strong evidence for authentication controls
-    // TODO: Use signedCommits for auth controls like A.5.17, E8-MFA
-    const _signedCommits = allCommits.filter((c) => c.verified === true);
+    // Signed commits provide strong evidence for authentication controls (A.5.17, E8-MFA)
+    const signedCommits = allCommits.filter((c) => c.verified === true);
     // CI/CD security tool commits for security testing evidence
     const cicdSecurityCommits = allCommits.filter((c) =>
       matchesPatterns(c.message, CICD_SECURITY_PATTERNS)
@@ -401,6 +400,10 @@ export async function getComplianceEvidence(
             } else if (control.code === "A.8.33") {
               relevantCommits =
                 testCommits.length > 0 ? [...testCommits, ...allCommits.slice(0, 10)] : allCommits;
+            } else if (["A.5.17", "E8-MFA"].includes(control.code)) {
+              // Signed commits directly evidence developer authentication / MFA practices.
+              // Use only signed commits when available so every evidence item is high relevance.
+              relevantCommits = signedCommits.length > 0 ? signedCommits : allCommits;
             }
 
             // Build evidence items

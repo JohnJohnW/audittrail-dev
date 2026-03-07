@@ -88,6 +88,7 @@ model Organization {
   complianceSnapshots  ComplianceSnapshot[]
   apiKeys                 ApiKey[]
   notificationPreferences NotificationPreferences?
+  shareableReports        ShareableReport[]
 
   @@map("organizations")
 }
@@ -353,5 +354,18 @@ model NotificationPreferences {
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
+}
+
+model ShareableReport {
+  id        String    @id @default(cuid())
+  orgId     String    @map("org_id")
+  token     String    @unique @default(cuid())
+  title     String    @default("Compliance Report")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("shareable_reports")
 }
 

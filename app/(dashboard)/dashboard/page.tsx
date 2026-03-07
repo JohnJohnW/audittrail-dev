@@ -56,38 +56,78 @@ export default async function DashboardPage() {
   let repositories: RepositoryWithCount[] = [];
   let subscription = null;
   let recentExports: Awaited<ReturnType<typeof db.export.findMany>> = [];
+  let complianceSnapshots: Awaited<ReturnType<typeof db.complianceSnapshot.findMany>> = [];
 
   try {
-    [githubConnection, repositories, subscription, recentExports] = await Promise.all([
-      db.gitHubConnection.findUnique({ where: { orgId } }).catch(() => null),
-      db.repository
-        .findMany({
-          where: { orgId, isActive: true },
-          include: {
-            _count: {
-              select: {
-                commits: true,
-                pullRequests: true,
+    [githubConnection, repositories, subscription, recentExports, complianceSnapshots] =
+      await Promise.all([
+        db.gitHubConnection.findUnique({ where: { orgId } }).catch(() => null),
+        db.repository
+          .findMany({
+            where: { orgId, isActive: true },
+            include: {
+              _count: {
+                select: {
+                  commits: true,
+                  pullRequests: true,
+                },
               },
             },
-          },
-        })
-        .catch(() => []),
-      db.subscription.findUnique({ where: { orgId } }).catch(() => null),
-      db.export
-        .findMany({
-          where: { orgId },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-        .catch(() => []),
-    ]);
+          })
+          .catch(() => []),
+        db.subscription.findUnique({ where: { orgId } }).catch(() => null),
+        db.export
+          .findMany({
+            where: { orgId },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+          })
+          .catch(() => []),
+        db.complianceSnapshot
+          .findMany({
+            where: { orgId },
+            orderBy: { snapshotDate: "desc" },
+            take: 2,
+          })
+          .catch(() => []),
+      ]);
   } catch (error) {
     console.error("Dashboard data fetch error:", error);
   }
 
   const totalCommits = repositories.reduce((sum, r) => sum + r._count.commits, 0);
   const totalPRs = repositories.reduce((sum, r) => sum + r._count.pullRequests, 0);
+
+  const latestSnapshot = complianceSnapshots[0] ?? null;
+  const previousSnapshot = complianceSnapshots[1] ?? null;
+  const complianceScore = latestSnapshot?.overallScore ?? null;
+  const scoreDelta =
+    latestSnapshot && previousSnapshot
+      ? latestSnapshot.overallScore - previousSnapshot.overallScore
+      : null;
+
+  // Find weakest framework from latest snapshot
+  let weakestFramework: { name: string; score: number } | null = null;
+  if (latestSnapshot?.frameworkScores) {
+    const scores = latestSnapshot.frameworkScores as Record<
+      string,
+      { score: number; total: number; withEvidence: number }
+    >;
+    const sorted = Object.entries(scores).sort((a, b) => a[1].score - b[1].score);
+    if (sorted.length > 0) {
+      weakestFramework = { name: sorted[0][0], score: sorted[0][1].score };
+    }
+  }
+
+  // Last sync time across all active repos
+  const lastSyncedAt = repositories.reduce(
+    (latest: Date | null, r) => {
+      if (!r.lastSyncedAt) return latest;
+      if (!latest) return r.lastSyncedAt;
+      return r.lastSyncedAt > latest ? r.lastSyncedAt : latest;
+    },
+    null as Date | null
+  );
 
   return (
     <DashboardContent
@@ -97,6 +137,10 @@ export default async function DashboardPage() {
       recentExports={recentExports}
       totalCommits={totalCommits}
       totalPRs={totalPRs}
+      complianceScore={complianceScore}
+      scoreDelta={scoreDelta}
+      weakestFramework={weakestFramework}
+      lastSyncedAt={lastSyncedAt}
     />
   );
 }

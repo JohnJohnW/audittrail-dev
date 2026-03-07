@@ -38,6 +38,10 @@ interface DashboardContentProps {
   recentExports: Export[];
   totalCommits: number;
   totalPRs: number;
+  complianceScore: number | null;
+  scoreDelta: number | null;
+  weakestFramework: { name: string; score: number } | null;
+  lastSyncedAt: Date | null;
 }
 
 export function DashboardContent({
@@ -47,16 +51,27 @@ export function DashboardContent({
   recentExports,
   totalCommits,
   totalPRs,
+  complianceScore,
+  scoreDelta,
+  weakestFramework,
+  lastSyncedAt,
 }: DashboardContentProps) {
   return (
     <div>
       {/* Header */}
       <FadeIn>
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
-            Overview
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">Your compliance evidence at a glance</p>
+        <div className="mb-6 sm:mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
+              Overview
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Your compliance evidence at a glance</p>
+          </div>
+          {lastSyncedAt && (
+            <p className="text-xs text-gray-400 mt-1 hidden sm:block">
+              Last sync: {formatRelativeTime(lastSyncedAt)}
+            </p>
+          )}
         </div>
       </FadeIn>
 
@@ -81,13 +96,30 @@ export function DashboardContent({
             subtitle="with reviews"
             icon={<PRIcon />}
           />
-          <StatCard
-            label="Plan"
-            value={subscription?.plan === "pro" ? "Pro" : "Free"}
-            subtitle={subscription?.plan === "pro" ? "unlimited exports" : "view only"}
-            highlight={subscription?.plan !== "pro"}
-            icon={<PlanIcon />}
-          />
+          {complianceScore !== null ? (
+            <StatCard
+              label="Compliance Score"
+              value={`${complianceScore}%`}
+              subtitle={
+                scoreDelta !== null
+                  ? scoreDelta > 0
+                    ? `↑ ${scoreDelta}% from yesterday`
+                    : scoreDelta < 0
+                      ? `↓ ${Math.abs(scoreDelta)}% from yesterday`
+                      : "no change"
+                  : "all frameworks"
+              }
+              icon={<ChartIcon />}
+            />
+          ) : (
+            <StatCard
+              label="Plan"
+              value={subscription?.plan === "pro" ? "Pro" : "Free"}
+              subtitle={subscription?.plan === "pro" ? "unlimited exports" : "view only"}
+              highlight={subscription?.plan !== "pro"}
+              icon={<PlanIcon />}
+            />
+          )}
         </StatCardGrid>
       </FadeIn>
 
@@ -140,6 +172,24 @@ export function DashboardContent({
               </CardContent>
             </Card>
           </FadeIn>
+
+          {weakestFramework && (
+            <FadeIn delay={0.35}>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-1">
+                  Weakest framework
+                </p>
+                <p className="text-sm font-medium text-amber-900 mb-0.5">{weakestFramework.name}</p>
+                <p className="text-xs text-amber-700 mb-3">{weakestFramework.score}% coverage</p>
+                <Link
+                  href={`/evidence?framework=${encodeURIComponent(weakestFramework.name)}`}
+                  className="text-xs font-medium text-amber-800 hover:text-amber-900 underline underline-offset-2"
+                >
+                  See missing controls →
+                </Link>
+              </div>
+            </FadeIn>
+          )}
 
           <FadeIn delay={0.4}>
             <Card>

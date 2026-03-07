@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
 import { getLoadingPhrase } from "@/lib/utils/loading-phrases";
@@ -19,10 +20,32 @@ interface OnboardingStep {
 export default function OnboardingPage() {
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [loading, setLoading] = useState(true);
+  const [countdown, setCountdown] = useState(3);
+  const router = useRouter();
 
   useEffect(() => {
     fetchOnboardingStatus();
   }, []);
+
+  const completedCount = steps.filter((s) => s.completed).length;
+  const progress = steps.length > 0 ? (completedCount / steps.length) * 100 : 0;
+  const allCompleted = steps.length > 0 && steps.every((s) => s.completed);
+
+  // Auto-redirect to dashboard 3 seconds after all steps complete
+  useEffect(() => {
+    if (!allCompleted) return;
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          router.push("/dashboard");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [allCompleted, router]);
 
   const fetchOnboardingStatus = async () => {
     try {
@@ -58,10 +81,6 @@ export default function OnboardingPage() {
     );
   }
 
-  const completedCount = steps.filter((s) => s.completed).length;
-  const progress = steps.length > 0 ? (completedCount / steps.length) * 100 : 0;
-  const allCompleted = steps.every((s) => s.completed);
-
   if (allCompleted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -93,6 +112,7 @@ export default function OnboardingPage() {
             >
               Go to Dashboard
             </Link>
+            <p className="mt-4 text-sm text-gray-400">Redirecting in {countdown}s…</p>
           </div>
         </div>
       </div>
@@ -186,6 +206,15 @@ export default function OnboardingPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/dashboard"
+            className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Skip to dashboard →
+          </Link>
         </div>
       </div>
     </div>

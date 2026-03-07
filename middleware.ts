@@ -18,8 +18,10 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/repositories") ||
     pathname.startsWith("/evidence") ||
+    pathname.startsWith("/compliance") ||
     pathname.startsWith("/exports") ||
-    pathname.startsWith("/settings");
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/onboarding");
 
   // Redirect logged-in users away from auth pages
   if (isLoggedIn && isAuthPage) {
@@ -41,8 +43,10 @@ export const config = {
     "/dashboard/:path*",
     "/repositories/:path*",
     "/evidence/:path*",
+    "/compliance/:path*",
     "/exports/:path*",
     "/settings/:path*",
+    "/onboarding/:path*",
     "/auth/:path*",
   ],
 };
