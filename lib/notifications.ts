@@ -1,8 +1,22 @@
 import { Resend } from "resend";
 import { db } from "./db";
 import { escapeHtml } from "./utils";
+import { logger } from "./logger";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy-init Resend so missing RESEND_API_KEY doesn't crash at module load time
+// (Next.js evaluates modules during static build even without env vars present)
+let resendInstance: Resend | null = null;
+
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) {
+    logger.warn("RESEND_API_KEY is not configured — email notifications are disabled");
+    return null;
+  }
+  if (!resendInstance) {
+    resendInstance = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendInstance;
+}
 
 export interface NotificationPreferences {
   syncFailures: boolean;
@@ -71,6 +85,9 @@ export async function sendSyncFailureNotification(
 
   const org = await db.organization.findUnique({ where: { id: orgId } });
 
+  const resend = getResend();
+  if (!resend) return;
+
   await resend.emails.send({
     from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
     to: user.email,
@@ -96,6 +113,9 @@ export async function sendExportReadyNotification(
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user?.email) return;
+
+  const resend = getResend();
+  if (!resend) return;
 
   await resend.emails.send({
     from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
@@ -127,6 +147,9 @@ export async function sendWeeklyDigest(
   if (!user?.email) return;
 
   const org = await db.organization.findUnique({ where: { id: orgId } });
+
+  const resend = getResend();
+  if (!resend) return;
 
   await resend.emails.send({
     from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
