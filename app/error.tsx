@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 
 export default function Error({
   error,
@@ -15,7 +16,7 @@ export default function Error({
   const [homeHref, setHomeHref] = useState("/");
 
   useEffect(() => {
-    console.error("App error:", error);
+    logger.error("App error", error);
   }, [error]);
 
   useEffect(() => {

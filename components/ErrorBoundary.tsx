@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -24,7 +25,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught error:", error, errorInfo);
+    logger.error("ErrorBoundary caught error", error, { componentStack: errorInfo.componentStack });
   }
 
   resetError = () => {

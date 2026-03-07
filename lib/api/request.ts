@@ -5,6 +5,7 @@
  */
 
 import { AppError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
 
 /**
  * Parse JSON body from request with error handling.
@@ -70,12 +71,12 @@ export function getQueryParam(
       params = url;
     } else {
       // Fallback: try to create URLSearchParams from string or object
-      console.warn("getQueryParam: Invalid URL type, attempting fallback", typeof url);
+      logger.warn("getQueryParam: invalid URL type, attempting fallback", { urlType: typeof url });
       return defaultValue;
     }
     return params.get(param) ?? defaultValue;
   } catch (error) {
-    console.error("getQueryParam error:", error);
+    logger.error("getQueryParam error", error);
     return defaultValue;
   }
 }

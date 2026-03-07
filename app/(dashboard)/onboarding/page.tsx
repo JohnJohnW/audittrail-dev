@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
 import { getLoadingPhrase } from "@/lib/utils/loading-phrases";
+import { logger } from "@/lib/logger";
 
 interface OnboardingStep {
   id: string;
@@ -53,7 +54,7 @@ export default function OnboardingPage() {
       const data = await response.json();
       setSteps(data.steps || []);
     } catch (error) {
-      console.error("Failed to fetch onboarding status:", error);
+      logger.error("Failed to fetch onboarding status", error);
     } finally {
       setLoading(false);
     }
@@ -69,7 +70,7 @@ export default function OnboardingPage() {
       fetchOnboardingStatus();
       trackEvent("onboarding_complete", { step: stepId });
     } catch (error) {
-      console.error("Failed to update onboarding:", error);
+      logger.error("Failed to update onboarding", error);
     }
   };
 

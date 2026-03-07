@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { logger } from "./logger";
 
 // Only create Redis client if both URL and TOKEN are configured
 const redis =
@@ -12,8 +13,8 @@ const redis =
 
 // Warn if partially configured (common misconfiguration)
 if (process.env.UPSTASH_REDIS_REST_URL && !process.env.UPSTASH_REDIS_REST_TOKEN) {
-  console.warn(
-    "UPSTASH_REDIS_REST_URL is set but UPSTASH_REDIS_REST_TOKEN is missing - rate limiting disabled"
+  logger.warn(
+    "UPSTASH_REDIS_REST_URL is set but UPSTASH_REDIS_REST_TOKEN is missing — rate limiting disabled"
   );
 }
 

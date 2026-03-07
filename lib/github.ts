@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { GITHUB_CONFIG } from "./constants";
+import { logger } from "./logger";
 
 const GITHUB_API_BASE = GITHUB_CONFIG.API_BASE;
 
@@ -218,9 +219,9 @@ export async function getGitHubClientForOrg(orgId: string): Promise<GitHubClient
 
   // Check if token is known to be expired
   if (connection.tokenExpiresAt && connection.tokenExpiresAt < new Date()) {
-    console.warn(
-      `GitHub token for org ${orgId} has expired (expired at ${connection.tokenExpiresAt.toISOString()})`
-    );
+    logger.warn(`GitHub token for org ${orgId} has expired`, {
+      expiredAt: connection.tokenExpiresAt.toISOString(),
+    });
     // Token is expired - could implement refresh logic here
     // For now, still return the client and let it fail with a clear error
   }

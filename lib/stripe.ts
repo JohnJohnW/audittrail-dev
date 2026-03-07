@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { AppError } from "./error-handler";
+import { logger } from "./logger";
 
 let stripeInstance: Stripe | null = null;
 
@@ -21,7 +22,7 @@ export function getStripe(): Stripe {
  */
 function handleStripeError(error: unknown, operation: string): never {
   if (error instanceof Stripe.errors.StripeError) {
-    console.error(`Stripe ${operation} error:`, error.message, error.code);
+    logger.error(`Stripe ${operation} error`, error, { code: error.code });
 
     switch (error.type) {
       case "StripeCardError":
@@ -41,7 +42,7 @@ function handleStripeError(error: unknown, operation: string): never {
     }
   }
 
-  console.error(`Stripe ${operation} unexpected error:`, error);
+  logger.error(`Stripe ${operation} unexpected error`, error);
   throw new AppError(`Failed to ${operation}`, 500, "STRIPE_ERROR");
 }
 

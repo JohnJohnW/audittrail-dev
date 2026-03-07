@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { DashboardContent } from "./DashboardContent";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,7 +13,7 @@ export default async function DashboardPage() {
   try {
     session = await auth();
   } catch (error) {
-    console.error("Auth error:", error);
+    logger.error("Auth error", error);
     redirect("/auth/signin");
   }
 
@@ -92,7 +93,7 @@ export default async function DashboardPage() {
           .catch(() => []),
       ]);
   } catch (error) {
-    console.error("Dashboard data fetch error:", error);
+    logger.error("Dashboard data fetch error", error);
   }
 
   const totalCommits = repositories.reduce((sum, r) => sum + r._count.commits, 0);

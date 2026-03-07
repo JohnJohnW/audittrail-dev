@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { logger } from "@/lib/logger";
 import {
   BarChart,
   Bar,
@@ -84,7 +85,7 @@ export default function CompliancePage() {
       // Check if score API call was successful
       if (!scoreRes.ok) {
         const errorData = await scoreRes.json().catch(() => ({}));
-        console.error("Compliance score API error:", errorData);
+        logger.error("Compliance score API error", undefined, { errorData });
         setError(errorData.error || "Failed to load compliance score");
         setScore(null);
         setRepositories([]);
@@ -93,7 +94,10 @@ export default function CompliancePage() {
 
       // Check if repos API call was successful
       if (!reposRes.ok) {
-        console.error("Repositories API error:", reposRes.status, reposRes.statusText);
+        logger.error("Repositories API error", undefined, {
+          status: reposRes.status,
+          statusText: reposRes.statusText,
+        });
         // Still try to parse score data even if repos fail
       }
 
@@ -104,7 +108,7 @@ export default function CompliancePage() {
 
       // Validate score data structure
       if (scoreData.error) {
-        console.error("Compliance score API returned error:", scoreData);
+        logger.error("Compliance score API returned error", undefined, { scoreData });
         setError(scoreData.error || "Invalid score data");
         setScore(null);
         setRepositories([]);
@@ -113,7 +117,7 @@ export default function CompliancePage() {
 
       // Validate required fields
       if (typeof scoreData.overall !== "number" || !Array.isArray(scoreData.byFramework)) {
-        console.error("Invalid score data structure:", scoreData);
+        logger.error("Invalid score data structure", undefined, { scoreData });
         setScore(null);
         setRepositories([]);
         return;
@@ -137,7 +141,7 @@ export default function CompliancePage() {
       }
       setError(null); // Clear error on success
     } catch (error) {
-      console.error("Failed to fetch data:", error);
+      logger.error("Failed to fetch data", error);
       setError(error instanceof Error ? error.message : "Failed to fetch compliance score");
       setScore(null);
       setRepositories([]);
@@ -157,7 +161,7 @@ export default function CompliancePage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("Compliance score API error:", errorData);
+        logger.error("Compliance score API error", undefined, { errorData });
         return;
       }
 
@@ -165,13 +169,13 @@ export default function CompliancePage() {
 
       // Validate data structure before setting
       if (data.error || typeof data.overall !== "number") {
-        console.error("Invalid score data:", data);
+        logger.error("Invalid score data", undefined, { data });
         return;
       }
 
       setScore(data);
     } catch (error) {
-      console.error("Failed to fetch compliance score:", error);
+      logger.error("Failed to fetch compliance score", error);
     } finally {
       setLoading(false);
     }

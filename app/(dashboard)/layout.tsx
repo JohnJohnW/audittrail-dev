@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   try {
     session = await auth();
   } catch (error) {
-    console.error("Dashboard layout auth error:", error);
+    logger.error("Dashboard layout auth error", error);
     redirect("/auth/signin");
   }
 

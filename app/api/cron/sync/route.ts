@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("Starting scheduled sync...");
+    logger.info("Starting scheduled sync");
 
     // Get all organizations with active repositories
     const organizations = await db.organization.findMany({

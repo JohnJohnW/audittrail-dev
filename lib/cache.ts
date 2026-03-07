@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { logger } from "./logger";
 
 // Only create Redis client if both URL and TOKEN are configured
 const redis =
@@ -11,8 +12,8 @@ const redis =
 
 // Warn if partially configured (common misconfiguration)
 if (process.env.UPSTASH_REDIS_REST_URL && !process.env.UPSTASH_REDIS_REST_TOKEN) {
-  console.warn(
-    "UPSTASH_REDIS_REST_URL is set but UPSTASH_REDIS_REST_TOKEN is missing - caching disabled"
+  logger.warn(
+    "UPSTASH_REDIS_REST_URL is set but UPSTASH_REDIS_REST_TOKEN is missing — caching disabled"
   );
 }
 
@@ -32,7 +33,7 @@ export async function getCached<T>(
       return cached;
     }
   } catch (error) {
-    console.error("Cache read error:", error);
+    logger.error("Cache read error", error);
   }
 
   // Cache miss, fetch and store
@@ -40,7 +41,7 @@ export async function getCached<T>(
   try {
     await redis.setex(key, ttl, data);
   } catch (error) {
-    console.error("Cache write error:", error);
+    logger.error("Cache write error", error);
   }
 
   return data;
@@ -55,7 +56,7 @@ export async function invalidateCache(pattern: string) {
     // For now, we'll use a simple key-based approach
     await redis.del(pattern);
   } catch (error) {
-    console.error("Cache invalidation error:", error);
+    logger.error("Cache invalidation error", error);
   }
 }
 

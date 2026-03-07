@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import GitHub from "next-auth/providers/github";
 import { db } from "./db";
+import { logger } from "./logger";
 
 // Validate required environment variables at startup
 if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
@@ -13,7 +14,7 @@ if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
 }
 
 if (!process.env.NEXTAUTH_SECRET) {
-  console.warn("Warning: NEXTAUTH_SECRET is not set. Authentication may not work correctly.");
+  logger.warn("NEXTAUTH_SECRET is not set — authentication may not work correctly");
 }
 
 // Validate NEXTAUTH_URL - critical for OAuth to work
@@ -21,7 +22,7 @@ if (!process.env.NEXTAUTH_URL) {
   const errorMsg =
     "NEXTAUTH_URL is required for OAuth to work. " +
     "Set it to your production URL (e.g., https://audittrail-dev.vercel.app) in Vercel environment variables.";
-  console.error(errorMsg);
+  logger.error(errorMsg);
   // Don't throw in production to avoid breaking the app, but log the error
   if (process.env.NODE_ENV === "development") {
     throw new Error(errorMsg);
@@ -90,7 +91,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
           }
         } catch (error) {
-          console.error("Error fetching user organization:", error);
+          logger.error("Error fetching user organization", error);
         }
       }
       return token;
@@ -147,7 +148,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
           });
         } catch (error) {
-          console.error("Error creating user organization:", error);
+          logger.error("Error creating user organization", error);
         }
       }
     },

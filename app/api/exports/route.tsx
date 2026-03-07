@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("Export error:", error);
+    logger.error("Export error", error);
     return NextResponse.json({ error: "Failed to generate export" }, { status: 500 });
   }
 }

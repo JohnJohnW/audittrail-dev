@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
 
 export function SyncButton() {
   const [syncing, setSyncing] = useState(false);
@@ -13,7 +14,7 @@ export function SyncButton() {
       await fetch("/api/github/sync", { method: "POST" });
       router.refresh();
     } catch (error) {
-      console.error("Sync failed:", error);
+      logger.error("Sync failed", error);
     } finally {
       setSyncing(false);
     }

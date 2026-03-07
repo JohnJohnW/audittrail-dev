@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { logger } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -90,7 +91,7 @@ function SettingsContent() {
         setNotifPrefs(data.notificationPreferences);
       }
     } catch (error) {
-      console.error("Failed to fetch settings:", error);
+      logger.error("Failed to fetch settings", error);
     } finally {
       setLoading(false);
     }
@@ -124,7 +125,7 @@ function SettingsContent() {
         window.location.href = data.url;
       }
     } catch (error) {
-      console.error("Upgrade error:", error);
+      logger.error("Upgrade error", error);
       alert("Failed to start upgrade. Please try again.");
     } finally {
       setUpgrading(false);
@@ -142,7 +143,7 @@ function SettingsContent() {
         window.location.href = data.url;
       }
     } catch (error) {
-      console.error("Billing portal error:", error);
+      logger.error("Billing portal error", error);
       alert("Failed to open billing portal. Please try again.");
     } finally {
       setManagingBilling(false);

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -96,7 +97,7 @@ export default function EvidencePage() {
       // Check if evidence API call was successful
       if (!evidenceRes.ok) {
         const errorData = await evidenceRes.json().catch(() => ({}));
-        console.error("Evidence API error:", errorData);
+        logger.error("Evidence API error", undefined, { errorData });
         setError(errorData.error || "Failed to load evidence data");
         setData(null);
         setRepositories([]);
@@ -105,7 +106,10 @@ export default function EvidencePage() {
 
       // Check if repos API call was successful
       if (!reposRes.ok) {
-        console.error("Repositories API error:", reposRes.status, reposRes.statusText);
+        logger.error("Repositories API error", undefined, {
+          status: reposRes.status,
+          statusText: reposRes.statusText,
+        });
         // Still try to parse evidence data even if repos fail
       }
 
@@ -116,7 +120,7 @@ export default function EvidencePage() {
 
       // Validate evidence data structure
       if (evidenceData.error) {
-        console.error("Evidence API returned error:", evidenceData);
+        logger.error("Evidence API returned error", undefined, { evidenceData });
         setError(evidenceData.error || "Invalid evidence data");
         setData(null);
         setRepositories([]);
@@ -125,7 +129,9 @@ export default function EvidencePage() {
 
       // Ensure controls is an array (default to empty if missing)
       if (!Array.isArray(evidenceData.controls)) {
-        console.error("Invalid evidence data structure - controls is not an array:", evidenceData);
+        logger.error("Invalid evidence data structure — controls is not an array", undefined, {
+          evidenceData,
+        });
         setData(null);
         setRepositories([]);
         return;
@@ -149,7 +155,7 @@ export default function EvidencePage() {
       }
       setError(null); // Clear error on success
     } catch (error) {
-      console.error("Failed to fetch data:", error);
+      logger.error("Failed to fetch data", error);
       setError(error instanceof Error ? error.message : "Failed to fetch evidence data");
       setData(null);
       setRepositories([]);
@@ -169,7 +175,7 @@ export default function EvidencePage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("Evidence API error:", errorData);
+        logger.error("Evidence API error", undefined, { errorData });
         return;
       }
 
@@ -177,13 +183,13 @@ export default function EvidencePage() {
 
       // Validate data structure before setting
       if (result.error || !result.controls) {
-        console.error("Invalid evidence data:", result);
+        logger.error("Invalid evidence data", undefined, { result });
         return;
       }
 
       setData(result);
     } catch (error) {
-      console.error("Failed to fetch evidence:", error);
+      logger.error("Failed to fetch evidence", error);
     } finally {
       setLoading(false);
     }

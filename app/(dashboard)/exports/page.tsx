@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { logger } from "@/lib/logger";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -68,7 +69,7 @@ export default function ExportsPage() {
         }))
       );
     } catch (error) {
-      console.error("Failed to fetch data:", error);
+      logger.error("Failed to fetch data", error);
     } finally {
       setLoading(false);
     }
@@ -132,7 +133,7 @@ export default function ExportsPage() {
 
       await fetchData();
     } catch (error) {
-      console.error("Export error:", error);
+      logger.error("Export error", error);
       alert("Export failed. Please try again.");
     } finally {
       setExporting(false);
