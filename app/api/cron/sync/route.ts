@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -20,8 +21,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Cron not configured" }, { status: 500 });
     }
 
-    // Vercel Cron sends the secret as Bearer token
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    // Verify using timing-safe comparison to prevent timing oracle attacks
+    const expected = `Bearer ${cronSecret}`;
+    const provided = authHeader ?? "";
+    const isValid =
+      provided.length === expected.length &&
+      timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+
+    if (!isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

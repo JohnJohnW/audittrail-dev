@@ -2,10 +2,18 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: NextRequest, { params }: { params: { token: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { token: string } }) {
+  // Rate-limit by IP — public endpoint, no auth required
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const { success } = await checkRateLimit(ip, "api");
+  if (!success) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const { token } = params;
 
   if (!token) {

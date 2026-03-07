@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { db } from "@/lib/db";
@@ -47,8 +48,11 @@ export async function POST() {
       await db.shareableReport.deleteMany({ where: { id: { in: toDelete } } });
     }
 
+    // Generate a cryptographically random token (not CUID — CUIDs are sequential/predictable)
+    const token = randomBytes(32).toString("hex");
+
     const report = await db.shareableReport.create({
-      data: { orgId, title: "Compliance Report" },
+      data: { orgId, title: "Compliance Report", token },
     });
 
     return NextResponse.json({ report });

@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
-import { handleApiError } from "@/lib/error-handler";
+import { handleApiError, AppError } from "@/lib/error-handler";
+import { isValidCuid } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -13,12 +14,19 @@ export async function GET(request: NextRequest) {
     const { orgId } = await requireAuth();
     logger.info("Auth successful", { orgId });
 
-    // Parse repository filter from query params
-    // Use request.nextUrl.searchParams directly to avoid type issues
+    // Parse and validate repository filter from query params
     const repoIdsParam = request.nextUrl.searchParams.get("repositoryIds");
     const repositoryIds = repoIdsParam
-      ? repoIdsParam.split(",").filter((id) => id.trim().length > 0)
+      ? repoIdsParam
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean)
       : undefined;
+
+    // Reject any IDs that aren't valid CUIDs to prevent injection / unexpected DB queries
+    if (repositoryIds && !repositoryIds.every(isValidCuid)) {
+      throw new AppError("Invalid repositoryId format", 400, "INVALID_ID");
+    }
 
     logger.info("Fetching compliance evidence", { orgId, repositoryIds });
     const evidence = await getComplianceEvidence(orgId, { repositoryIds });

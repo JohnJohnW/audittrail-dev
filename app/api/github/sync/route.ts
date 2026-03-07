@@ -7,10 +7,21 @@ import { getGitHubClientForOrg } from "@/lib/github";
 import { isValidCuid } from "@/lib/utils";
 import { handleApiError, AppError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
     const { orgId } = await requireAuth();
+
+    // Rate-limit manual syncs per org (5/minute — same bucket as the sync limiter)
+    const { success: withinLimit } = await checkRateLimit(orgId, "sync");
+    if (!withinLimit) {
+      throw new AppError(
+        "Sync rate limit reached — please wait before syncing again",
+        429,
+        "RATE_LIMITED"
+      );
+    }
 
     const body = await parseOptionalJsonBody<{ repositoryId?: string }>(request);
     const repositoryId = body?.repositoryId;

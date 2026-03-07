@@ -9,12 +9,19 @@ import { isValidCuid, isValidDateString } from "@/lib/utils";
 import { handleApiError, AppError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
 import { EXPORT_CONFIG } from "@/lib/constants";
+import { checkRateLimit } from "@/lib/rate-limit";
 
-// Helper to escape CSV values
+// Helper to escape CSV values safely.
+// Prevents CSV formula injection: Excel/Sheets treat cells starting with =, +, -, @, tab, or
+// carriage-return as formulas. We prefix those with a single-quote so they render as plain text.
 function escapeCSV(value: string): string {
   if (!value) return "";
-  // If value contains comma, quote, or newline, wrap in quotes and escape internal quotes
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+  // Neutralise formula injection characters at the start of a value
+  if (/^[=+\-@\t\r]/.test(value)) {
+    value = `'${value}`;
+  }
+  // Wrap in double-quotes if the value contains commas, quotes, newlines, or the injected apostrophe
+  if (value.includes(",") || value.includes('"') || value.includes("\n") || value.startsWith("'")) {
     return `"${value.replace(/"/g, '""')}"`;
   }
   return value;
@@ -30,6 +37,12 @@ interface ExportBody {
 export async function POST(request: NextRequest) {
   try {
     const { orgId, userId } = await requireAuth();
+
+    // Rate-limit exports per org (10/hour — enforced after auth so we use orgId as key)
+    const { success: withinLimit } = await checkRateLimit(orgId, "export");
+    if (!withinLimit) {
+      throw new AppError("Export rate limit reached — try again later", 429, "RATE_LIMITED");
+    }
 
     // Check subscription
     const canExport = await checkCanExport(orgId);
@@ -115,9 +128,14 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date();
-    const fileName = `${frameworkName.replace(/\s+/g, "-")}-Evidence-${
-      now.toISOString().split("T")[0]
-    }.${format}`;
+    // Sanitise frameworkName before using in a filename: strip everything except
+    // alphanumerics, spaces, and hyphens, then collapse whitespace to hyphens.
+    const safeFrameworkName = frameworkName
+      .replace(/[^a-zA-Z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .slice(0, 64);
+    const fileName = `${safeFrameworkName}-Evidence-${now.toISOString().split("T")[0]}.${format}`;
 
     // Create export record
     const exportRecord = await db.export.create({
