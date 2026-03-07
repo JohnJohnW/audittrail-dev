@@ -16,10 +16,8 @@ Audit Trail connects to your GitHub repositories and maps commits, pull requests
 - [Evidence Mapping](#evidence-mapping)
 - [Database Schema](#database-schema)
 - [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
 - [Deployment](#deployment)
-- [Available Scripts](#available-scripts)
 - [License](#license)
 
 ---
@@ -68,7 +66,7 @@ flowchart LR
 - **Gap analysis** — every control with missing or partial evidence shows a numbered action list explaining exactly what your team needs to do in GitHub to generate evidence.
 - **Shareable reports** — generate a tokenised public URL (no login required) to share a read-only compliance snapshot with auditors or stakeholders. Links can be revoked at any time.
 - **Evidence filtering** — public reports support filtering controls by Covered / Partial / Missing status, with per-framework accordion sections.
-- **Email notifications** — configurable per-event alerts: sync failures, weekly digest, export-ready, and subscription updates.
+- **Email notifications** — weekly compliance digest emailed via Resend; notification preferences are configurable per organisation.
 
 ---
 
@@ -383,97 +381,6 @@ erDiagram
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- A PostgreSQL database ([Supabase](https://supabase.com) free tier recommended)
-- A GitHub OAuth App ([create one](https://github.com/settings/applications/new))
-- A [Stripe](https://stripe.com) account (test mode is fine for local dev)
-- A [Resend](https://resend.com) account (free tier works)
-
-### 1. Clone and install
-
-```bash
-git clone https://github.com/JohnJohnW/audittrail-dev.git
-cd audittrail-dev
-npm install
-```
-
-### 2. Configure environment variables
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and fill in the following:
-
-```bash
-# ─── Database ─────────────────────────────────────────────────────────────────
-# Use the "Transaction" pooler URL for DATABASE_URL (port 6543)
-# Use the "Session" direct URL for DIRECT_URL (port 5432)
-DATABASE_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].supabase.com:5432/postgres"
-
-# ─── Auth ─────────────────────────────────────────────────────────────────────
-NEXTAUTH_SECRET=""          # openssl rand -base64 32
-NEXTAUTH_URL="http://localhost:3000"
-
-# ─── GitHub OAuth ─────────────────────────────────────────────────────────────
-# Callback URL: http://localhost:3000/api/auth/callback/github
-GITHUB_CLIENT_ID=""
-GITHUB_CLIENT_SECRET=""
-
-# ─── Stripe ───────────────────────────────────────────────────────────────────
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_PUBLISHABLE_KEY="pk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."     # from: stripe listen --forward-to ...
-STRIPE_PRO_PRICE_ID="price_..."
-
-# ─── Email ────────────────────────────────────────────────────────────────────
-RESEND_API_KEY="re_..."
-EMAIL_FROM="Audit Trail <noreply@yourdomain.com>"
-
-# ─── Cron ─────────────────────────────────────────────────────────────────────
-CRON_SECRET=""              # openssl rand -hex 32
-
-# ─── Optional: Redis (Upstash) ────────────────────────────────────────────────
-# Enables API caching and rate limiting. App works without these.
-# UPSTASH_REDIS_REST_URL=""
-# UPSTASH_REDIS_REST_TOKEN=""
-```
-
-### 3. Set up the database
-
-```bash
-# Push the Prisma schema to Supabase
-npx prisma db push
-
-# Seed all 8 frameworks and 63 compliance controls
-npm run db:seed
-
-# Regenerate the Prisma client after schema changes
-npx prisma generate
-```
-
-### 4. Start the development server
-
-```bash
-npm run dev
-# → http://localhost:3000
-```
-
-### 5. Forward Stripe webhooks (local testing)
-
-```bash
-# Install the Stripe CLI: https://stripe.com/docs/stripe-cli
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-# Copy the printed webhook secret into STRIPE_WEBHOOK_SECRET
-```
-
----
-
 ## Project Structure
 
 ```
@@ -587,24 +494,6 @@ The endpoint validates `Authorization: Bearer $CRON_SECRET` — Vercel Cron send
    https://yourdomain.com/api/auth/callback/github
    ```
 4. Copy the Client ID and Client Secret into your environment variables.
-
----
-
-## Available Scripts
-
-```bash
-npm run dev           # Start development server (http://localhost:3000)
-npm run build         # Build for production
-npm run start         # Start production server
-npm run lint          # Run ESLint
-npm run type-check    # TypeScript type check (no emit)
-npm run test          # Run unit tests (Vitest)
-npm run test:e2e      # Run end-to-end tests (Playwright)
-npm run db:push       # Push Prisma schema to database
-npm run db:seed       # Seed frameworks and all 63 controls
-npm run db:studio     # Open Prisma Studio (local DB browser)
-npm run db:generate   # Regenerate Prisma client after schema changes
-```
 
 ---
 

@@ -71,65 +71,6 @@ export async function updateOrgNotificationPreferences(
   };
 }
 
-export async function sendSyncFailureNotification(
-  userId: string,
-  orgId: string,
-  repositoryName: string,
-  error: string
-) {
-  const preferences = await getOrgNotificationPreferences(orgId);
-  if (!preferences.syncFailures) return;
-
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user?.email) return;
-
-  const org = await db.organization.findUnique({ where: { id: orgId } });
-
-  const resend = getResend();
-  if (!resend) return;
-
-  await resend.emails.send({
-    from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
-    to: user.email,
-    subject: `Sync Failed: ${escapeHtml(repositoryName)}`,
-    html: `
-      <h2>Repository Sync Failed</h2>
-      <p>We encountered an error while syncing your repository <strong>${escapeHtml(repositoryName)}</strong> for organization <strong>${escapeHtml(org?.name || "Unknown")}</strong>.</p>
-      <p><strong>Error:</strong> ${escapeHtml(error)}</p>
-      <p>Please check your repository settings and try syncing again.</p>
-      <p><a href="${process.env.NEXTAUTH_URL}/repositories">View Repositories</a></p>
-    `,
-  });
-}
-
-export async function sendExportReadyNotification(
-  userId: string,
-  orgId: string,
-  fileName: string,
-  downloadUrl: string
-) {
-  const preferences = await getOrgNotificationPreferences(orgId);
-  if (!preferences.exportReady) return;
-
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user?.email) return;
-
-  const resend = getResend();
-  if (!resend) return;
-
-  await resend.emails.send({
-    from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
-    to: user.email,
-    subject: `Export Ready: ${escapeHtml(fileName)}`,
-    html: `
-      <h2>Your Export is Ready</h2>
-      <p>Your compliance evidence export <strong>${escapeHtml(fileName)}</strong> has been generated successfully.</p>
-      <p><a href="${escapeHtml(downloadUrl)}">Download Export</a></p>
-      <p>This link will expire in 7 days.</p>
-    `,
-  });
-}
-
 export async function sendWeeklyDigest(
   userId: string,
   orgId: string,
