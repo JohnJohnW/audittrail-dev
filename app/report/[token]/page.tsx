@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
+import type { EvidenceStatus } from "@/types/compliance";
 import Image from "next/image";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-interface Framework {
+interface FrameworkData {
   framework: string;
   score: number;
   total: number;
@@ -15,13 +16,13 @@ interface Framework {
 
 function ScoreRing({ score }: { score: number }) {
   return (
-    <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 shadow-md">
-      <span className="text-4xl font-bold text-indigo-600">{score}%</span>
+    <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-accent-light to-orange-100 shadow-md">
+      <span className="text-4xl font-bold text-accent">{score}%</span>
     </div>
   );
 }
 
-function FrameworkBar({ framework, score, withEvidence, total }: Framework) {
+function FrameworkBar({ framework, score, withEvidence, total }: FrameworkData) {
   const color = score >= 70 ? "bg-green-500" : score >= 40 ? "bg-amber-400" : "bg-red-400";
 
   return (
@@ -45,6 +46,41 @@ function FrameworkBar({ framework, score, withEvidence, total }: Framework) {
   );
 }
 
+const STATUS_CONFIG: Record<EvidenceStatus, { label: string; className: string; dot: string }> = {
+  has_evidence: {
+    label: "Covered",
+    className: "bg-green-50 text-green-700 border border-green-200",
+    dot: "bg-green-500",
+  },
+  partial: {
+    label: "Partial",
+    className: "bg-amber-50 text-amber-700 border border-amber-200",
+    dot: "bg-amber-400",
+  },
+  limited: {
+    label: "Limited",
+    className: "bg-amber-50 text-amber-700 border border-amber-200",
+    dot: "bg-amber-400",
+  },
+  no_evidence: {
+    label: "Missing",
+    className: "bg-red-50 text-red-600 border border-red-200",
+    dot: "bg-red-400",
+  },
+};
+
+function StatusBadge({ status }: { status: EvidenceStatus }) {
+  const cfg = STATUS_CONFIG[status];
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${cfg.className}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.label}
+    </span>
+  );
+}
+
 export default async function PublicReportPage({ params }: { params: { token: string } }) {
   const report = await db.shareableReport.findUnique({
     where: { token: params.token },
@@ -57,7 +93,7 @@ export default async function PublicReportPage({ params }: { params: { token: st
   const evidence = await getComplianceEvidence(report.organization.id);
   const summary = getEvidenceSummary(evidence.controls);
 
-  const byFramework: Framework[] = evidence.frameworks.map((f) => {
+  const byFramework: FrameworkData[] = evidence.frameworks.map((f) => {
     const fc = evidence.controls.filter((c) => c.frameworkName === f.name);
     const fs = getEvidenceSummary(fc);
     return {
@@ -83,7 +119,7 @@ export default async function PublicReportPage({ params }: { params: { token: st
             <Image src="/icon.svg" alt="Audit Trail" width={28} height={28} priority />
           </div>
           <span className="text-sm font-semibold text-gray-900">
-            Audit <span className="text-indigo-600">Trail</span>
+            Audit <span className="text-accent">Trail</span>
           </span>
         </div>
         <span className="text-xs text-gray-400">Read-only report</span>
@@ -127,13 +163,71 @@ export default async function PublicReportPage({ params }: { params: { token: st
           </div>
         </div>
 
-        {/* Framework breakdown */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Framework Breakdown</h2>
+        {/* Framework scores */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Framework Scores</h2>
           <div className="space-y-3">
             {byFramework.map((f) => (
               <FrameworkBar key={f.framework} {...f} />
             ))}
+          </div>
+        </div>
+
+        {/* Per-control breakdown (collapsible per framework) */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Control Details</h2>
+          <div className="space-y-2">
+            {evidence.frameworks.map((f) => {
+              const frameworkControls = evidence.controls.filter((c) => c.frameworkName === f.name);
+              const coveredCount = frameworkControls.filter(
+                (c) => c.status === "has_evidence"
+              ).length;
+
+              return (
+                <details
+                  key={f.name}
+                  className="group rounded-xl border border-gray-100 overflow-hidden"
+                >
+                  <summary className="flex items-center justify-between cursor-pointer px-4 py-3 hover:bg-gray-50 select-none list-none [&::-webkit-details-marker]:hidden">
+                    <span className="font-medium text-gray-900 text-sm">{f.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500">
+                        {coveredCount}/{frameworkControls.length} covered
+                      </span>
+                      <svg
+                        className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </summary>
+                  <div className="border-t border-gray-100 divide-y divide-gray-50">
+                    {frameworkControls.map((c) => (
+                      <div
+                        key={c.controlCode}
+                        className="flex items-center justify-between px-4 py-2.5 bg-white hover:bg-gray-50/50"
+                      >
+                        <div className="flex items-center gap-2 min-w-0 pr-2">
+                          <span className="font-mono text-xs text-gray-400 shrink-0">
+                            {c.controlCode}
+                          </span>
+                          <span className="text-sm text-gray-700 truncate">{c.controlTitle}</span>
+                        </div>
+                        <StatusBadge status={c.status} />
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              );
+            })}
           </div>
         </div>
 
@@ -143,7 +237,7 @@ export default async function PublicReportPage({ params }: { params: { token: st
             This report was shared via{" "}
             <Link
               href="/"
-              className="text-indigo-500 hover:text-indigo-700 underline underline-offset-2"
+              className="text-accent hover:text-accent-hover underline underline-offset-2"
             >
               Audit Trail
             </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 interface ShareableReport {
   id: string;
@@ -130,8 +131,26 @@ export function ShareReportButton() {
             </div>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <div
+                className={`mb-4 p-3 rounded-lg text-sm border ${
+                  error.includes("Pro feature") || error.includes("Upgrade")
+                    ? "bg-amber-50 border-amber-200 text-amber-800"
+                    : "bg-red-50 border-red-200 text-red-700"
+                }`}
+              >
                 {error}
+                {(error.includes("Pro feature") || error.includes("Upgrade")) && (
+                  <>
+                    {" "}
+                    <Link
+                      href="/settings"
+                      className="font-medium underline underline-offset-2 hover:opacity-80"
+                      onClick={() => setOpen(false)}
+                    >
+                      Upgrade in Settings →
+                    </Link>
+                  </>
+                )}
               </div>
             )}
 
@@ -189,7 +208,16 @@ export function ShareReportButton() {
                 >
                   {creating ? "Generating link…" : "Generate shareable link"}
                 </button>
-                <p className="mt-3 text-xs text-center text-gray-400">Pro plan required</p>
+                <p className="mt-3 text-xs text-center text-gray-400">
+                  Pro plan required &mdash;{" "}
+                  <Link
+                    href="/settings"
+                    className="text-accent hover:text-accent-hover underline underline-offset-2"
+                    onClick={() => setOpen(false)}
+                  >
+                    upgrade in Settings
+                  </Link>
+                </p>
               </div>
             )}
           </div>

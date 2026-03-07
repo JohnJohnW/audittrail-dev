@@ -33,6 +33,13 @@ interface OrgData {
   slug: string;
 }
 
+interface NotificationPrefsData {
+  syncFailures: boolean;
+  weeklyDigest: boolean;
+  exportReady: boolean;
+  subscriptionUpdates: boolean;
+}
+
 function SettingsContent() {
   const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
@@ -45,6 +52,13 @@ function SettingsContent() {
   const [creatingKey, setCreatingKey] = useState(false);
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefsData>({
+    syncFailures: true,
+    weeklyDigest: true,
+    exportReady: true,
+    subscriptionUpdates: true,
+  });
+  const [savingPrefs, setSavingPrefs] = useState(false);
 
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
@@ -72,10 +86,30 @@ function SettingsContent() {
       const data = await response.json();
       setSubscription(data.subscription);
       setOrg(data.organization);
+      if (data.notificationPreferences) {
+        setNotifPrefs(data.notificationPreferences);
+      }
     } catch (error) {
       console.error("Failed to fetch settings:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const togglePref = async (key: keyof NotificationPrefsData) => {
+    const updated = { ...notifPrefs, [key]: !notifPrefs[key] };
+    setNotifPrefs(updated); // optimistic update
+    setSavingPrefs(true);
+    try {
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationPreferences: updated }),
+      });
+    } catch {
+      setNotifPrefs(notifPrefs); // revert on error
+    } finally {
+      setSavingPrefs(false);
     }
   };
 
@@ -292,6 +326,7 @@ function SettingsContent() {
                     <FeatureItem included>View compliance evidence</FeatureItem>
                     <FeatureItem included>Unlimited PDF exports</FeatureItem>
                     <FeatureItem included>Unlimited CSV exports</FeatureItem>
+                    <FeatureItem included>Shareable read-only reports</FeatureItem>
                     <FeatureItem included>Priority support</FeatureItem>
                   </ul>
                 </motion.div>
@@ -301,15 +336,80 @@ function SettingsContent() {
         </Card>
       </FadeIn>
 
-      {/* API Keys for Agent Connector */}
+      {/* Notification Preferences */}
       <FadeIn delay={0.3}>
+        <Card variant="elevated" className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Email Notifications</CardTitle>
+              {savingPrefs && <span className="text-xs text-gray-400">Saving…</span>}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 mb-2">
+              Choose which events trigger email notifications.
+            </p>
+            <div className="divide-y divide-gray-100">
+              {(
+                [
+                  {
+                    key: "syncFailures" as const,
+                    label: "Sync failures",
+                    description: "When a repository sync fails",
+                  },
+                  {
+                    key: "weeklyDigest" as const,
+                    label: "Weekly digest",
+                    description: "Weekly summary of commits, PRs, and compliance score",
+                  },
+                  {
+                    key: "exportReady" as const,
+                    label: "Export ready",
+                    description: "When a PDF or CSV export completes",
+                  },
+                  {
+                    key: "subscriptionUpdates" as const,
+                    label: "Subscription updates",
+                    description: "Billing and plan change notifications",
+                  },
+                ] as { key: keyof NotificationPrefsData; label: string; description: string }[]
+              ).map(({ key, label, description }) => (
+                <div key={key} className="flex items-center justify-between py-3.5">
+                  <div className="min-w-0 pr-4">
+                    <p className="text-sm font-medium text-gray-900">{label}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+                  </div>
+                  <button
+                    onClick={() => togglePref(key)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-accent/30 ${
+                      notifPrefs[key] ? "bg-accent" : "bg-gray-200"
+                    }`}
+                    role="switch"
+                    aria-checked={notifPrefs[key]}
+                    aria-label={label}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                        notifPrefs[key] ? "translate-x-[18px]" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </FadeIn>
+
+      {/* API Keys */}
+      <FadeIn delay={0.4}>
         <Card variant="elevated" className="mt-6">
           <CardHeader>
             <CardTitle>API Keys</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500 mb-4">
-              Create API keys to connect an agent connector to Audit Trail.
+              Create API keys for programmatic access to Audit Trail.
             </p>
 
             {/* Create new key */}
@@ -425,18 +525,8 @@ function SettingsContent() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-400 text-center py-4">
-                No API keys yet. Create one to connect the agent connector.
-              </p>
+              <p className="text-sm text-gray-400 text-center py-4">No API keys yet.</p>
             )}
-
-            {/* Quick start hint */}
-            <div className="mt-4 bg-gray-50 rounded-lg p-4">
-              <p className="text-xs font-medium text-gray-600 mb-2">Quick Start</p>
-              <p className="text-xs font-mono text-gray-500">
-                $ audittrail-connect --api-key &lt;your-key&gt;
-              </p>
-            </div>
           </CardContent>
         </Card>
       </FadeIn>
