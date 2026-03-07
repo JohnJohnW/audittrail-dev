@@ -95,12 +95,7 @@ export function StatCard({
       </p>
 
       {/* Label */}
-      <p
-        className={cn(
-          "text-gray-600 mt-1",
-          icon ? "text-xs sm:text-sm font-medium" : "text-sm"
-        )}
-      >
+      <p className={cn("text-gray-600 mt-1", icon ? "text-xs sm:text-sm font-medium" : "text-sm")}>
         {label}
       </p>
 

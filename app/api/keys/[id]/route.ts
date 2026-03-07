@@ -8,10 +8,7 @@ export const dynamic = "force-dynamic";
 /**
  * DELETE /api/keys/[id] - Revoke an API key
  */
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
   try {
     const { orgId } = await requireAuth();
     const { id } = params;

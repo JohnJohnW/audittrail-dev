@@ -8,11 +8,7 @@
 import { db } from "@/lib/db";
 import type { GitHubClient } from "@/lib/github";
 import { logger } from "@/lib/logger";
-import {
-  SYNC_CONFIG,
-  DATA_LIMITS,
-  GITHUB_CONFIG,
-} from "@/lib/constants";
+import { SYNC_CONFIG, DATA_LIMITS, GITHUB_CONFIG } from "@/lib/constants";
 
 // =============================================================================
 // Types
@@ -87,9 +83,7 @@ export function chunk<T>(array: T[], size: number): T[][] {
  * Parse repository fullName into owner and repo name.
  * Returns null if the format is invalid.
  */
-export function parseRepoFullName(
-  fullName: string
-): { owner: string; repo: string } | null {
+export function parseRepoFullName(fullName: string): { owner: string; repo: string } | null {
   if (!fullName || !fullName.includes("/")) {
     return null;
   }
@@ -151,10 +145,7 @@ export async function syncCommits(
             create: {
               repoId,
               sha: commit.sha,
-              message: commit.commit.message.slice(
-                0,
-                DATA_LIMITS.MAX_COMMIT_MESSAGE_LENGTH
-              ),
+              message: commit.commit.message.slice(0, DATA_LIMITS.MAX_COMMIT_MESSAGE_LENGTH),
               authorName: commit.commit.author.name,
               authorEmail: commit.commit.author.email,
               committedAt: new Date(commit.commit.author.date),
@@ -273,18 +264,14 @@ export async function syncPullRequests(
                   githubReviewId: BigInt(review.id),
                   reviewerLogin: review.user.login,
                   state: review.state,
-                  body:
-                    review.body?.slice(0, DATA_LIMITS.MAX_REVIEW_BODY_LENGTH) ||
-                    null,
+                  body: review.body?.slice(0, DATA_LIMITS.MAX_REVIEW_BODY_LENGTH) || null,
                   submittedAt: new Date(review.submitted_at),
                 },
               })
             )
           );
 
-          reviewCount += reviewResults.filter(
-            (r) => r.status === "fulfilled"
-          ).length;
+          reviewCount += reviewResults.filter((r) => r.status === "fulfilled").length;
         }
       } catch (error) {
         errors++;
@@ -338,14 +325,11 @@ export async function syncBranchProtection(
       update: {
         requirePullRequest: !!protection.required_pull_request_reviews,
         requiredApprovals:
-          protection.required_pull_request_reviews
-            ?.required_approving_review_count || 0,
+          protection.required_pull_request_reviews?.required_approving_review_count || 0,
         dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews ||
-          false,
+          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
         requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews ||
-          false,
+          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
         enforceAdmins: protection.enforce_admins?.enabled || false,
         requireStatusChecks: !!protection.required_status_checks,
       },
@@ -354,14 +338,11 @@ export async function syncBranchProtection(
         branch,
         requirePullRequest: !!protection.required_pull_request_reviews,
         requiredApprovals:
-          protection.required_pull_request_reviews
-            ?.required_approving_review_count || 0,
+          protection.required_pull_request_reviews?.required_approving_review_count || 0,
         dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews ||
-          false,
+          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
         requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews ||
-          false,
+          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
         enforceAdmins: protection.enforce_admins?.enabled || false,
         requireStatusChecks: !!protection.required_status_checks,
         snapshotAt,
@@ -406,30 +387,14 @@ export async function syncRepository(
 
   const { owner, repo: repoName } = parsed;
   const since =
-    repo.lastSyncedAt ||
-    new Date(
-      Date.now() - SYNC_CONFIG.DEFAULT_DAYS_BACK * 24 * 60 * 60 * 1000
-    );
+    repo.lastSyncedAt || new Date(Date.now() - SYNC_CONFIG.DEFAULT_DAYS_BACK * 24 * 60 * 60 * 1000);
 
   try {
     // Sync commits
-    const commits = await syncCommits(
-      client,
-      repo.id,
-      owner,
-      repoName,
-      since,
-      options
-    );
+    const commits = await syncCommits(client, repo.id, owner, repoName, since, options);
 
     // Sync pull requests and reviews
-    const prs = await syncPullRequests(
-      client,
-      repo.id,
-      owner,
-      repoName,
-      options
-    );
+    const prs = await syncPullRequests(client, repo.id, owner, repoName, options);
 
     // Sync branch protection
     const protection = await syncBranchProtection(
@@ -466,8 +431,5 @@ export async function syncRepository(
  * Get the default sync since date based on lastSyncedAt or default days back.
  */
 export function getSyncSinceDate(lastSyncedAt: Date | null): Date {
-  return (
-    lastSyncedAt ||
-    new Date(Date.now() - SYNC_CONFIG.DEFAULT_DAYS_BACK * 24 * 60 * 60 * 1000)
-  );
+  return lastSyncedAt || new Date(Date.now() - SYNC_CONFIG.DEFAULT_DAYS_BACK * 24 * 60 * 60 * 1000);
 }

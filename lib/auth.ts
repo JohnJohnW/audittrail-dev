@@ -5,9 +5,11 @@ import { db } from "./db";
 
 // Validate required environment variables at startup
 if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
-  throw new Error(
-    "GitHub OAuth credentials are required. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables."
-  );
+  if (process.env.SKIP_ENV_VALIDATION !== "true") {
+    throw new Error(
+      "GitHub OAuth credentials are required. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables."
+    );
+  }
 }
 
 if (!process.env.NEXTAUTH_SECRET) {
@@ -16,7 +18,7 @@ if (!process.env.NEXTAUTH_SECRET) {
 
 // Validate NEXTAUTH_URL - critical for OAuth to work
 if (!process.env.NEXTAUTH_URL) {
-  const errorMsg = 
+  const errorMsg =
     "NEXTAUTH_URL is required for OAuth to work. " +
     "Set it to your production URL (e.g., https://audittrail-dev.vercel.app) in Vercel environment variables.";
   console.error(errorMsg);

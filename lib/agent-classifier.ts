@@ -153,9 +153,10 @@ export function assessEventRisk(
 /**
  * Assess the aggregate risk of an entire session.
  */
-export function assessSessionRisk(
-  eventRisks: { riskScore: number; riskLevel: AgentRiskLevel }[]
-): { riskScore: number; riskLevel: AgentRiskLevel } {
+export function assessSessionRisk(eventRisks: { riskScore: number; riskLevel: AgentRiskLevel }[]): {
+  riskScore: number;
+  riskLevel: AgentRiskLevel;
+} {
   if (eventRisks.length === 0) {
     return { riskScore: 0, riskLevel: "low" };
   }

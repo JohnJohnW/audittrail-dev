@@ -8,14 +8,15 @@ This document outlines the design guidelines and patterns used throughout the ap
 
 The accent color is orange, used for primary actions, highlights, and emphasis.
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `accent` | `#ff6b35` | Primary actions, links, emphasis |
-| `accent-light` | `#fff4f0` | Backgrounds, subtle highlights |
-| `accent-hover` | `#e55a2b` | Hover states |
-| `accent-muted` | `#ffb299` | Secondary emphasis, charts |
+| Token          | Value     | Usage                            |
+| -------------- | --------- | -------------------------------- |
+| `accent`       | `#ff6b35` | Primary actions, links, emphasis |
+| `accent-light` | `#fff4f0` | Backgrounds, subtle highlights   |
+| `accent-hover` | `#e55a2b` | Hover states                     |
+| `accent-muted` | `#ffb299` | Secondary emphasis, charts       |
 
 **Tailwind usage:**
+
 ```html
 <button class="bg-accent text-white hover:bg-accent-hover">Action</button>
 <div class="bg-accent-light">Subtle background</div>
@@ -25,27 +26,28 @@ The accent color is orange, used for primary actions, highlights, and emphasis.
 
 Used for text, borders, and neutral backgrounds.
 
-| Class | Usage |
-|-------|-------|
-| `text-gray-900` | Primary text, headings |
-| `text-gray-600` | Secondary text, body |
-| `text-gray-500` | Tertiary text, descriptions |
-| `text-gray-400` | Captions, timestamps |
-| `border-gray-200` | Card borders, dividers |
-| `bg-gray-50` | Page backgrounds |
-| `bg-gray-100` | Input backgrounds, muted areas |
+| Class             | Usage                          |
+| ----------------- | ------------------------------ |
+| `text-gray-900`   | Primary text, headings         |
+| `text-gray-600`   | Secondary text, body           |
+| `text-gray-500`   | Tertiary text, descriptions    |
+| `text-gray-400`   | Captions, timestamps           |
+| `border-gray-200` | Card borders, dividers         |
+| `bg-gray-50`      | Page backgrounds               |
+| `bg-gray-100`     | Input backgrounds, muted areas |
 
 ### Status Colors
 
 **Important:** Status colors should ONLY be used for explicit status indicators (badges, alerts). Do NOT use them to differentiate similar elements or for decoration.
 
-| Status | Background | Text | Usage |
-|--------|------------|------|-------|
-| Success | `bg-green-50` | `text-green-700` | Completed actions, valid states |
-| Warning | `bg-yellow-50` | `text-yellow-700` | Caution, pending states |
-| Error | `bg-red-50` | `text-red-700` | Errors, failed states |
+| Status  | Background     | Text              | Usage                           |
+| ------- | -------------- | ----------------- | ------------------------------- |
+| Success | `bg-green-50`  | `text-green-700`  | Completed actions, valid states |
+| Warning | `bg-yellow-50` | `text-yellow-700` | Caution, pending states         |
+| Error   | `bg-red-50`    | `text-red-700`    | Errors, failed states           |
 
 **Correct usage:**
+
 ```tsx
 // Badge for status
 <Badge variant="success">Completed</Badge>
@@ -55,6 +57,7 @@ Used for text, borders, and neutral backgrounds.
 ```
 
 **Incorrect usage:**
+
 ```tsx
 // DON'T use different colors for similar stat cards
 <StatCard color="blue" />   // Wrong
@@ -89,22 +92,22 @@ chart.gray      // #9ca3af - Comparison/baseline
 
 ## Typography
 
-| Style | Class | Usage |
-|-------|-------|-------|
-| Page Title | `text-xl sm:text-2xl font-semibold tracking-tight` | Main page headings |
-| Section Title | `text-lg font-semibold` | Card headers, sections |
-| Body | `text-sm sm:text-base text-gray-600` | Main content |
-| Small | `text-xs sm:text-sm text-gray-500` | Secondary info |
-| Caption | `text-xs text-gray-400` | Timestamps, metadata |
+| Style         | Class                                              | Usage                  |
+| ------------- | -------------------------------------------------- | ---------------------- |
+| Page Title    | `text-xl sm:text-2xl font-semibold tracking-tight` | Main page headings     |
+| Section Title | `text-lg font-semibold`                            | Card headers, sections |
+| Body          | `text-sm sm:text-base text-gray-600`               | Main content           |
+| Small         | `text-xs sm:text-sm text-gray-500`                 | Secondary info         |
+| Caption       | `text-xs text-gray-400`                            | Timestamps, metadata   |
 
 ## Spacing
 
-| Context | Class | Value |
-|---------|-------|-------|
+| Context      | Class                  | Value              |
+| ------------ | ---------------------- | ------------------ |
 | Page padding | `px-4 sm:px-6 lg:px-8` | 16px / 24px / 32px |
-| Section gap | `mb-6 sm:mb-8` | 24px / 32px |
-| Card padding | `p-4 sm:p-6` | 16px / 24px |
-| Grid gap | `gap-3 sm:gap-4` | 12px / 16px |
+| Section gap  | `mb-6 sm:mb-8`         | 24px / 32px        |
+| Card padding | `p-4 sm:p-6`           | 16px / 24px        |
+| Grid gap     | `gap-3 sm:gap-4`       | 12px / 16px        |
 
 ## Components
 
@@ -113,16 +116,17 @@ chart.gray      // #9ca3af - Comparison/baseline
 Use for displaying metrics. All stat cards use the accent color for values.
 
 ```tsx
-import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
+import { StatCard, StatCardGrid } from "@/components/ui/StatCard";
 
 <StatCardGrid columns={{ default: 2, lg: 4 }}>
   <StatCard value={42} label="Total Items" />
   <StatCard value="85%" label="Coverage" />
   <StatCard value="Pro" label="Plan" highlight />
-</StatCardGrid>
+</StatCardGrid>;
 ```
 
 **Guidelines:**
+
 - Use `StatCardGrid` wrapper for equal-height cards
 - All values display in accent color
 - Use `highlight` prop sparingly for call-to-action cards
@@ -132,16 +136,14 @@ import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 Container for grouped content.
 
 ```tsx
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 
 <Card variant="elevated">
   <CardHeader>
     <CardTitle>Section Title</CardTitle>
   </CardHeader>
-  <CardContent>
-    Content here
-  </CardContent>
-</Card>
+  <CardContent>Content here</CardContent>
+</Card>;
 ```
 
 ### Button

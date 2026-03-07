@@ -53,7 +53,11 @@ export async function requireApiKeyAuth(request: Request): Promise<ApiKeyAuthCon
 
   const parts = authHeader.split(" ");
   if (parts.length !== 2 || parts[0] !== "Bearer") {
-    throw new AppError("Invalid Authorization header format. Use: Bearer <api-key>", 401, "INVALID_AUTH_FORMAT");
+    throw new AppError(
+      "Invalid Authorization header format. Use: Bearer <api-key>",
+      401,
+      "INVALID_AUTH_FORMAT"
+    );
   }
 
   const rawKey = parts[1];

@@ -51,10 +51,7 @@ export async function GET() {
       select: { id: true, githubRepoId: true, isActive: true },
     });
     const trackedMap = new Map(
-      trackedRepos.map((r) => [
-        r.githubRepoId.toString(),
-        { dbId: r.id, isActive: r.isActive },
-      ])
+      trackedRepos.map((r) => [r.githubRepoId.toString(), { dbId: r.id, isActive: r.isActive }])
     );
 
     const repositories = githubRepos.map((repo) => {

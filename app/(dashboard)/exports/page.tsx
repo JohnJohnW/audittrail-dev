@@ -155,8 +155,12 @@ export default function ExportsPage() {
       {/* Header */}
       <FadeIn>
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Export Reports</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1">Generate audit-ready PDF reports or CSV exports</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
+            Export Reports
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">
+            Generate audit-ready PDF reports or CSV exports
+          </p>
         </div>
       </FadeIn>
 

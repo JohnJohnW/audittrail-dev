@@ -4,11 +4,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import {
-  SettingsIcon,
-  LogoutIcon,
-  ChevronDownIcon,
-} from "./NavIcons";
+import { SettingsIcon, LogoutIcon, ChevronDownIcon } from "./NavIcons";
 
 interface UserMenuProps {
   user: {
@@ -40,10 +36,7 @@ export function UserMenu({ user, isOpen, onToggle, onClose }: UserMenuProps) {
             </span>
           )}
         </div>
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDownIcon className="w-4 h-4 text-gray-400" />
         </motion.div>
       </button>
@@ -63,16 +56,10 @@ export function UserMenu({ user, isOpen, onToggle, onClose }: UserMenuProps) {
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {user.name || "User"}
                 </p>
-                <p className="text-xs text-gray-500 truncate mt-0.5">
-                  {user.email}
-                </p>
+                <p className="text-xs text-gray-500 truncate mt-0.5">{user.email}</p>
               </div>
               <div className="py-1">
-                <DropdownLink
-                  href="/settings"
-                  icon={SettingsIcon}
-                  onClick={onClose}
-                >
+                <DropdownLink href="/settings" icon={SettingsIcon} onClick={onClose}>
                   Settings
                 </DropdownLink>
               </div>

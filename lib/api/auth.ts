@@ -77,10 +77,7 @@ export async function requireAuth(): Promise<AuthContext> {
  * const subscription = await requireSubscription(orgId, "pro");
  * ```
  */
-export async function requireSubscription(
-  orgId: string,
-  requiredPlan: "pro" | "free" = "pro"
-) {
+export async function requireSubscription(orgId: string, requiredPlan: "pro" | "free" = "pro") {
   const subscription = await db.subscription.findFirst({
     where: { orgId },
   });
@@ -90,21 +87,16 @@ export async function requireSubscription(
   }
 
   if (requiredPlan === "pro" && subscription.plan !== "pro") {
-    throw new AppError(
-      "Pro subscription required",
-      403,
-      "SUBSCRIPTION_REQUIRED",
-      { currentPlan: subscription.plan, requiredPlan }
-    );
+    throw new AppError("Pro subscription required", 403, "SUBSCRIPTION_REQUIRED", {
+      currentPlan: subscription.plan,
+      requiredPlan,
+    });
   }
 
   if (subscription.status !== "active" && subscription.status !== "free") {
-    throw new AppError(
-      "Subscription is not active",
-      403,
-      "SUBSCRIPTION_INACTIVE",
-      { status: subscription.status }
-    );
+    throw new AppError("Subscription is not active", 403, "SUBSCRIPTION_INACTIVE", {
+      status: subscription.status,
+    });
   }
 
   return subscription;

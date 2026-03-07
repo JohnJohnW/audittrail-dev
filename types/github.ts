@@ -6,12 +6,7 @@
 export type PRState = "open" | "closed" | "merged";
 
 // Review states from GitHub API
-export type ReviewState =
-  | "APPROVED"
-  | "CHANGES_REQUESTED"
-  | "COMMENTED"
-  | "DISMISSED"
-  | "PENDING";
+export type ReviewState = "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED" | "DISMISSED" | "PENDING";
 
 /**
  * Repository as returned from list/selection endpoints.

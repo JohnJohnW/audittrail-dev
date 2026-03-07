@@ -7,7 +7,6 @@ let lastConnectionPoolError: Date | null = null;
 
 // Use a more reliable global pattern for serverless environments
 declare global {
-  // eslint-disable-next-line no-var
   var __prisma: PrismaClient | undefined;
 }
 
@@ -60,31 +59,34 @@ export async function safeDbOperation<T>(
   maxRetries: number = 2
 ): Promise<T> {
   let lastError: unknown;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
     } catch (error) {
       lastError = error;
-      
+
       // Retry on connection pool errors with exponential backoff
       if (isConnectionPoolError(error) && attempt < maxRetries) {
         connectionPoolErrorCount++;
         lastConnectionPoolError = new Date();
         const delay = Math.min(100 * Math.pow(2, attempt), 1000);
-        logger.warn(`Connection pool error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`, {
-          errorCount: connectionPoolErrorCount,
-          lastError: lastConnectionPoolError,
-        });
+        logger.warn(
+          `Connection pool error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`,
+          {
+            errorCount: connectionPoolErrorCount,
+            lastError: lastConnectionPoolError,
+          }
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
-      
+
       logger.error("Database operation failed", error);
       return fallback;
     }
   }
-  
+
   logger.error("Database operation failed after retries", lastError);
   return fallback;
 }
@@ -105,31 +107,34 @@ export async function dbOperation<T>(
   maxRetries: number = 2
 ): Promise<T> {
   let lastError: unknown;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
     } catch (error) {
       lastError = error;
-      
+
       // Retry on connection pool errors with exponential backoff
       if (isConnectionPoolError(error) && attempt < maxRetries) {
         connectionPoolErrorCount++;
         lastConnectionPoolError = new Date();
         const delay = Math.min(100 * Math.pow(2, attempt), 1000);
-        logger.warn(`Connection pool error in ${context}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`, {
-          errorCount: connectionPoolErrorCount,
-          lastError: lastConnectionPoolError,
-        });
+        logger.warn(
+          `Connection pool error in ${context}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`,
+          {
+            errorCount: connectionPoolErrorCount,
+            lastError: lastConnectionPoolError,
+          }
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
-      
+
       logger.error(`Database operation failed: ${context}`, error);
       throw error;
     }
   }
-  
+
   logger.error(`Database operation failed after retries: ${context}`, lastError);
   throw lastError;
 }
@@ -145,7 +150,12 @@ export async function dbOperation<T>(
  * @returns The result of the transaction
  */
 export async function withTransaction<T>(
-  fn: (tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">) => Promise<T>
+  fn: (
+    tx: Omit<
+      PrismaClient,
+      "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+    >
+  ) => Promise<T>
 ): Promise<T> {
   return db.$transaction(fn);
 }

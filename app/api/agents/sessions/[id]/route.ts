@@ -9,10 +9,7 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/agents/sessions/[id] - Get session detail with full event timeline
  */
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: Request, { params }: { params: { id: string } }) {
   try {
     const { orgId } = await requireAuth();
     const { id } = params;
@@ -32,7 +29,8 @@ export async function GET(
     }
 
     // Compute risk breakdown by category
-    const riskByCategory: Record<string, { count: number; maxRisk: string; totalScore: number }> = {};
+    const riskByCategory: Record<string, { count: number; maxRisk: string; totalScore: number }> =
+      {};
     for (const event of session.events) {
       if (!riskByCategory[event.category]) {
         riskByCategory[event.category] = { count: 0, maxRisk: "low", totalScore: 0 };
@@ -49,7 +47,10 @@ export async function GET(
     }
 
     // Collect unique control mappings across all events
-    const controlSet = new Map<string, { frameworkName: string; controlCode: string; controlTitle: string; count: number }>();
+    const controlSet = new Map<
+      string,
+      { frameworkName: string; controlCode: string; controlTitle: string; count: number }
+    >();
     for (const event of session.events) {
       const mappings = event.controlMappings as Array<{
         frameworkName: string;
@@ -101,9 +102,7 @@ export async function GET(
         category,
         ...data,
       })),
-      complianceReferences: Array.from(controlSet.values()).sort(
-        (a, b) => b.count - a.count
-      ),
+      complianceReferences: Array.from(controlSet.values()).sort((a, b) => b.count - a.count),
     });
   } catch (error) {
     return handleApiError(error);

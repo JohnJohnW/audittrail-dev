@@ -97,7 +97,9 @@ export default function CompliancePage() {
       }
 
       const scoreData = await scoreRes.json();
-      const reposData = reposRes.ok ? await reposRes.json().catch(() => ({ repositories: [] })) : { repositories: [] };
+      const reposData = reposRes.ok
+        ? await reposRes.json().catch(() => ({ repositories: [] }))
+        : { repositories: [] };
 
       // Validate score data structure
       if (scoreData.error) {
@@ -117,7 +119,7 @@ export default function CompliancePage() {
       }
 
       setScore(scoreData);
-      
+
       // Extract tracked repositories from the API response
       // The API returns { connected: boolean, repositories: [...] }
       // We only want active/tracked repositories with database IDs
@@ -151,21 +153,21 @@ export default function CompliancePage() {
         params.set("repositoryIds", selectedRepositories.join(","));
       }
       const response = await fetch(`/api/compliance/score?${params.toString()}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("Compliance score API error:", errorData);
         return;
       }
-      
+
       const data = await response.json();
-      
+
       // Validate data structure before setting
       if (data.error || typeof data.overall !== "number") {
         console.error("Invalid score data:", data);
         return;
       }
-      
+
       setScore(data);
     } catch (error) {
       console.error("Failed to fetch compliance score:", error);
@@ -189,15 +191,25 @@ export default function CompliancePage() {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <svg
+            className="w-8 h-8 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            />
           </svg>
         </div>
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
           {error ? "Error Loading Compliance Score" : "No Compliance Data Available"}
         </h2>
         <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-          {error 
+          {error
             ? error
             : "Connect your GitHub repositories and sync them to start tracking compliance."}
         </p>
@@ -242,7 +254,10 @@ export default function CompliancePage() {
         },
         {
           name: "Missing",
-          value: score.byFramework.reduce((sum, f) => sum + ((f.total || 0) - (f.withEvidence || 0)), 0),
+          value: score.byFramework.reduce(
+            (sum, f) => sum + ((f.total || 0) - (f.withEvidence || 0)),
+            0
+          ),
         },
       ].filter((item) => item.value > 0); // Filter out zero values
 
@@ -253,8 +268,12 @@ export default function CompliancePage() {
       {/* Header */}
       <FadeIn>
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Compliance Score</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1">Overall compliance status and framework breakdown</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
+            Compliance Score
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">
+            Overall compliance status and framework breakdown
+          </p>
         </div>
       </FadeIn>
 
@@ -416,7 +435,9 @@ export default function CompliancePage() {
                     className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 sm:p-5 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100"
                   >
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate">{framework.framework}</h3>
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        {framework.framework}
+                      </h3>
                       <p className="text-sm text-gray-500 mt-0.5 sm:mt-1">
                         {framework.withEvidence} of {framework.total} controls with evidence
                       </p>

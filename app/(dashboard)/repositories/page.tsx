@@ -155,7 +155,9 @@ export default function RepositoriesPage() {
       <FadeIn>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Repositories</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
+              Repositories
+            </h1>
             <p className="text-sm sm:text-base text-gray-500 mt-1">
               Connected as <span className="font-medium text-gray-900">{data.githubAccount}</span>.
               Select repositories to track.

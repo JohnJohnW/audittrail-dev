@@ -354,11 +354,7 @@ interface StaggerChildrenProps {
   once?: boolean;
 }
 
-export function StaggerChildren({
-  children,
-  className,
-  staggerDelay = 0.1,
-}: StaggerChildrenProps) {
+export function StaggerChildren({ children, className, staggerDelay = 0.1 }: StaggerChildrenProps) {
   return (
     <motion.div
       initial="initial"

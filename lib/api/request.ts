@@ -37,9 +37,7 @@ export async function parseJsonBody<T>(request: Request): Promise<T> {
  * @param request - The incoming request
  * @returns Parsed JSON body or null
  */
-export async function parseOptionalJsonBody<T>(
-  request: Request
-): Promise<T | null> {
+export async function parseOptionalJsonBody<T>(request: Request): Promise<T | null> {
   try {
     const text = await request.text();
     if (!text || text.trim() === "") {

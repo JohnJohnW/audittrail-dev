@@ -40,7 +40,12 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className, action }: CardHeaderProps) {
   return (
-    <div className={cn("flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4", className)}>
+    <div
+      className={cn(
+        "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4",
+        className
+      )}
+    >
       <div className="min-w-0">{children}</div>
       {action && <div className="shrink-0">{action}</div>}
     </div>

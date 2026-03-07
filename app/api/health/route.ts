@@ -9,7 +9,7 @@ export async function GET() {
   try {
     await db.$queryRaw`SELECT 1`;
     const poolMetrics = getConnectionPoolMetrics();
-    
+
     // Check for recent connection pool errors
     if (poolMetrics.hasRecentErrors) {
       checks.database = {
@@ -20,17 +20,19 @@ export async function GET() {
       checks.database = { status: "healthy" };
     }
   } catch (error) {
-    const isPoolError = error instanceof Error && (
-      error.message.includes("MaxClientsInSessionMode") ||
-      error.message.includes("max clients reached") ||
-      error.message.includes("connection pool")
-    );
-    
+    const isPoolError =
+      error instanceof Error &&
+      (error.message.includes("MaxClientsInSessionMode") ||
+        error.message.includes("max clients reached") ||
+        error.message.includes("connection pool"));
+
     checks.database = {
       status: "unhealthy",
       message: isPoolError
         ? "Database connection pool exhausted"
-        : error instanceof Error ? error.message : "Database connection failed",
+        : error instanceof Error
+          ? error.message
+          : "Database connection failed",
     };
   }
 

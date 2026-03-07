@@ -12,12 +12,7 @@ interface MobileMenuProps {
   onClose: () => void;
 }
 
-export function MobileMenu({
-  isOpen,
-  navigation,
-  isActive,
-  onClose,
-}: MobileMenuProps) {
+export function MobileMenu({ isOpen, navigation, isActive, onClose }: MobileMenuProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -46,10 +41,7 @@ export function MobileMenu({
                     )}
                   >
                     <Icon
-                      className={cn(
-                        "w-4 h-4 shrink-0",
-                        active ? "text-accent" : "text-gray-400"
-                      )}
+                      className={cn("w-4 h-4 shrink-0", active ? "text-accent" : "text-gray-400")}
                     />
                     {item.name}
                   </Link>
