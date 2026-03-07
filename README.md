@@ -9,12 +9,17 @@ Audit Trail connects to your GitHub repositories and maps commits, pull requests
 ## Table of Contents
 
 - [How It Works](#how-it-works)
+- [Business Model](#business-model)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Data Flow](#data-flow)
+- [Authentication Flow](#authentication-flow)
+- [Subscription Lifecycle](#subscription-lifecycle)
 - [Compliance Frameworks](#compliance-frameworks)
 - [Evidence Mapping](#evidence-mapping)
+- [Compliance Scoring](#compliance-scoring)
 - [Database Schema](#database-schema)
+- [API Surface](#api-surface)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Deployment](#deployment)
@@ -40,6 +45,68 @@ flowchart LR
 2. **Sync** — Audit Trail pulls commits, pull requests, code reviews, and branch protection settings via the GitHub API (read-only; we never access your source code).
 3. **Map** — The compliance engine scores each of the 63 controls across 8 frameworks based on your real activity.
 4. **Report** — View a live dashboard, generate a PDF/CSV for your auditor, or share a public read-only link that requires no login.
+
+---
+
+## Business Model
+
+Audit Trail is a freemium SaaS that removes the manual labour of compliance evidence collection. Engineers stop taking screenshots and maintaining spreadsheets; the product does it automatically from the Git activity they're already producing.
+
+```mermaid
+graph LR
+    subgraph Pain ["The Problem"]
+        P1["Audit prep takes weeks\nper framework per year"]
+        P2["Evidence lives in screenshots,\nspreadsheets, and memory"]
+        P3["Every new framework means\nstarting from scratch"]
+    end
+
+    subgraph Product ["Audit Trail"]
+        AT["GitHub activity → mapped automatically\nto 63 controls across 8 frameworks"]
+    end
+
+    subgraph Value ["The Outcome"]
+        V1["Always audit-ready,\nnot just once a year"]
+        V2["PDF / CSV handed\ndirectly to an auditor"]
+        V3["Same evidence base\nreused across all frameworks"]
+    end
+
+    Pain --> Product --> Value
+```
+
+### Freemium Tiers
+
+|                                | Free    | Pro       |
+| ------------------------------ | ------- | --------- |
+| Repositories                   | Up to 3 | Unlimited |
+| All 8 compliance frameworks    | ✅      | ✅        |
+| Live evidence dashboard        | ✅      | ✅        |
+| Gap analysis with action steps | ✅      | ✅        |
+| PDF / CSV exports              | —       | ✅        |
+| Shareable auditor links        | —       | ✅        |
+| Weekly email digest            | ✅      | ✅        |
+| API key access                 | ✅      | ✅        |
+
+### Revenue Flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant App as Audit Trail
+    participant Stripe
+
+    User->>App: Clicks Upgrade on any Pro feature
+    App->>Stripe: Create Checkout Session (Pro price ID)
+    Stripe-->>User: Hosted checkout page
+    User->>Stripe: Enters card details
+    Stripe->>App: checkout.session.completed webhook
+    App->>App: Upsert subscription → Pro in DB
+    Stripe-->>User: Confirmation email
+
+    Note over User,App: Monthly billing thereafter
+    Stripe->>App: invoice.payment_succeeded → remain Pro
+    Stripe->>App: invoice.payment_failed → grace period
+    Stripe->>App: subscription.deleted → downgrade to Free
+```
 
 ---
 
@@ -165,6 +232,79 @@ sequenceDiagram
 
 ---
 
+## Authentication Flow
+
+Authentication uses **GitHub OAuth via NextAuth.js**. The app requests only read-only scopes (`read:user`, `repo` metadata) — source code is never accessed or stored.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Browser
+    participant Middleware as Next.js Middleware
+    participant NextAuth as NextAuth.js
+    participant GitHub as GitHub OAuth
+    participant DB as Supabase
+
+    User->>Browser: Visit /dashboard (protected route)
+    Browser->>Middleware: Request with no session cookie
+    Middleware-->>Browser: Redirect → /auth/signin
+
+    User->>Browser: Click "Sign in with GitHub"
+    Browser->>NextAuth: GET /api/auth/signin/github
+    NextAuth-->>Browser: Redirect to GitHub consent screen
+    User->>GitHub: Authorise Audit Trail (read-only scopes)
+    GitHub-->>NextAuth: Authorization code
+    NextAuth->>GitHub: POST — exchange code for access_token
+    GitHub-->>NextAuth: access_token (read:user + repo)
+
+    NextAuth->>DB: Upsert User + Account (Prisma adapter)
+    NextAuth->>DB: Create or find Organization for user
+    DB-->>NextAuth: User + org records
+    NextAuth-->>Browser: Set encrypted session cookie (JWT)
+
+    Browser->>Middleware: Subsequent request with session cookie
+    Middleware->>Middleware: Validate session cookie
+    Middleware-->>Browser: Allow through → /dashboard
+```
+
+Session tokens contain `userId`, `orgId`, and `plan` — enough context for every API route to authorise requests without an extra database round-trip.
+
+---
+
+## Subscription Lifecycle
+
+Billing is handled entirely by Stripe. The application reacts to Stripe webhook events to keep subscription state in sync.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Free : GitHub sign-up
+
+    Free --> CheckoutPending : Click Upgrade
+    CheckoutPending --> Free : User abandons checkout
+    CheckoutPending --> Pro : checkout.session.completed
+
+    Pro --> Pro : invoice.payment_succeeded (monthly renewal)
+    Pro --> PastDue : invoice.payment_failed
+    PastDue --> Pro : Stripe retries — payment succeeds
+    PastDue --> Free : customer.subscription.deleted
+
+    Pro --> Free : User cancels (subscription.deleted)
+
+    Free --> [*]
+    Pro --> [*]
+```
+
+Stripe events handled by `/api/webhooks/stripe`:
+
+| Event                           | Action                          |
+| ------------------------------- | ------------------------------- |
+| `checkout.session.completed`    | Activate Pro subscription in DB |
+| `customer.subscription.updated` | Sync plan / status changes      |
+| `customer.subscription.deleted` | Downgrade to Free               |
+| `invoice.payment_failed`        | Mark subscription as `past_due` |
+
+---
+
 ## Compliance Frameworks
 
 Audit Trail supports **8 frameworks** covering **63 controls** in total.
@@ -282,6 +422,42 @@ When a control has `partial`, `limited`, or `no_evidence` status, Audit Trail su
 
 ---
 
+## Compliance Scoring
+
+Each of the 63 controls is evaluated against the GitHub artifacts collected during a sync. The compliance engine (`lib/compliance.ts`) runs entirely server-side and never touches source code — only commit messages, PR metadata, branch protection settings, and workflow names.
+
+```mermaid
+flowchart TD
+    A[Repository sync completes] --> B & C & D & E
+
+    subgraph Artifacts ["Artifacts loaded from DB"]
+        B[Commits\nmessage · author · GPG signature]
+        C[Pull Requests\nreviews · approvals · merge strategy]
+        D[Branch Protection\nrules · status checks · admin enforcement]
+        E[CI Workflow Names\ndetected from check run names]
+    end
+
+    B & C & D & E --> F
+
+    subgraph Engine ["Compliance Engine — lib/compliance.ts"]
+        F[Pattern matching\nfor each of 63 controls]
+        F --> G{Evidence strength}
+    end
+
+    G -->|Strong match| H["✅  has_evidence (100%)"]
+    G -->|Partial match| I["🟡  partial (60%)"]
+    G -->|Weak match| J["🟠  limited (30%)"]
+    G -->|No match| K["🔴  no_evidence (0%)"]
+
+    H & I & J & K --> L[Weighted average\nper framework]
+    L --> M[Overall compliance score]
+    K --> N[Gap Analysis — lib/gap-analysis.ts\nActionable next steps per control]
+```
+
+Framework scores are periodically snapshotted into the `ComplianceSnapshot` table, enabling the trend chart on the dashboard to show score changes over time.
+
+---
+
 ## Database Schema
 
 ```mermaid
@@ -359,6 +535,56 @@ erDiagram
 
 ---
 
+## API Surface
+
+All API routes live under `/app/api/`. Dashboard routes require a valid NextAuth session; the public report endpoint and the Stripe webhook require no session.
+
+```mermaid
+graph TB
+    subgraph Public ["Public — no auth required"]
+        P1[GET /api/health]
+        P2[GET /api/reports/public/:token]
+        P3[POST /api/webhooks/stripe]
+    end
+
+    subgraph Auth ["Session-gated — NextAuth cookie required"]
+        A1[GET /api/compliance/score]
+        A2[GET /api/evidence]
+        A3[GET /api/github/repos]
+        A4[POST /api/github/sync]
+        A5[GET · POST /api/exports]
+        A6[GET · POST · DELETE /api/reports/shareable]
+        A7[GET · PUT /api/settings]
+        A8[GET · POST · DELETE /api/keys]
+        A9[POST /api/stripe/checkout\nGET /api/stripe/portal]
+        A10[POST /api/onboarding]
+    end
+
+    subgraph Cron ["Cron — Bearer CRON_SECRET"]
+        C1[POST /api/cron/sync\ndaily at 02:00 UTC]
+    end
+```
+
+| Route                         | Method(s)         | Description                                               |
+| ----------------------------- | ----------------- | --------------------------------------------------------- |
+| `/api/health`                 | GET               | Database + service health check                           |
+| `/api/compliance/score`       | GET               | Overall + per-framework scores for the org                |
+| `/api/evidence`               | GET               | Full 63-control evidence dataset with gap recommendations |
+| `/api/github/repos`           | GET               | List connected repositories                               |
+| `/api/github/sync`            | POST              | Trigger manual repository sync                            |
+| `/api/exports`                | GET, POST         | List past exports / generate new PDF or CSV               |
+| `/api/reports/shareable`      | GET, POST, DELETE | Manage shareable report tokens                            |
+| `/api/reports/public/[token]` | GET               | Public evidence summary — no auth required                |
+| `/api/settings`               | GET, PUT          | Org info + notification preferences                       |
+| `/api/keys`                   | GET, POST, DELETE | API key management (create, list, revoke)                 |
+| `/api/stripe/checkout`        | POST              | Create Stripe Checkout session                            |
+| `/api/stripe/portal`          | GET               | Redirect to Stripe billing portal                         |
+| `/api/webhooks/stripe`        | POST              | Stripe event handler — no auth, HMAC-verified             |
+| `/api/cron/sync`              | POST              | Scheduled daily sync — bearer token auth                  |
+| `/api/onboarding`             | POST              | Update onboarding step progress                           |
+
+---
+
 ## Tech Stack
 
 | Layer         | Technology                                                                      | Notes                                       |
@@ -369,7 +595,7 @@ erDiagram
 | ORM           | [Prisma](https://www.prisma.io/)                                                | Type-safe queries, schema-as-code           |
 | Auth          | [NextAuth.js v5](https://authjs.dev/)                                           | GitHub OAuth, JWT sessions, Prisma adapter  |
 | Payments      | [Stripe](https://stripe.com/)                                                   | Subscriptions, billing portal, webhooks     |
-| Email         | [Resend](https://resend.com/)                                                   | Transactional emails via REST API           |
+| Email         | [Resend](https://resend.com/)                                                   | Weekly digest emails via REST API           |
 | Styling       | [Tailwind CSS](https://tailwindcss.com/)                                        | Utility-first, custom accent colour         |
 | Animations    | [Framer Motion](https://www.framer.com/motion/)                                 | Page transitions, micro-interactions        |
 | Charts        | [Recharts](https://recharts.org/)                                               | Bar + pie charts for compliance scores      |
@@ -427,7 +653,7 @@ audittrail-dev/
 │   ├── github.ts               # GitHub REST API client
 │   ├── auth.ts                 # NextAuth configuration + callbacks
 │   ├── db.ts                   # Prisma singleton (serverless-safe)
-│   ├── notifications.ts        # Resend email dispatch helpers
+│   ├── notifications.ts        # Resend email dispatch (weekly digest)
 │   ├── stripe.ts               # Stripe checkout + portal helpers
 │   ├── cache.ts                # Upstash Redis cache wrapper
 │   ├── rate-limit.ts           # Upstash sliding-window rate limiter
@@ -448,16 +674,52 @@ audittrail-dev/
 
 ## Deployment
 
-### Vercel (Recommended)
+### Infrastructure Overview
+
+```mermaid
+graph TB
+    subgraph Internet ["Internet"]
+        USR["Users & Auditors\nbrowser"]
+    end
+
+    subgraph Vercel ["Vercel (Edge + Serverless)"]
+        EDG["Edge Middleware\nauth routing guard"]
+        SC["Server Components\nSSR pages"]
+        API["API Routes\nserverless functions"]
+        CRN["Cron Job\n/api/cron/sync\n02:00 UTC daily"]
+    end
+
+    subgraph Services ["External Services"]
+        GH["GitHub API\nread-only OAuth"]
+        SB[("Supabase\nPostgres + pgbouncer")]
+        STR["Stripe\nbilling + webhooks"]
+        RSD["Resend\nweekly digest email"]
+        RDS[("Upstash Redis\noptional cache + rate-limit")]
+    end
+
+    USR -->|HTTPS| EDG
+    EDG --> SC
+    EDG --> API
+    CRN -->|bearer auth| API
+    SC --> SB
+    API --> SB
+    API --> GH
+    API --> STR
+    API --> RSD
+    API -.->|optional| RDS
+```
+
+### Vercel
 
 1. Fork this repo and push to your GitHub account.
 2. Go to [vercel.com/new](https://vercel.com/new) and import the repository.
-3. Set all environment variables from `.env.example` in the Vercel project settings.
-4. Deploy — Vercel detects Next.js automatically.
+3. Set all environment variables (see `.env.example`) in the Vercel project settings.
+4. Set the **Build Command** to `npx prisma generate && npm run build`.
+5. Deploy — Vercel detects Next.js automatically.
 
 ### Cron Job
 
-Add a `vercel.json` at the repo root to run daily syncs:
+The `vercel.json` at the repo root schedules the daily sync:
 
 ```json
 {
