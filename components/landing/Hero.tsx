@@ -40,8 +40,8 @@ export function Hero() {
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
             Connect your GitHub repositories. We extract commits, pull requests, reviews, and branch
-            protection rules—then map them to compliance controls. Export audit-ready reports in one
-            click.
+            protection rules, then map them to compliance controls. Export audit-ready reports in
+            one click.
           </p>
         </FadeInOnLoad>
 

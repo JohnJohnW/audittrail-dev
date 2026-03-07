@@ -161,7 +161,7 @@ export function ShareReportButton() {
             ) : latestReport ? (
               <div>
                 <p className="text-sm text-gray-600 mb-3">
-                  Share this read-only link with auditors or stakeholders — no account required.
+                  Share this read-only link with auditors or stakeholders. No account required.
                 </p>
                 <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-4">
                   <span className="text-xs text-gray-600 truncate flex-1">
@@ -199,7 +199,7 @@ export function ShareReportButton() {
               <div>
                 <p className="text-sm text-gray-600 mb-5">
                   Generate a read-only link to share your compliance report with auditors or
-                  stakeholders — no Audit Trail account required.
+                  stakeholders. No Audit Trail account required.
                 </p>
                 <button
                   onClick={createLink}
@@ -209,7 +209,7 @@ export function ShareReportButton() {
                   {creating ? "Generating link…" : "Generate shareable link"}
                 </button>
                 <p className="mt-3 text-xs text-center text-gray-400">
-                  Pro plan required &mdash;{" "}
+                  Pro plan required.{" "}
                   <Link
                     href="/settings"
                     className="text-accent hover:text-accent-hover underline underline-offset-2"

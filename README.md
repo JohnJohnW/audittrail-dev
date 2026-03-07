@@ -1,6 +1,6 @@
 # Audit Trail
 
-> Turn GitHub activity into audit-ready compliance evidence — automatically.
+> Turn GitHub activity into audit-ready compliance evidence. Automatically.
 
 Audit Trail connects to your GitHub repositories and maps commits, pull requests, code reviews, and branch protection rules to the controls inside 8 major compliance frameworks. The result is a live evidence dashboard, exportable PDF/CSV reports, and shareable read-only report links you can hand directly to an auditor.
 
@@ -41,10 +41,10 @@ flowchart LR
     H --> I[Auditor]
 ```
 
-1. **Connect** — Sign in with GitHub and select the repositories you want to track.
-2. **Sync** — Audit Trail pulls commits, pull requests, code reviews, and branch protection settings via the GitHub API (read-only; we never access your source code).
-3. **Map** — The compliance engine scores each of the 63 controls across 8 frameworks based on your real activity.
-4. **Report** — View a live dashboard, generate a PDF/CSV for your auditor, or share a public read-only link that requires no login.
+1. **Connect**: Sign in with GitHub and select the repositories you want to track.
+2. **Sync**: Audit Trail pulls commits, pull requests, code reviews, and branch protection settings via the GitHub API (read-only; we never access your source code).
+3. **Map**: The compliance engine scores each of the 63 controls across 8 frameworks based on your real activity.
+4. **Report**: View a live dashboard, generate a PDF/CSV for your auditor, or share a public read-only link that requires no login.
 
 ---
 
@@ -78,13 +78,13 @@ graph LR
 |                                | Free    | Pro       |
 | ------------------------------ | ------- | --------- |
 | Repositories                   | Up to 3 | Unlimited |
-| All 8 compliance frameworks    | ✅      | ✅        |
-| Live evidence dashboard        | ✅      | ✅        |
-| Gap analysis with action steps | ✅      | ✅        |
-| PDF / CSV exports              | —       | ✅        |
-| Shareable auditor links        | —       | ✅        |
-| Weekly email digest            | ✅      | ✅        |
-| API key access                 | ✅      | ✅        |
+| All 8 compliance frameworks    | Yes     | Yes       |
+| Live evidence dashboard        | Yes     | Yes       |
+| Gap analysis with action steps | Yes     | Yes       |
+| PDF / CSV exports              | No      | Yes       |
+| Shareable auditor links        | No      | Yes       |
+| Weekly email digest            | Yes     | Yes       |
+| API key access                 | Yes     | Yes       |
 
 ### Revenue Flow
 
@@ -114,26 +114,26 @@ sequenceDiagram
 
 | Feature                          | Free | Pro |
 | -------------------------------- | ---- | --- |
-| Up to 3 repositories             | ✅   | ✅  |
-| Unlimited repositories           | —    | ✅  |
-| All 8 compliance frameworks      | ✅   | ✅  |
-| Live evidence dashboard          | ✅   | ✅  |
-| Gap analysis with action steps   | ✅   | ✅  |
-| PDF exports                      | —    | ✅  |
-| CSV exports                      | —    | ✅  |
-| Shareable read-only report links | —    | ✅  |
-| Email notifications              | ✅   | ✅  |
-| API key access                   | ✅   | ✅  |
-| Priority support                 | —    | ✅  |
+| Up to 3 repositories             | Yes  | Yes |
+| Unlimited repositories           | No   | Yes |
+| All 8 compliance frameworks      | Yes  | Yes |
+| Live evidence dashboard          | Yes  | Yes |
+| Gap analysis with action steps   | Yes  | Yes |
+| PDF exports                      | No   | Yes |
+| CSV exports                      | No   | Yes |
+| Shareable read-only report links | No   | Yes |
+| Email notifications              | Yes  | Yes |
+| API key access                   | Yes  | Yes |
+| Priority support                 | No   | Yes |
 
 ### Key Highlights
 
-- **Zero source-code access** — only metadata is read (commit messages, PR titles, review states, branch rules). Your actual code is never transmitted or stored.
-- **Auto-sync via cron** — repositories sync on a daily schedule; manual sync is one click.
-- **Gap analysis** — every control with missing or partial evidence shows a numbered action list explaining exactly what your team needs to do in GitHub to generate evidence.
-- **Shareable reports** — generate a tokenised public URL (no login required) to share a read-only compliance snapshot with auditors or stakeholders. Links can be revoked at any time.
-- **Evidence filtering** — public reports support filtering controls by Covered / Partial / Missing status, with per-framework accordion sections.
-- **Email notifications** — weekly compliance digest emailed via Resend; notification preferences are configurable per organisation.
+- **Zero source-code access**: only metadata is read (commit messages, PR titles, review states, branch rules). Your actual code is never transmitted or stored.
+- **Auto-sync via cron**: repositories sync on a daily schedule; manual sync is one click.
+- **Gap analysis**: every control with missing or partial evidence shows a numbered action list explaining exactly what your team needs to do in GitHub to generate evidence.
+- **Shareable reports**: generate a tokenised public URL (no login required) to share a read-only compliance snapshot with auditors or stakeholders. Links can be revoked at any time.
+- **Evidence filtering**: public reports support filtering controls by Covered / Partial / Missing status, with per-framework accordion sections.
+- **Email notifications**: weekly compliance digest emailed via Resend; notification preferences are configurable per organisation.
 
 ---
 
@@ -234,7 +234,7 @@ sequenceDiagram
 
 ## Authentication Flow
 
-Authentication uses **GitHub OAuth via NextAuth.js**. The app requests only read-only scopes (`read:user`, `repo` metadata) — source code is never accessed or stored.
+Authentication uses **GitHub OAuth via NextAuth.js**. The app requests only read-only scopes (`read:user`, `repo` metadata). Source code is never accessed or stored.
 
 ```mermaid
 sequenceDiagram
@@ -254,7 +254,7 @@ sequenceDiagram
     NextAuth-->>Browser: Redirect to GitHub consent screen
     User->>GitHub: Authorise Audit Trail (read-only scopes)
     GitHub-->>NextAuth: Authorization code
-    NextAuth->>GitHub: POST — exchange code for access_token
+    NextAuth->>GitHub: POST - exchange code for access_token
     GitHub-->>NextAuth: access_token (read:user + repo)
 
     NextAuth->>DB: Upsert User + Account (Prisma adapter)
@@ -267,7 +267,7 @@ sequenceDiagram
     Middleware-->>Browser: Allow through → /dashboard
 ```
 
-Session tokens contain `userId`, `orgId`, and `plan` — enough context for every API route to authorise requests without an extra database round-trip.
+Session tokens contain `userId`, `orgId`, and `plan`. Enough context for every API route to authorise requests without an extra database round-trip.
 
 ---
 
@@ -285,7 +285,7 @@ stateDiagram-v2
 
     Pro --> Pro : invoice.payment_succeeded (monthly renewal)
     Pro --> PastDue : invoice.payment_failed
-    PastDue --> Pro : Stripe retries — payment succeeds
+    PastDue --> Pro : Stripe retries, payment succeeds
     PastDue --> Free : customer.subscription.deleted
 
     Pro --> Free : User cancels (subscription.deleted)
@@ -311,14 +311,14 @@ Audit Trail supports **8 frameworks** covering **63 controls** in total.
 
 | Framework                                                                                                              | Controls | Focus                                                     |
 | ---------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------- |
-| [ISO 27001:2022](https://www.iso.org/standard/27001)                                                                   | 19       | Information security management — Annex A.5 & A.8         |
+| [ISO 27001:2022](https://www.iso.org/standard/27001)                                                                   | 19       | Information security management - Annex A.5 & A.8         |
 | [Essential Eight](https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight) | 6        | ACSC baseline strategies for Australian organisations     |
-| [NIST CSF 2.0](https://www.nist.gov/cyberframework)                                                                    | 7        | US cybersecurity framework — Govern, Protect, Detect      |
-| [NIST SP 800-53 Rev 5](https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final)                                | 7        | Federal controls — AC, CA, CM, SA, SI families            |
-| [SOC 2](https://www.aicpa-cima.com/resources/landing/system-and-organization-controls-soc-suite-of-services)           | 5        | Trust Services Criteria — CC6, CC7, CC8                   |
-| [GDPR](https://gdpr.eu/)                                                                                               | 9        | EU data protection — Art. 25 (privacy by design), Art. 32 |
-| [SOCI Act](https://www.homeaffairs.gov.au/cyber-security-subsite/files/security-of-critical-infrastructure-act.pdf)    | 4        | AU critical infrastructure protection — PSO 1–4           |
-| [PCI DSS 4.0](https://www.pcisecuritystandards.org/)                                                                   | 6        | Payment card industry — Requirements 6, 7, 8              |
+| [NIST CSF 2.0](https://www.nist.gov/cyberframework)                                                                    | 7        | US cybersecurity framework - Govern, Protect, Detect      |
+| [NIST SP 800-53 Rev 5](https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final)                                | 7        | Federal controls - AC, CA, CM, SA, SI families            |
+| [SOC 2](https://www.aicpa-cima.com/resources/landing/system-and-organization-controls-soc-suite-of-services)           | 5        | Trust Services Criteria - CC6, CC7, CC8                   |
+| [GDPR](https://gdpr.eu/)                                                                                               | 9        | EU data protection - Art. 25 (privacy by design), Art. 32 |
+| [SOCI Act](https://www.homeaffairs.gov.au/cyber-security-subsite/files/security-of-critical-infrastructure-act.pdf)    | 4        | AU critical infrastructure protection - PSO 1-4           |
+| [PCI DSS 4.0](https://www.pcisecuritystandards.org/)                                                                   | 6        | Payment card industry - Requirements 6, 7, 8              |
 
 ### Control Coverage Map
 
@@ -391,10 +391,10 @@ flowchart LR
     end
 
     subgraph Score ["Evidence Status"]
-        HE["✅ Has Evidence\nStrong direct evidence"]
-        PA["🟡 Partial\nSome but incomplete"]
-        LI["🟠 Limited\nMinimal activity"]
-        NE["🔴 No Evidence\n+ Gap analysis actions"]
+        HE["Has Evidence\nStrong direct evidence"]
+        PA["Partial\nSome but incomplete"]
+        LI["Limited\nMinimal activity"]
+        NE["No Evidence\n+ Gap analysis actions"]
     end
 
     C --> KW
@@ -424,7 +424,7 @@ When a control has `partial`, `limited`, or `no_evidence` status, Audit Trail su
 
 ## Compliance Scoring
 
-Each of the 63 controls is evaluated against the GitHub artifacts collected during a sync. The compliance engine (`lib/compliance.ts`) runs entirely server-side and never touches source code — only commit messages, PR metadata, branch protection settings, and workflow names.
+Each of the 63 controls is evaluated against the GitHub artifacts collected during a sync. The compliance engine (`lib/compliance.ts`) runs entirely server-side and never touches source code. Only commit messages, PR metadata, branch protection settings, and workflow names.
 
 ```mermaid
 flowchart TD
@@ -439,19 +439,19 @@ flowchart TD
 
     B & C & D & E --> F
 
-    subgraph Engine ["Compliance Engine — lib/compliance.ts"]
+    subgraph Engine ["Compliance Engine: lib/compliance.ts"]
         F[Pattern matching\nfor each of 63 controls]
         F --> G{Evidence strength}
     end
 
-    G -->|Strong match| H["✅  has_evidence (100%)"]
-    G -->|Partial match| I["🟡  partial (60%)"]
-    G -->|Weak match| J["🟠  limited (30%)"]
-    G -->|No match| K["🔴  no_evidence (0%)"]
+    G -->|Strong match| H["has_evidence (100%)"]
+    G -->|Partial match| I["partial (60%)"]
+    G -->|Weak match| J["limited (30%)"]
+    G -->|No match| K["no_evidence (0%)"]
 
     H & I & J & K --> L[Weighted average\nper framework]
     L --> M[Overall compliance score]
-    K --> N[Gap Analysis — lib/gap-analysis.ts\nActionable next steps per control]
+    K --> N[Gap Analysis: lib/gap-analysis.ts\nActionable next steps per control]
 ```
 
 Framework scores are periodically snapshotted into the `ComplianceSnapshot` table, enabling the trend chart on the dashboard to show score changes over time.
@@ -541,13 +541,13 @@ All API routes live under `/app/api/`. Dashboard routes require a valid NextAuth
 
 ```mermaid
 graph TB
-    subgraph Public ["Public — no auth required"]
+    subgraph Public ["Public - no auth required"]
         P1[GET /api/health]
         P2[GET /api/reports/public/:token]
         P3[POST /api/webhooks/stripe]
     end
 
-    subgraph Auth ["Session-gated — NextAuth cookie required"]
+    subgraph Auth ["Session-gated - NextAuth cookie required"]
         A1[GET /api/compliance/score]
         A2[GET /api/evidence]
         A3[GET /api/github/repos]
@@ -560,7 +560,7 @@ graph TB
         A10[POST /api/onboarding]
     end
 
-    subgraph Cron ["Cron — Bearer CRON_SECRET"]
+    subgraph Cron ["Cron - Bearer CRON_SECRET"]
         C1[POST /api/cron/sync\ndaily at 02:00 UTC]
     end
 ```
@@ -574,13 +574,13 @@ graph TB
 | `/api/github/sync`            | POST              | Trigger manual repository sync                            |
 | `/api/exports`                | GET, POST         | List past exports / generate new PDF or CSV               |
 | `/api/reports/shareable`      | GET, POST, DELETE | Manage shareable report tokens                            |
-| `/api/reports/public/[token]` | GET               | Public evidence summary — no auth required                |
+| `/api/reports/public/[token]` | GET               | Public evidence summary - no auth required                |
 | `/api/settings`               | GET, PUT          | Org info + notification preferences                       |
 | `/api/keys`                   | GET, POST, DELETE | API key management (create, list, revoke)                 |
 | `/api/stripe/checkout`        | POST              | Create Stripe Checkout session                            |
 | `/api/stripe/portal`          | GET               | Redirect to Stripe billing portal                         |
-| `/api/webhooks/stripe`        | POST              | Stripe event handler — no auth, HMAC-verified             |
-| `/api/cron/sync`              | POST              | Scheduled daily sync — bearer token auth                  |
+| `/api/webhooks/stripe`        | POST              | Stripe event handler - no auth, HMAC-verified             |
+| `/api/cron/sync`              | POST              | Scheduled daily sync - bearer token auth                  |
 | `/api/onboarding`             | POST              | Update onboarding step progress                           |
 
 ---
@@ -600,8 +600,8 @@ graph TB
 | Animations    | [Framer Motion](https://www.framer.com/motion/)                                 | Page transitions, micro-interactions        |
 | Charts        | [Recharts](https://recharts.org/)                                               | Bar + pie charts for compliance scores      |
 | PDF           | [@react-pdf/renderer](https://react-pdf.org/)                                   | Server-side PDF generation                  |
-| Caching       | [Upstash Redis](https://upstash.com/)                                           | Optional — falls back gracefully if unset   |
-| Rate Limiting | Upstash Ratelimit                                                               | Optional — sliding window per endpoint type |
+| Caching       | [Upstash Redis](https://upstash.com/)                                           | Optional - falls back gracefully if unset   |
+| Rate Limiting | Upstash Ratelimit                                                               | Optional - sliding window per endpoint type |
 | Hosting       | [Vercel](https://vercel.com/)                                                   | Zero-config, cron jobs, edge middleware     |
 | Analytics     | [Vercel Analytics](https://vercel.com/analytics)                                | Privacy-friendly, no cookie banner needed   |
 
@@ -715,7 +715,7 @@ graph TB
 2. Go to [vercel.com/new](https://vercel.com/new) and import the repository.
 3. Set all environment variables (see `.env.example`) in the Vercel project settings.
 4. Set the **Build Command** to `npx prisma generate && npm run build`.
-5. Deploy — Vercel detects Next.js automatically.
+5. Deploy. Vercel detects Next.js automatically.
 
 ### Cron Job
 
@@ -732,7 +732,7 @@ The `vercel.json` at the repo root schedules the daily sync:
 }
 ```
 
-The endpoint validates `Authorization: Bearer $CRON_SECRET` — Vercel Cron sends this automatically.
+The endpoint validates `Authorization: Bearer $CRON_SECRET`. Vercel Cron sends this automatically.
 
 ### Stripe Webhook
 
@@ -761,4 +761,4 @@ The endpoint validates `Authorization: Bearer $CRON_SECRET` — Vercel Cron send
 
 ## License
 
-Proprietary — All rights reserved © 2026 Audit Trail.
+Proprietary. All rights reserved (c) 2026 Audit Trail.

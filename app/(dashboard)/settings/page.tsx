@@ -218,14 +218,14 @@ function SettingsContent() {
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 Organization Name
               </label>
-              <p className="text-gray-900 font-medium">{org?.name || "—"}</p>
+              <p className="text-gray-900 font-medium">{org?.name || "-"}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 Organization Slug
               </label>
               <p className="text-gray-600 font-mono text-sm bg-gray-50 px-3 py-2 rounded-lg inline-block">
-                {org?.slug || "—"}
+                {org?.slug || "-"}
               </p>
             </div>
           </CardContent>
@@ -460,7 +460,7 @@ function SettingsContent() {
                   className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4"
                 >
                   <p className="text-sm font-medium text-green-800 mb-2">
-                    API key created. Copy it now — it won&apos;t be shown again.
+                    API key created. Copy it now - it won&apos;t be shown again.
                   </p>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 text-xs bg-white border border-green-200 rounded px-3 py-2 font-mono text-green-900 break-all">

@@ -110,7 +110,7 @@ export function Frameworks() {
           </h2>
           <p className="text-sm text-gray-500 max-w-lg mx-auto">
             We&apos;ve done the control mapping for you. Eight frameworks covering global and
-            regional standards—connect once, evidence them all.
+            regional standards. Connect once, evidence them all.
           </p>
         </FadeIn>
 

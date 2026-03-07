@@ -60,7 +60,7 @@ export function Problem() {
                 </span>
                 <span className="text-gray-600">
                   Every artifact maps to specific compliance controls. ISO 27001, NIST CSF, NIST SP
-                  800-53, SOC 2, GDPR, SOCI Act, PCI DSS, and Essential Eight—all covered.
+                  800-53, SOC 2, GDPR, SOCI Act, PCI DSS, and Essential Eight - all covered.
                 </span>
               </li>
               <li className="flex gap-3 group">

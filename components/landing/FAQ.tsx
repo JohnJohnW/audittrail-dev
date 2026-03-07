@@ -38,7 +38,7 @@ const faqs = [
   {
     question: "Can I use this for my certification audit?",
     answer:
-      "Yes. Audit Trail generates evidence that supports certification and compliance audits across ISO 27001, NIST, SOC 2, GDPR, and other frameworks. However, we're one part of your compliance program—you'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
+      "Yes. Audit Trail generates evidence that supports certification and compliance audits across ISO 27001, NIST, SOC 2, GDPR, and other frameworks. However, we're one part of your compliance program. You'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
   },
   {
     question: "Do you offer enterprise plans?",
