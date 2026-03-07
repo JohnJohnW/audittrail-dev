@@ -86,8 +86,8 @@ model Organization {
   subscription         Subscription?
   exports              Export[]
   complianceSnapshots  ComplianceSnapshot[]
-  apiKeys              ApiKey[]
-  agentSessions        AgentSession[]
+  apiKeys                 ApiKey[]
+  notificationPreferences NotificationPreferences?
 
   @@map("organizations")
 }
@@ -337,52 +337,21 @@ model ApiKey {
 }
 
 // ============================================
-// AGENT GOVERNANCE
+// NOTIFICATION PREFERENCES
 // ============================================
 
-model AgentSession {
-  id             String    @id @default(cuid())
-  orgId          String    @map("org_id")
-  externalId     String    @map("external_id")
-  agentFramework String    @default("openclaw") @map("agent_framework")
-  agentId        String?   @map("agent_id")
-  status         String    @default("running")
-  riskLevel      String    @default("low") @map("risk_level")
-  riskScore      Int       @default(0) @map("risk_score")
-  summary        String?
-  startedAt      DateTime  @default(now()) @map("started_at")
-  endedAt        DateTime? @map("ended_at")
-  metadata       Json?
-  createdAt      DateTime  @default(now()) @map("created_at")
+model NotificationPreferences {
+  id                  String   @id @default(cuid())
+  orgId               String   @unique @map("org_id")
+  syncFailures        Boolean  @default(true) @map("sync_failures")
+  weeklyDigest        Boolean  @default(true) @map("weekly_digest")
+  exportReady         Boolean  @default(true) @map("export_ready")
+  subscriptionUpdates Boolean  @default(true) @map("subscription_updates")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
-  organization Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  events       AgentEvent[]
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  @@unique([orgId, externalId])
-  @@index([orgId, startedAt])
-  @@map("agent_sessions")
+  @@map("notification_preferences")
 }
 
-model AgentEvent {
-  id              String   @id @default(cuid())
-  sessionId       String   @map("session_id")
-  orgId           String   @map("org_id")
-  category        String
-  action          String
-  summary         String
-  riskLevel       String   @default("low") @map("risk_level")
-  riskScore       Int      @default(0) @map("risk_score")
-  input           Json?
-  output          Json?
-  metadata        Json?
-  controlMappings Json?    @map("control_mappings")
-  timestamp       DateTime @default(now())
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  session AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@index([orgId, timestamp])
-  @@index([sessionId])
-  @@index([category])
-  @@map("agent_events")
-}

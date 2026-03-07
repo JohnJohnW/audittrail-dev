@@ -3,7 +3,6 @@ import { requireAuth } from "@/lib/api/auth";
 import { generateApiKey } from "@/lib/api/api-key-auth";
 import { handleApiError, AppError } from "@/lib/error-handler";
 import { db } from "@/lib/db";
-import { AGENT_CONFIG } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -59,9 +58,10 @@ export async function POST(request: Request) {
       where: { orgId, revokedAt: null },
     });
 
-    if (existingCount >= AGENT_CONFIG.MAX_KEYS_PER_ORG) {
+    const MAX_KEYS_PER_ORG = 10;
+    if (existingCount >= MAX_KEYS_PER_ORG) {
       throw new AppError(
-        `Maximum of ${AGENT_CONFIG.MAX_KEYS_PER_ORG} active API keys per organization`,
+        `Maximum of ${MAX_KEYS_PER_ORG} active API keys per organization`,
         400,
         "KEY_LIMIT_REACHED"
       );

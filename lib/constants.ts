@@ -116,42 +116,6 @@ export const HEALTH_CHECK_CONFIG = {
   TIMEOUT_MS: 5000,
 } as const;
 
-// Agent governance configuration
-export const AGENT_CONFIG = {
-  /** API key prefix for identification */
-  API_KEY_PREFIX: "atk_",
-  /** Maximum events per ingestion batch */
-  MAX_EVENTS_PER_BATCH: 100,
-  /** Maximum sessions to return per page */
-  MAX_SESSIONS_PER_PAGE: 50,
-  /** Maximum events to return per session detail */
-  MAX_EVENTS_PER_SESSION: 500,
-  /** Maximum API keys per organization */
-  MAX_KEYS_PER_ORG: 10,
-  /** Event categories */
-  EVENT_CATEGORIES: [
-    "shell_exec",
-    "file_write",
-    "file_read",
-    "network_request",
-    "browser_action",
-    "credential_access",
-    "session_management",
-    "agent_routing",
-    "system_config",
-  ] as const,
-  /** Risk levels */
-  RISK_LEVELS: ["low", "medium", "high", "critical"] as const,
-  /** Session statuses */
-  SESSION_STATUSES: ["running", "completed", "failed", "timeout"] as const,
-  /** Agent frameworks */
-  FRAMEWORKS: ["generic"] as const,
-} as const;
-
-export type AgentEventCategory = (typeof AGENT_CONFIG.EVENT_CATEGORIES)[number];
-export type AgentRiskLevel = (typeof AGENT_CONFIG.RISK_LEVELS)[number];
-export type AgentSessionStatus = (typeof AGENT_CONFIG.SESSION_STATUSES)[number];
-
 // HTTP status codes for consistency
 export const HTTP_STATUS = {
   OK: 200,

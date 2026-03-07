@@ -8,13 +8,13 @@ const FREE_FEATURES = [
   "Up to 3 repositories",
   "GitHub integration",
   "View compliance evidence",
-  "ISO 27001 & Essential Eight",
+  "All 8 compliance frameworks",
   "Email support",
 ];
 
 const PRO_FEATURES = [
   "Unlimited repositories",
-  "ISO 27001 & Essential Eight",
+  "All 8 compliance frameworks",
   "Unlimited PDF exports",
   "Unlimited CSV exports",
   "Priority support",

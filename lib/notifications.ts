@@ -11,15 +11,49 @@ export interface NotificationPreferences {
   subscriptionUpdates: boolean;
 }
 
-export async function getUserNotificationPreferences(
-  _userId: string
+const DEFAULT_PREFERENCES: NotificationPreferences = {
+  syncFailures: true,
+  weeklyDigest: true,
+  exportReady: true,
+  subscriptionUpdates: true,
+};
+
+/**
+ * Get (or lazily create) notification preferences for an org from the database.
+ */
+export async function getOrgNotificationPreferences(
+  orgId: string
 ): Promise<NotificationPreferences> {
-  // Default preferences - in future, store in database
+  const prefs = await db.notificationPreferences.upsert({
+    where: { orgId },
+    update: {},
+    create: { orgId, ...DEFAULT_PREFERENCES },
+  });
   return {
-    syncFailures: true,
-    weeklyDigest: true,
-    exportReady: true,
-    subscriptionUpdates: true,
+    syncFailures: prefs.syncFailures,
+    weeklyDigest: prefs.weeklyDigest,
+    exportReady: prefs.exportReady,
+    subscriptionUpdates: prefs.subscriptionUpdates,
+  };
+}
+
+/**
+ * Update notification preferences for an org.
+ */
+export async function updateOrgNotificationPreferences(
+  orgId: string,
+  updates: Partial<NotificationPreferences>
+): Promise<NotificationPreferences> {
+  const prefs = await db.notificationPreferences.upsert({
+    where: { orgId },
+    update: updates,
+    create: { orgId, ...DEFAULT_PREFERENCES, ...updates },
+  });
+  return {
+    syncFailures: prefs.syncFailures,
+    weeklyDigest: prefs.weeklyDigest,
+    exportReady: prefs.exportReady,
+    subscriptionUpdates: prefs.subscriptionUpdates,
   };
 }
 
@@ -29,7 +63,7 @@ export async function sendSyncFailureNotification(
   repositoryName: string,
   error: string
 ) {
-  const preferences = await getUserNotificationPreferences(userId);
+  const preferences = await getOrgNotificationPreferences(orgId);
   if (!preferences.syncFailures) return;
 
   const user = await db.user.findUnique({ where: { id: userId } });
@@ -57,7 +91,7 @@ export async function sendExportReadyNotification(
   fileName: string,
   downloadUrl: string
 ) {
-  const preferences = await getUserNotificationPreferences(userId);
+  const preferences = await getOrgNotificationPreferences(orgId);
   if (!preferences.exportReady) return;
 
   const user = await db.user.findUnique({ where: { id: userId } });
@@ -86,7 +120,7 @@ export async function sendWeeklyDigest(
     complianceScore: number;
   }
 ) {
-  const preferences = await getUserNotificationPreferences(userId);
+  const preferences = await getOrgNotificationPreferences(orgId);
   if (!preferences.weeklyDigest) return;
 
   const user = await db.user.findUnique({ where: { id: userId } });

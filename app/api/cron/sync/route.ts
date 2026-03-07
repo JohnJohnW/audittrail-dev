@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import type { GitHubClient } from "@/lib/github";
 import { getGitHubClientForOrg } from "@/lib/github";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
+import { sendWeeklyDigest } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
 
 // Cron job endpoint for automatic syncing
@@ -109,6 +110,14 @@ export async function GET(request: NextRequest) {
 
         // Store daily compliance snapshot after sync
         await storeComplianceSnapshot(org.id);
+
+        // Send weekly digest on Mondays (cron runs at 2am UTC daily)
+        const today = new Date();
+        if (today.getUTCDay() === 1) {
+          await sendWeeklyDigestForOrg(org.id, syncedRepos).catch((err) =>
+            logger.warn("Weekly digest failed for org", { orgId: org.id, error: String(err) })
+          );
+        }
 
         results.push({
           orgId: org.id,
@@ -383,6 +392,53 @@ async function storeComplianceSnapshot(orgId: string) {
     logger.error(`Error storing compliance snapshot for org ${orgId}`, error);
     // Don't throw - snapshot storage failure shouldn't fail the sync
   }
+}
+
+/**
+ * Gather weekly stats and dispatch digest emails to all org members.
+ */
+async function sendWeeklyDigestForOrg(orgId: string, repositoriesSynced: number) {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  // Count new activity in last 7 days across all active repos
+  const [newCommits, newPRs] = await Promise.all([
+    db.commit.count({
+      where: {
+        repository: { orgId, isActive: true },
+        committedAt: { gte: sevenDaysAgo },
+      },
+    }),
+    db.pullRequest.count({
+      where: {
+        repository: { orgId, isActive: true },
+        createdAt: { gte: sevenDaysAgo },
+      },
+    }),
+  ]);
+
+  // Get latest compliance score from snapshots
+  const latestSnapshot = await db.complianceSnapshot.findFirst({
+    where: { orgId },
+    orderBy: { snapshotDate: "desc" },
+  });
+  const complianceScore = latestSnapshot?.overallScore ?? 0;
+
+  // Send to all org members
+  const memberships = await db.orgMembership.findMany({
+    where: { orgId },
+    select: { userId: true },
+  });
+
+  await Promise.allSettled(
+    memberships.map(({ userId }) =>
+      sendWeeklyDigest(userId, orgId, {
+        repositoriesSynced,
+        newCommits,
+        newPRs,
+        complianceScore,
+      })
+    )
+  );
 }
 
 // Also support POST for manual triggering

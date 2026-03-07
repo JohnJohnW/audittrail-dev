@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api";
+import { requireAuth, parseJsonBody } from "@/lib/api";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/error-handler";
+import {
+  getOrgNotificationPreferences,
+  updateOrgNotificationPreferences,
+} from "@/lib/notifications";
 
 export async function GET() {
   try {
     const { orgId } = await requireAuth();
 
-    const [organization, subscription] = await Promise.all([
+    const [organization, subscription, notificationPreferences] = await Promise.all([
       db.organization.findUnique({
         where: { id: orgId },
         select: { name: true, slug: true },
@@ -15,6 +19,7 @@ export async function GET() {
       db.subscription.findUnique({
         where: { orgId },
       }),
+      getOrgNotificationPreferences(orgId),
     ]);
 
     return NextResponse.json({
@@ -34,7 +39,32 @@ export async function GET() {
             cancelAtPeriodEnd: false,
             hasStripeCustomer: false,
           },
+      notificationPreferences,
     });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+interface UpdateSettingsBody {
+  notificationPreferences?: {
+    syncFailures?: boolean;
+    weeklyDigest?: boolean;
+    exportReady?: boolean;
+    subscriptionUpdates?: boolean;
+  };
+}
+
+export async function POST(request: Request) {
+  try {
+    const { orgId } = await requireAuth();
+    const body = await parseJsonBody<UpdateSettingsBody>(request);
+
+    if (body.notificationPreferences) {
+      await updateOrgNotificationPreferences(orgId, body.notificationPreferences);
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     return handleApiError(error);
   }
