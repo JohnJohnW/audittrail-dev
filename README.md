@@ -448,40 +448,35 @@ graph LR
 The compliance engine maps four types of GitHub artifacts to control requirements:
 
 ```mermaid
-flowchart TD
-    subgraph Sources["GitHub Artifacts"]
-        C["Commits\nsha · message · GPG"]
-        PR["Pull Requests\nreviews · approvals"]
-        BP["Branch Protection\nrules · status checks"]
-        CI["CI Workflows\nbuild · test · deploy"]
-    end
+flowchart LR
+    C["Commits\nsha · message · GPG"]
+    PR["Pull Requests\nreviews · approvals"]
+    BP["Branch Protection\nrules · status checks"]
+    CI["CI Workflows\nbuild · test · deploy"]
 
-    subgraph Engine["Compliance Engine"]
-        KW["Keyword\nmatching"]
-        RC["Review\nthresholds"]
-        BP2["Protection\nchecks"]
-        WF["Workflow\npatterns"]
-    end
+    KW["Keyword\nmatching"]
+    RC["Review\nthresholds"]
+    BP2["Protection\nchecks"]
+    WF["Workflow\npatterns"]
 
-    subgraph Outcomes["Control Status"]
-        HE(["Has Evidence"])
-        PA(["Partial"])
-        LI(["Limited"])
-        NE(["No Evidence"])
-    end
+    PA(["Partial"])
+    HE(["Has Evidence"])
+    LI(["Limited"])
+    NE(["No Evidence"])
 
     C  --> KW
     PR --> RC
     BP --> BP2
     CI --> WF
 
-    KW  --> PA
     KW  --> HE
     RC  --> HE
-    RC  --> PA
     BP2 --> HE
-    BP2 --> LI
     WF  --> HE
+
+    KW  --> PA
+    RC  --> PA
+    BP2 --> LI
     WF  --> NE
 ```
 
