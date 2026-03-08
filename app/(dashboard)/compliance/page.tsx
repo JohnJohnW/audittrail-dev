@@ -618,9 +618,9 @@ export default function CompliancePage() {
                         </Pie>
                         <Tooltip
                           contentStyle={chartStyles.tooltip.contentStyle}
-                          formatter={(value: unknown, name: unknown) => {
+                          formatter={(value: unknown, name: string | undefined) => {
                             const numValue = typeof value === "number" ? value : 0;
-                            return [`${numValue} controls`, name];
+                            return [`${numValue} controls`, name ?? ""];
                           }}
                         />
                         <Legend />
