@@ -306,6 +306,14 @@ export default function CompliancePage() {
 
   const hasPieData = pieData.length > 0 && pieData.some((item) => item.value > 0);
 
+  // True when frameworks are loaded and controls exist but no evidence has been found yet.
+  // This happens when repos are connected but haven't been synced, so no commits/PRs are
+  // in the database for the evidence engine to match against.
+  const hasNoSyncData =
+    score.byFramework.length > 0 &&
+    score.byFramework.every((f) => f.withEvidence === 0) &&
+    (score.overallSummary?.total ?? 0) > 0;
+
   return (
     <div>
       {/* Header */}
@@ -398,126 +406,286 @@ export default function CompliancePage() {
         </Card>
       </FadeIn>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <FadeIn delay={0.2}>
-          <Card variant="elevated">
-            <CardHeader>
-              <CardTitle>By Framework</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={score.byFramework}>
-                  <CartesianGrid {...chartStyles.grid} />
-                  <XAxis dataKey="framework" tick={chartStyles.axis.tick} />
-                  <YAxis tick={chartStyles.axis.tick} />
-                  <Tooltip contentStyle={chartStyles.tooltip.contentStyle} />
-                  <Bar dataKey="score" fill={chart.primary} radius={chartStyles.bar.radius} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </FadeIn>
-
-        <FadeIn delay={0.3}>
-          <Card variant="elevated">
-            <CardHeader>
-              <CardTitle>Evidence Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {hasPieData ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={true}
-                      label={(props: PieLabelProps) => {
-                        const { name, percent } = props;
-                        // Only show label if segment is significant (>5%)
-                        if (!percent || percent < 0.05) return "";
-                        return `${name || ""}\n${(percent * 100).toFixed(0)}%`;
-                      }}
-                      outerRadius={100}
-                      innerRadius={60}
-                      fill={chart.primary}
-                      dataKey="value"
-                      strokeWidth={2}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={chartStyles.tooltip.contentStyle}
-                      formatter={(value: unknown) => {
-                        const numValue = typeof value === "number" ? value : 0;
-                        return `${numValue} controls`;
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-[300px] text-gray-500">
-                  <p>No evidence data available</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </FadeIn>
-      </div>
-
-      {/* Framework Details */}
-      <FadeIn delay={0.4}>
-        <Card variant="elevated">
-          <CardHeader>
-            <CardTitle>Framework Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <StaggerContainer className="space-y-4">
-              {score.byFramework.map((framework, index) => (
-                <StaggerItem key={framework.framework}>
-                  <motion.div
-                    whileHover={{ scale: 1.01 }}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 sm:p-5 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100"
-                  >
-                    <div className="min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate">
-                        {framework.framework}
-                      </h3>
-                      <p className="text-sm text-gray-500 mt-0.5 sm:mt-1">
-                        {framework.withEvidence} of {framework.total} controls with evidence
+      {hasNoSyncData ? (
+        <>
+          {/* No-sync onboarding card */}
+          <FadeIn delay={0.2}>
+            <Card variant="elevated" className="mb-6 sm:mb-8">
+              <CardContent className="py-8">
+                <div className="max-w-lg mx-auto">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                      <svg
+                        className="w-5 h-5 text-blue-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">No evidence data yet</h3>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        Audit Trail maps GitHub activity to compliance controls — it needs to import
+                        your repository data first.
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 sm:gap-4 sm:text-right shrink-0">
-                      <div className="flex-1 sm:flex-none sm:w-24 lg:w-36 bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${framework.score}%` }}
-                          transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
-                          className="h-2.5 rounded-full"
-                          style={{
-                            backgroundColor:
-                              framework.score >= 70
-                                ? progress.high
-                                : framework.score >= 40
-                                  ? progress.medium
-                                  : progress.low,
+                  </div>
+
+                  <div className="space-y-3 mb-6 pl-1">
+                    {/* Step 1 — frameworks */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <svg
+                          className="w-3 h-3 text-emerald-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">
+                          {score.byFramework.length} compliance frameworks
+                        </span>{" "}
+                        loaded and ready
+                      </p>
+                    </div>
+
+                    {/* Step 2 — repositories */}
+                    <div className="flex items-start gap-3">
+                      {repositories.length > 0 ? (
+                        <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                          <svg
+                            className="w-3 h-3 text-emerald-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2.5}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-xs text-gray-400 font-bold">2</span>
+                        </div>
+                      )}
+                      <p className="text-sm text-gray-700">
+                        {repositories.length > 0 ? (
+                          <>
+                            <span className="font-medium">
+                              {repositories.length}{" "}
+                              {repositories.length === 1 ? "repository" : "repositories"}
+                            </span>{" "}
+                            connected
+                          </>
+                        ) : (
+                          <span className="text-gray-500">Connect a GitHub repository first</span>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Step 3 — sync */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-xs text-amber-600 font-bold">
+                          {repositories.length > 0 ? "3" : "2"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">Sync your repositories</span> to import
+                        commits, pull requests, and branch protection rules — evidence scores will
+                        appear once the sync completes
+                      </p>
+                    </div>
+                  </div>
+
+                  <Link
+                    href="/repositories"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors text-sm font-medium"
+                  >
+                    Go to Repositories
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+
+          {/* Framework list — still shown so user can see what will be measured */}
+          <FadeIn delay={0.35}>
+            <Card variant="elevated">
+              <CardHeader>
+                <CardTitle>Frameworks Being Tracked</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StaggerContainer className="space-y-3">
+                  {score.byFramework.map((framework) => (
+                    <StaggerItem key={framework.framework}>
+                      <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                        <span className="text-sm font-medium text-gray-900">
+                          {framework.framework}
+                        </span>
+                        <span className="text-xs text-gray-400">{framework.total} controls</span>
+                      </div>
+                    </StaggerItem>
+                  ))}
+                </StaggerContainer>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </>
+      ) : (
+        <>
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <FadeIn delay={0.2}>
+              <Card variant="elevated">
+                <CardHeader>
+                  <CardTitle>By Framework</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={score.byFramework}>
+                      <CartesianGrid {...chartStyles.grid} />
+                      <XAxis dataKey="framework" tick={chartStyles.axis.tick} />
+                      <YAxis tick={chartStyles.axis.tick} />
+                      <Tooltip contentStyle={chartStyles.tooltip.contentStyle} />
+                      <Bar dataKey="score" fill={chart.primary} radius={chartStyles.bar.radius} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </FadeIn>
+
+            <FadeIn delay={0.3}>
+              <Card variant="elevated">
+                <CardHeader>
+                  <CardTitle>Evidence Distribution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {hasPieData ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          label={(props: PieLabelProps) => {
+                            const { name, percent } = props;
+                            // Only show label if segment is significant (>5%)
+                            if (!percent || percent < 0.05) return "";
+                            return `${name || ""}\n${(percent * 100).toFixed(0)}%`;
+                          }}
+                          outerRadius={100}
+                          innerRadius={60}
+                          fill={chart.primary}
+                          dataKey="value"
+                          strokeWidth={2}
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={PIE_COLORS[index % PIE_COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={chartStyles.tooltip.contentStyle}
+                          formatter={(value: unknown) => {
+                            const numValue = typeof value === "number" ? value : 0;
+                            return `${numValue} controls`;
                           }}
                         />
-                      </div>
-                      <div className="text-xl sm:text-2xl font-bold text-accent w-14 text-right">
-                        {framework.score}%
-                      </div>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-[300px] text-gray-500">
+                      <p>No evidence data available</p>
                     </div>
-                  </motion.div>
-                </StaggerItem>
-              ))}
-            </StaggerContainer>
-          </CardContent>
-        </Card>
-      </FadeIn>
+                  )}
+                </CardContent>
+              </Card>
+            </FadeIn>
+          </div>
+
+          {/* Framework Details */}
+          <FadeIn delay={0.4}>
+            <Card variant="elevated">
+              <CardHeader>
+                <CardTitle>Framework Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StaggerContainer className="space-y-4">
+                  {score.byFramework.map((framework, index) => (
+                    <StaggerItem key={framework.framework}>
+                      <motion.div
+                        whileHover={{ scale: 1.01 }}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 sm:p-5 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100"
+                      >
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-gray-900 truncate">
+                            {framework.framework}
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-0.5 sm:mt-1">
+                            {framework.withEvidence} of {framework.total} controls with evidence
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 sm:gap-4 sm:text-right shrink-0">
+                          <div className="flex-1 sm:flex-none sm:w-24 lg:w-36 bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${framework.score}%` }}
+                              transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
+                              className="h-2.5 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  framework.score >= 70
+                                    ? progress.high
+                                    : framework.score >= 40
+                                      ? progress.medium
+                                      : progress.low,
+                              }}
+                            />
+                          </div>
+                          <div className="text-xl sm:text-2xl font-bold text-accent w-14 text-right">
+                            {framework.score}%
+                          </div>
+                        </div>
+                      </motion.div>
+                    </StaggerItem>
+                  ))}
+                </StaggerContainer>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </>
+      )}
 
       {/* Auditor Patterns — controls flagged by auditors */}
       {auditorPatterns && auditorPatterns.patterns.length > 0 && (
