@@ -139,7 +139,7 @@ Every organisation that uses Audit Trail contributes anonymised, aggregated comp
 This dataset only exists inside Audit Trail. It cannot be replicated by a competitor starting from scratch.
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph Orgs["Participating Organisations (anonymised)"]
         O1[Startup A]
         O2[Startup B]
@@ -148,20 +148,19 @@ flowchart LR
         O5[Startup E]
     end
 
-    subgraph Flywheel["Data Flywheel"]
-        AGG["Nightly aggregation\n≥5 org privacy floor"]
-        BM["IndustryBenchmark table\np25 / p50 / p75 per control"]
-    end
+    AGG["Nightly aggregation\n≥5 org privacy floor"]
+    BM["IndustryBenchmark table\np25 / p50 / p75 per control"]
 
     subgraph Value["Value Returned"]
         PCT["Percentile rank\nper framework"]
         CR["Control pass rates\nvs peer cohort"]
     end
 
-    O1 & O2 & O3 & O4 & O5 -->|ComplianceSnapshot| AGG
+    Orgs -->|ComplianceSnapshot| AGG
     AGG --> BM
-    BM --> PCT & CR
-    PCT & CR -->|shown in dashboard| O1 & O2 & O3 & O4 & O5
+    BM --> PCT
+    BM --> CR
+    PCT & CR -->|shown in dashboard| Orgs
 ```
 
 ### 2. Workflow Lock-In
@@ -385,7 +384,6 @@ Billing is handled entirely by Stripe. The application reacts to Stripe webhook 
 
 ```mermaid
 stateDiagram-v2
-    direction LR
     state "Checkout Pending" as Checkout
     state "Past Due" as PastDue
 
@@ -451,21 +449,27 @@ graph LR
 The compliance engine maps four types of GitHub artifacts to control requirements:
 
 ```mermaid
-flowchart LR
-    C["Commits\nsha · message · GPG"]
-    PR["Pull Requests\nreviews · approvals"]
-    BP["Branch Protection\nrules · status checks"]
-    CI["CI Workflows\nbuild · test · deploy"]
+flowchart TD
+    subgraph Sources["GitHub Artifacts"]
+        C["Commits\nsha · message · GPG"]
+        PR["Pull Requests\nreviews · approvals"]
+        BP["Branch Protection\nrules · status checks"]
+        CI["CI Workflows\nbuild · test · deploy"]
+    end
 
-    KW["Keyword\nmatching"]
-    RC["Review\nthresholds"]
-    BP2["Protection\nchecks"]
-    WF["Workflow\npatterns"]
+    subgraph Engine["Compliance Engine"]
+        KW["Keyword\nmatching"]
+        RC["Review\nthresholds"]
+        BP2["Protection\nchecks"]
+        WF["Workflow\npatterns"]
+    end
 
-    HE(["Has Evidence"])
-    PA(["Partial"])
-    LI(["Limited"])
-    NE(["No Evidence"])
+    subgraph Outcomes["Control Status"]
+        HE(["Has Evidence"])
+        PA(["Partial"])
+        LI(["Limited"])
+        NE(["No Evidence"])
+    end
 
     C  --> KW
     PR --> RC
