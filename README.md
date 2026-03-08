@@ -2,7 +2,7 @@
 
 > Turn GitHub activity into audit-ready compliance evidence. Automatically.
 
-Audit Trail connects to your GitHub repositories and maps commits, pull requests, code reviews, and branch protection rules to the controls inside 8 major compliance frameworks. The result is a live evidence dashboard, exportable PDF/CSV reports, and shareable read-only report links you can hand directly to an auditor.
+Audit Trail connects to your GitHub repositories and maps commits, pull requests, code reviews, and branch protection rules to the controls inside 8 major compliance frameworks. The result is a live evidence dashboard, continuous compliance monitoring, a token-gated auditor portal, exportable PDF/CSV reports, and industry benchmark data that gets smarter as more teams use it.
 
 ---
 
@@ -10,6 +10,7 @@ Audit Trail connects to your GitHub repositories and maps commits, pull requests
 
 - [How It Works](#how-it-works)
 - [Business Model](#business-model)
+- [Growth & Defensibility](#growth--defensibility)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Data Flow](#data-flow)
@@ -18,6 +19,8 @@ Audit Trail connects to your GitHub repositories and maps commits, pull requests
 - [Compliance Frameworks](#compliance-frameworks)
 - [Evidence Mapping](#evidence-mapping)
 - [Compliance Scoring](#compliance-scoring)
+- [Continuous Monitoring](#continuous-monitoring)
+- [Auditor Portal](#auditor-portal)
 - [Database Schema](#database-schema)
 - [API Surface](#api-surface)
 - [Tech Stack](#tech-stack)
@@ -37,14 +40,18 @@ flowchart LR
     D --> E[Compliance Engine]
     E --> F[Evidence Dashboard]
     E --> G[PDF / CSV Export]
-    E --> H[Shareable Report Link]
-    H --> I[Auditor]
+    E --> H[Auditor Portal]
+    E --> I[Industry Benchmarks]
+    H --> J[External Auditor]
+    I --> K[Percentile Ranking]
 ```
 
 1. **Connect**: Sign in with GitHub and select the repositories you want to track.
 2. **Sync**: Audit Trail pulls commits, pull requests, code reviews, and branch protection settings via the GitHub API (read-only; we never access your source code).
 3. **Map**: The compliance engine scores each of the 63 controls across 8 frameworks based on your real activity.
-4. **Report**: View a live dashboard, generate a PDF/CSV for your auditor, or share a public read-only link that requires no login.
+4. **Monitor**: Alerts fire when your posture changes — score drops, control regressions, branch protection weakened, PRs merged without review.
+5. **Report**: View a live dashboard, invite auditors to a token-gated workspace, generate PDF/CSV reports, or share a public read-only link.
+6. **Benchmark**: See how your score compares to similar companies (same industry, same size) using anonymised aggregate data.
 
 ---
 
@@ -76,16 +83,20 @@ graph LR
 
 ### Freemium Tiers
 
-|                                | Free    | Pro       |
-| ------------------------------ | ------- | --------- |
-| Repositories                   | Up to 3 | Unlimited |
-| All 8 compliance frameworks    | Yes     | Yes       |
-| Live evidence dashboard        | Yes     | Yes       |
-| Gap analysis with action steps | Yes     | Yes       |
-| PDF / CSV exports              | No      | Yes       |
-| Shareable auditor links        | No      | Yes       |
-| Weekly email digest            | Yes     | Yes       |
-| API key access                 | Yes     | Yes       |
+|                                           | Free    | Pro       |
+| ----------------------------------------- | ------- | --------- |
+| Repositories                              | Up to 3 | Unlimited |
+| All 8 compliance frameworks               | Yes     | Yes       |
+| Live evidence dashboard                   | Yes     | Yes       |
+| Gap analysis with action steps            | Yes     | Yes       |
+| Continuous compliance alerts              | Yes     | Yes       |
+| Control notes & exceptions                | Yes     | Yes       |
+| PDF / CSV exports                         | No      | Yes       |
+| Shareable auditor links                   | No      | Yes       |
+| Auditor portal (comments, sign-offs, ZIP) | No      | Yes       |
+| Industry benchmark comparisons            | Yes     | Yes       |
+| Weekly email digest                       | Yes     | Yes       |
+| API key access                            | Yes     | Yes       |
 
 ### Revenue Flow
 
@@ -111,30 +122,111 @@ sequenceDiagram
 
 ---
 
+## Growth & Defensibility
+
+Audit Trail is built around four compounding growth mechanics that make the product harder to leave and more valuable as the user base grows.
+
+### 1. Proprietary Data Flywheel
+
+Every organisation that uses Audit Trail contributes anonymised, aggregated compliance signals to a proprietary benchmark dataset. No individual org's data is ever exposed — cohorts require a minimum of 5 organisations before any benchmark is published. But as more companies join, the dataset becomes uniquely valuable:
+
+- **Percentile rankings**: "Your SOC 2 score is in the 73rd percentile for 11–50 person SaaS companies."
+- **Control-level pass rates**: "62% of similar companies have evidence for CC6.1."
+- **Segment filters**: industry (SaaS, fintech, healthcare, government) × team size (1-10 through 1000+)
+
+This dataset only exists inside Audit Trail. It cannot be replicated by a competitor starting from scratch.
+
+```mermaid
+flowchart LR
+    subgraph Orgs["Participating Organisations (anonymised)"]
+        O1[Startup A]
+        O2[Startup B]
+        O3[Startup C]
+        O4[Startup D]
+        O5[Startup E]
+    end
+
+    subgraph Flywheel["Data Flywheel"]
+        AGG["Nightly aggregation\n≥5 org privacy floor"]
+        BM["IndustryBenchmark table\np25 / p50 / p75 per control"]
+    end
+
+    subgraph Value["Value Returned"]
+        PCT["Percentile rank\nper framework"]
+        CR["Control pass rates\nvs peer cohort"]
+    end
+
+    O1 & O2 & O3 & O4 & O5 -->|ComplianceSnapshot| AGG
+    AGG --> BM
+    BM --> PCT & CR
+    PCT & CR -->|shown in dashboard| O1 & O2 & O3 & O4 & O5
+```
+
+### 2. Workflow Lock-In
+
+Two features accumulate value over time and make migration painful:
+
+**Control Notes** — Team-authored narrative explanations for how your organisation satisfies each control (e.g. "We use protected branches + required reviews instead of a separate code-signing process"). These build up over months and represent institutional compliance knowledge that lives exclusively in Audit Trail.
+
+**Evidence Exceptions** — Controls marked as "not applicable to us" with a reason and optional expiry date. An organisation that has exception-annotated dozens of controls would need to recreate that entire context from scratch in any competing tool.
+
+### 3. Continuous Compliance Monitoring
+
+Audit Trail doesn't just show you where you stand — it alerts you the moment your posture degrades:
+
+| Alert Type                 | Trigger                                                 | Default Severity       |
+| -------------------------- | ------------------------------------------------------- | ---------------------- |
+| Score drop                 | Overall or per-framework score falls >5pts              | Medium (>10pts = High) |
+| Control regression         | A previously evidenced control loses evidence           | High                   |
+| Branch protection weakened | `requirePullRequest` flipped off on any repo            | Critical               |
+| PR without review          | PRs merged to default branch without an APPROVED review | High                   |
+
+Alerts deduplicate over 24h windows and email org owners/admins via Resend.
+
+### 4. Auditor Portal
+
+External auditors get a time-limited, token-gated workspace at `/auditor/{token}` — no account creation required. From there they can:
+
+- **Browse** the full evidence dataset (filtered by framework if specified)
+- **Comment** on individual controls to request additional evidence
+- **Sign off** with a verdict: Approved / Needs More Info / Rejected
+- **Download** a ZIP evidence package (README + summary.csv + evidence.csv)
+
+Org teams manage auditor sessions from Settings → Auditor Access. Once an auditor has left comments and verdicts across an audit, that history becomes part of the org's compliance record — adding more migration cost.
+
+---
+
 ## Features
 
-| Feature                          | Free | Pro |
-| -------------------------------- | ---- | --- |
-| Up to 3 repositories             | Yes  | Yes |
-| Unlimited repositories           | No   | Yes |
-| All 8 compliance frameworks      | Yes  | Yes |
-| Live evidence dashboard          | Yes  | Yes |
-| Gap analysis with action steps   | Yes  | Yes |
-| PDF exports                      | No   | Yes |
-| CSV exports                      | No   | Yes |
-| Shareable read-only report links | No   | Yes |
-| Email notifications              | Yes  | Yes |
-| API key access                   | Yes  | Yes |
-| Priority support                 | No   | Yes |
+| Feature                                   | Free | Pro |
+| ----------------------------------------- | ---- | --- |
+| Up to 3 repositories                      | Yes  | Yes |
+| Unlimited repositories                    | No   | Yes |
+| All 8 compliance frameworks               | Yes  | Yes |
+| Live evidence dashboard                   | Yes  | Yes |
+| Gap analysis with action steps            | Yes  | Yes |
+| Prioritised gap remediation               | Yes  | Yes |
+| Continuous compliance alerts              | Yes  | Yes |
+| Control notes & exceptions                | Yes  | Yes |
+| Industry benchmark comparisons            | Yes  | Yes |
+| PDF exports                               | No   | Yes |
+| CSV exports                               | No   | Yes |
+| Shareable read-only report links          | No   | Yes |
+| Auditor portal (comments, sign-offs, ZIP) | No   | Yes |
+| Email notifications                       | Yes  | Yes |
+| API key access                            | Yes  | Yes |
+| Priority support                          | No   | Yes |
 
 ### Key Highlights
 
 - **Zero source-code access**: only metadata is read (commit messages, PR titles, review states, branch rules). Your actual code is never transmitted or stored.
 - **Auto-sync via cron**: repositories sync on a daily schedule; manual sync is one click.
-- **Gap analysis**: every control with missing or partial evidence shows a numbered action list explaining exactly what your team needs to do in GitHub to generate evidence.
-- **Shareable reports**: generate a tokenised public URL (no login required) to share a read-only compliance snapshot with auditors or stakeholders. Links can be revoked at any time.
-- **Evidence filtering**: public reports support filtering controls by Covered / Partial / Missing status, with per-framework accordion sections.
-- **Email notifications**: weekly compliance digest emailed via Resend; notification preferences are configurable per organisation.
+- **Gap analysis**: every control with missing or partial evidence shows a numbered action list explaining exactly what your team needs to do in GitHub to generate evidence. Gap controls are sortable by score impact ("Fix This First").
+- **Continuous monitoring**: post-sync alert detection catches regressions before your next audit.
+- **Auditor portal**: token-gated, no account required. Auditors view evidence, comment, sign off controls, and download a ZIP package.
+- **Industry benchmarks**: proprietary percentile data built from anonymised usage — your compliance score ranked against companies with a similar profile.
+- **Shareable reports**: generate a tokenised public URL (no login required) to share a read-only compliance snapshot with stakeholders.
+- **Email notifications**: weekly compliance digest emailed via Resend; notification preferences configurable per organisation.
 
 ---
 
@@ -150,6 +242,8 @@ graph TB
         EX[Export Builder]
         ST["Settings and Billing"]
         PR["Public Report - /report/:token"]
+        AP["Auditor Portal - /auditor/:token"]
+        AL["Alerts Panel"]
     end
 
     subgraph Server ["Next.js App Router - Server"]
@@ -161,11 +255,13 @@ graph TB
 
     subgraph Lib ["Core Libraries"]
         CE["compliance.ts - evidence mapping"]
-        GA["gap-analysis.ts - recommendations"]
+        GA["gap-analysis.ts - recommendations + priority"]
         GH["github.ts - API client"]
         NF["notifications.ts - email"]
         SL["stripe.ts - billing"]
         LG["logger.ts - structured logging"]
+        AL2["alerts.ts - regression detection"]
+        BM["benchmarks.ts - data flywheel"]
     end
 
     subgraph Ext ["External Services"]
@@ -176,10 +272,10 @@ graph TB
         Redis[(Upstash Redis)]
     end
 
-    LP & DB & EV & CO & EX & ST & PR --> MW
+    LP & DB & EV & CO & EX & ST & PR & AP & AL --> MW
     MW --> SC & AR
     CJ --> GH
-    AR --> CE & GA & GH & NF & SL & LG
+    AR --> CE & GA & GH & NF & SL & LG & AL2 & BM
     GH --> GitHub
     CE --> Supa
     AR --> Supa
@@ -214,17 +310,20 @@ sequenceDiagram
     App->>GH: GET commits, PRs, reviews, branch protection
     GH-->>App: Raw metadata
     App->>DB: Upsert commits, pull_requests, reviews, branch_protection
+    App->>DB: Store ComplianceSnapshot (daily score record)
+    App->>App: detectAndCreateAlerts (regression detection)
+    App->>App: computeIndustryBenchmarks (nightly, all orgs)
 
     User->>App: View Compliance Score
     App->>Engine: getComplianceEvidence(orgId)
     Engine->>DB: Load all activity
     DB-->>Engine: Commits, PRs, reviews, branch rules
     Engine-->>App: 63 scored controls + gap recommendations
-    App-->>User: Dashboard with score, evidence, gaps
+    App-->>User: Dashboard with score, evidence, gaps, benchmarks
 
-    User->>App: Generate shareable link
-    App->>DB: Create ShareableReport (token)
-    App-->>User: Public URL /report/:token
+    User->>App: Invite auditor
+    App->>DB: Create AuditorSession (token, expiry, framework filter)
+    App-->>User: Portal link /auditor/{token}
 
     User->>App: Export PDF/CSV (Pro)
     App->>Engine: Build report data
@@ -270,6 +369,8 @@ sequenceDiagram
 ```
 
 Session tokens contain `userId`, `orgId`, and `plan`. Enough context for every API route to authorise requests without an extra database round-trip.
+
+The **Auditor Portal** (`/auditor/{token}`) is intentionally unauthenticated — it validates a 32-byte random token stored in `AuditorSession` and checks expiry on every request.
 
 ---
 
@@ -416,6 +517,10 @@ When a control has `partial`, `limited`, or `no_evidence` status, Audit Trail su
 - A **summary** of what the control requires
 - A numbered **action list** of concrete steps to take in GitHub
 - The specific commit keywords, PR patterns, or branch settings that will generate evidence
+- A **score impact chip** showing how many points fixing this control would add to the overall score
+- An **effort estimate** (Quick win / medium / Complex) based on evidence type
+
+Controls can be sorted by "Fix This First" to prioritise the highest-impact gaps.
 
 ---
 
@@ -448,10 +553,82 @@ flowchart TD
 
     H & I & J & K --> L["Weighted average\nper framework"]
     L --> M[Overall compliance score]
-    K --> N["Gap Analysis\nActionable next steps per control"]
+    M --> N["ComplianceSnapshot stored daily"]
+    K --> O["Gap Analysis\nActionable next steps per control"]
+    N --> P["Industry Benchmark computation\nnightly aggregation"]
 ```
 
-Framework scores are periodically snapshotted into the `ComplianceSnapshot` table, enabling the trend chart on the dashboard to show score changes over time.
+Framework scores are periodically snapshotted into the `ComplianceSnapshot` table, enabling the trend chart on the dashboard to show score changes over time, and feeding the nightly benchmark computation.
+
+---
+
+## Continuous Monitoring
+
+After each sync the cron job runs `detectAndCreateAlerts()` to compare the new snapshot against the previous one.
+
+```mermaid
+flowchart TD
+    SYNC[Cron sync completes] --> SNAP[Store ComplianceSnapshot]
+    SNAP --> DET[detectAndCreateAlerts]
+
+    DET --> SD[detectScoreDrop]
+    DET --> CR[detectControlRegressions]
+    DET --> BP[detectBranchProtectionChanges]
+    DET --> PR[detectPRsMergedWithoutReviews]
+
+    SD -->|drop > 5pts| A1["Alert: score_drop\nmedium severity"]
+    SD -->|drop > 10pts| A2["Alert: score_drop\nhigh severity"]
+    CR -->|noEvidence count up| A3["Alert: control_regression\nhigh severity"]
+    BP -->|requirePullRequest false| A4["Alert: branch_protection_weakened\ncritical severity"]
+    PR -->|merged without APPROVED review| A5["Alert: pr_no_review\nhigh severity"]
+
+    A1 & A2 & A3 & A4 & A5 --> DEDUP["24h deduplication\nby dedupeKey in metadata"]
+    DEDUP -->|new alert| DB[(Save to ComplianceAlert)]
+    DB --> EMAIL[Email owners and admins via Resend]
+    DB --> BELL[Bell icon in dashboard nav\nunread count badge]
+```
+
+Org members can mark alerts as read or resolve them from the **Alerts Panel** (bell icon in the top navigation).
+
+---
+
+## Auditor Portal
+
+The auditor portal is a separate, public-facing workspace at `/auditor/{token}`. It requires no account — only the 32-byte token issued when an org creates an auditor session.
+
+```mermaid
+sequenceDiagram
+    actor OrgUser as Org Team Member
+    actor Auditor as External Auditor
+    participant App as Audit Trail
+    participant DB as Supabase
+
+    OrgUser->>App: Settings → Auditor Access → Invite Auditor
+    App->>DB: Create AuditorSession (token, expiry, framework filter)
+    App-->>OrgUser: Portal link /auditor/{token}
+    OrgUser->>Auditor: Share link (email / Slack)
+
+    Auditor->>App: GET /auditor/{token}
+    App->>DB: Validate token + check expiry
+    DB-->>App: Session + org evidence
+    App-->>Auditor: Full evidence dashboard (read-only)
+
+    Auditor->>App: POST /api/auditor/{token}/comments
+    App->>DB: Save AuditorComment on control
+    App-->>Auditor: Comment saved
+
+    Auditor->>App: POST /api/auditor/{token}/signoffs
+    App->>DB: Upsert ControlSignoff (approved / needs_more_info / rejected)
+    App-->>Auditor: Sign-off recorded
+
+    Auditor->>App: GET /api/auditor/{token}/export
+    App-->>Auditor: ZIP download (README + summary.csv + evidence.csv)
+
+    OrgUser->>App: Settings → Revoke session
+    App->>DB: Delete AuditorSession
+```
+
+Org teams can revoke access at any time from Settings → Auditor Access. Active and signed-off verdicts appear as badges on control cards in the main evidence view.
 
 ---
 
@@ -467,9 +644,15 @@ erDiagram
     Organization ||--o{ ComplianceSnapshot : tracks
     Organization ||--o{ ShareableReport : creates
     Organization ||--o| NotificationPreferences : configures
+    Organization ||--o{ ComplianceAlert : receives
+    Organization ||--o{ ControlNote : has
+    Organization ||--o{ EvidenceException : has
+    Organization ||--o{ AuditorSession : manages
+    Organization ||--o| OrgProfile : profiles
 
     User ||--o{ OrgMembership : "belongs to"
     User ||--o{ ApiKey : owns
+    User ||--o{ ControlNote : authors
 
     Repository ||--o{ Commit : contains
     Repository ||--o{ PullRequest : contains
@@ -478,6 +661,9 @@ erDiagram
     PullRequest ||--o{ Review : receives
 
     ComplianceFramework ||--o{ ComplianceControl : defines
+
+    AuditorSession ||--o{ AuditorComment : has
+    AuditorSession ||--o{ ControlSignoff : has
 
     Organization {
         string id PK
@@ -525,8 +711,89 @@ erDiagram
         string id PK
         string orgId FK
         date snapshotDate
-        int overallScore
-        string frameworkScores
+        float overallScore
+        json frameworkScores
+    }
+    ComplianceAlert {
+        string id PK
+        string orgId FK
+        string type
+        string severity
+        string title
+        string description
+        json metadata
+        datetime resolvedAt
+        datetime readAt
+        datetime createdAt
+    }
+    ControlNote {
+        string id PK
+        string orgId FK
+        string controlCode
+        string frameworkName
+        string content
+        string authorId FK
+        datetime updatedAt
+    }
+    EvidenceException {
+        string id PK
+        string orgId FK
+        string controlCode
+        string frameworkName
+        string reason
+        datetime expiresAt
+        string createdBy FK
+    }
+    AuditorSession {
+        string id PK
+        string orgId FK
+        string auditorEmail
+        string auditorName
+        string token UK
+        string frameworkFilter
+        datetime expiresAt
+        datetime lastActiveAt
+    }
+    AuditorComment {
+        string id PK
+        string orgId FK
+        string sessionId FK
+        string controlCode
+        string frameworkName
+        string body
+        string status
+    }
+    ControlSignoff {
+        string id PK
+        string orgId FK
+        string sessionId FK
+        string controlCode
+        string frameworkName
+        string verdict
+        string note
+        datetime signedAt
+    }
+    OrgProfile {
+        string id PK
+        string orgId UK
+        string industry
+        string companySize
+        string[] techStack
+        datetime updatedAt
+    }
+    IndustryBenchmark {
+        string id PK
+        string framework
+        string industry
+        string companySize
+        string controlCode
+        float passRate
+        float avgScore
+        float p25
+        float p50
+        float p75
+        int sampleCount
+        datetime computedAt
     }
 ```
 
@@ -534,7 +801,7 @@ erDiagram
 
 ## API Surface
 
-All API routes live under `/app/api/`. Dashboard routes require a valid NextAuth session; the public report endpoint and the Stripe webhook require no session.
+All API routes live under `/app/api/`. Dashboard routes require a valid NextAuth session. Auditor routes are token-gated. The public report endpoint and the Stripe webhook require no session.
 
 ```mermaid
 graph TB
@@ -542,6 +809,14 @@ graph TB
         P1["GET /api/health"]
         P2["GET /api/reports/public/:token"]
         P3["POST /api/webhooks/stripe"]
+    end
+
+    subgraph AuditorRoutes ["Auditor-token-gated - no login"]
+        AU1["GET /api/auditor/:token/evidence"]
+        AU2["GET, POST /api/auditor/:token/comments"]
+        AU3["PATCH /api/auditor/:token/comments/:id"]
+        AU4["GET, POST /api/auditor/:token/signoffs"]
+        AU5["GET /api/auditor/:token/export"]
     end
 
     subgraph Auth ["Session-gated - NextAuth cookie required"]
@@ -555,6 +830,14 @@ graph TB
         A8["GET, POST, DELETE /api/keys"]
         A9["POST /api/stripe/checkout\nGET /api/stripe/portal"]
         A10["POST /api/onboarding"]
+        A11["GET, PATCH /api/alerts"]
+        A12["GET, PUT /api/controls/:code/notes"]
+        A13["GET, PUT /api/controls/:code/exceptions"]
+        A14["GET /api/gaps"]
+        A15["GET, POST /api/auditor/sessions"]
+        A16["DELETE /api/auditor/sessions/:id"]
+        A17["GET, PUT /api/org/profile"]
+        A18["GET /api/benchmarks"]
     end
 
     subgraph Cron ["Cron - Bearer CRON_SECRET"]
@@ -562,23 +845,37 @@ graph TB
     end
 ```
 
-| Route                         | Method(s)         | Description                                               |
-| ----------------------------- | ----------------- | --------------------------------------------------------- |
-| `/api/health`                 | GET               | Database + service health check                           |
-| `/api/compliance/score`       | GET               | Overall + per-framework scores for the org                |
-| `/api/evidence`               | GET               | Full 63-control evidence dataset with gap recommendations |
-| `/api/github/repos`           | GET               | List connected repositories                               |
-| `/api/github/sync`            | POST              | Trigger manual repository sync                            |
-| `/api/exports`                | GET, POST         | List past exports / generate new PDF or CSV               |
-| `/api/reports/shareable`      | GET, POST, DELETE | Manage shareable report tokens                            |
-| `/api/reports/public/[token]` | GET               | Public evidence summary - no auth required                |
-| `/api/settings`               | GET, PUT          | Org info + notification preferences                       |
-| `/api/keys`                   | GET, POST, DELETE | API key management (create, list, revoke)                 |
-| `/api/stripe/checkout`        | POST              | Create Stripe Checkout session                            |
-| `/api/stripe/portal`          | GET               | Redirect to Stripe billing portal                         |
-| `/api/webhooks/stripe`        | POST              | Stripe event handler - no auth, HMAC-verified             |
-| `/api/cron/sync`              | POST              | Scheduled daily sync - bearer token auth                  |
-| `/api/onboarding`             | POST              | Update onboarding step progress                           |
+| Route                                | Method(s)         | Description                                               |
+| ------------------------------------ | ----------------- | --------------------------------------------------------- |
+| `/api/health`                        | GET               | Database + service health check                           |
+| `/api/compliance/score`              | GET               | Overall + per-framework scores for the org                |
+| `/api/evidence`                      | GET               | Full 63-control evidence dataset with gap recommendations |
+| `/api/github/repos`                  | GET               | List connected repositories                               |
+| `/api/github/sync`                   | POST              | Trigger manual repository sync                            |
+| `/api/exports`                       | GET, POST         | List past exports / generate new PDF or CSV               |
+| `/api/reports/shareable`             | GET, POST, DELETE | Manage shareable report tokens                            |
+| `/api/reports/public/[token]`        | GET               | Public evidence summary — no auth required                |
+| `/api/settings`                      | GET, PUT          | Org info + notification preferences                       |
+| `/api/keys`                          | GET, POST, DELETE | API key management (create, list, revoke)                 |
+| `/api/stripe/checkout`               | POST              | Create Stripe Checkout session                            |
+| `/api/stripe/portal`                 | GET               | Redirect to Stripe billing portal                         |
+| `/api/webhooks/stripe`               | POST              | Stripe event handler — no auth, HMAC-verified             |
+| `/api/cron/sync`                     | POST              | Scheduled daily sync — bearer token auth                  |
+| `/api/onboarding`                    | POST              | Update onboarding step progress                           |
+| `/api/alerts`                        | GET               | Unread count + recent alerts (filter by type/resolved)    |
+| `/api/alerts/[id]`                   | PATCH             | Mark alert as read or resolve                             |
+| `/api/controls/[code]/notes`         | GET, PUT, DELETE  | Team notes per control+framework                          |
+| `/api/controls/[code]/exceptions`    | GET, PUT, DELETE  | Evidence exceptions with optional expiry                  |
+| `/api/gaps`                          | GET               | Prioritised gap list sorted by score impact               |
+| `/api/auditor/sessions`              | GET, POST         | List / create auditor sessions                            |
+| `/api/auditor/sessions/[id]`         | DELETE            | Revoke an auditor session                                 |
+| `/api/auditor/[token]/evidence`      | GET               | Token-gated evidence + sign-off metadata                  |
+| `/api/auditor/[token]/comments`      | GET, POST         | List / add comments per control                           |
+| `/api/auditor/[token]/comments/[id]` | PATCH             | Resolve a comment (org auth required)                     |
+| `/api/auditor/[token]/signoffs`      | GET, POST         | List / upsert sign-off verdicts                           |
+| `/api/auditor/[token]/export`        | GET               | Download ZIP evidence package                             |
+| `/api/org/profile`                   | GET, PUT          | Industry + team size for benchmark segmentation           |
+| `/api/benchmarks`                    | GET               | Percentile ranking vs. peer cohort per framework          |
 
 ---
 
@@ -592,13 +889,14 @@ graph TB
 | ORM           | [Prisma](https://www.prisma.io/)                                                | Type-safe queries, schema-as-code           |
 | Auth          | [NextAuth.js v5](https://authjs.dev/)                                           | GitHub OAuth, JWT sessions, Prisma adapter  |
 | Payments      | [Stripe](https://stripe.com/)                                                   | Subscriptions, billing portal, webhooks     |
-| Email         | [Resend](https://resend.com/)                                                   | Weekly digest emails via REST API           |
+| Email         | [Resend](https://resend.com/)                                                   | Weekly digest + compliance alert emails     |
 | Styling       | [Tailwind CSS](https://tailwindcss.com/)                                        | Utility-first, custom accent colour         |
 | Animations    | [Framer Motion](https://www.framer.com/motion/)                                 | Page transitions, micro-interactions        |
 | Charts        | [Recharts](https://recharts.org/)                                               | Bar + pie charts for compliance scores      |
 | PDF           | [@react-pdf/renderer](https://react-pdf.org/)                                   | Server-side PDF generation                  |
-| Caching       | [Upstash Redis](https://upstash.com/)                                           | Optional - falls back gracefully if unset   |
-| Rate Limiting | Upstash Ratelimit                                                               | Optional - sliding window per endpoint type |
+| ZIP           | [fflate](https://github.com/101arrowz/fflate)                                   | Evidence package export for auditor portal  |
+| Caching       | [Upstash Redis](https://upstash.com/)                                           | Optional — falls back gracefully if unset   |
+| Rate Limiting | Upstash Ratelimit                                                               | Optional — sliding window per endpoint type |
 | Hosting       | [Vercel](https://vercel.com/)                                                   | Zero-config, cron jobs, edge middleware     |
 | Analytics     | [Vercel Analytics](https://vercel.com/analytics)                                | Privacy-friendly, no cookie banner needed   |
 
@@ -612,10 +910,12 @@ audittrail-dev/
 │   ├── (dashboard)/            # Protected app pages (auth-gated by middleware)
 │   │   ├── dashboard/          # Overview: stats, last sync, compliance trend
 │   │   ├── repositories/       # Connect and manage GitHub repositories
-│   │   ├── evidence/           # Per-control evidence explorer with gap analysis
-│   │   ├── compliance/         # Score charts, framework breakdown, share button
+│   │   ├── evidence/           # Per-control evidence explorer with gap analysis,
+│   │   │                       #   team notes, exceptions, priority sort
+│   │   ├── compliance/         # Score charts, framework breakdown, benchmark panel
 │   │   ├── exports/            # PDF / CSV generation (Pro plan)
-│   │   ├── settings/           # Billing, notifications, API keys
+│   │   ├── settings/           # Billing, notifications, API keys,
+│   │   │                       #   company profile, auditor access
 │   │   └── onboarding/         # First-run setup wizard with auto-redirect
 │   ├── api/
 │   │   ├── auth/               # NextAuth.js handlers ([...nextauth])
@@ -626,6 +926,16 @@ audittrail-dev/
 │   │   ├── reports/
 │   │   │   ├── shareable/      # CRUD for shareable report tokens
 │   │   │   └── public/[token]/ # Public evidence summary (no auth)
+│   │   ├── alerts/             # GET alerts + PATCH [id] (read / resolve)
+│   │   ├── controls/[code]/
+│   │   │   ├── notes/          # Team notes per control
+│   │   │   └── exceptions/     # Evidence exceptions per control
+│   │   ├── gaps/               # Prioritised remediation roadmap
+│   │   ├── auditor/
+│   │   │   ├── sessions/       # Create / list / revoke auditor sessions
+│   │   │   └── [token]/        # Token-gated: evidence, comments, sign-offs, export
+│   │   ├── benchmarks/         # Percentile ranking vs. peer cohort
+│   │   ├── org/profile/        # Industry + team size (benchmark segmentation)
 │   │   ├── settings/           # Org info + notification preferences
 │   │   ├── stripe/             # Checkout session + billing portal
 │   │   ├── webhooks/stripe/    # Stripe event webhook handler
@@ -634,6 +944,7 @@ audittrail-dev/
 │   │   ├── health/             # Health check endpoint
 │   │   └── cron/sync/          # Scheduled daily auto-sync
 │   ├── auth/                   # Sign-in, sign-out, error pages
+│   ├── auditor/[token]/        # Public auditor portal (token-gated, no login)
 │   ├── report/[token]/         # Public shareable report page (no auth required)
 │   ├── changelog/              # Release history
 │   ├── privacy/                # Privacy policy
@@ -641,16 +952,20 @@ audittrail-dev/
 │   └── page.tsx                # Landing page (server component)
 ├── components/
 │   ├── landing/                # Hero, Pricing, FAQ, SocialProof, etc.
-│   ├── dashboard/              # DashboardNav, SyncButton, DashboardContent
+│   ├── dashboard/              # DashboardNav, SyncButton, DashboardContent,
+│   │                           #   AlertsPanel, AlertBell
 │   ├── compliance/             # ShareReportButton, PublicReportControls
 │   └── ui/                     # Design system: Card, Button, Badge, Input, etc.
 ├── lib/
 │   ├── compliance.ts           # Core evidence-mapping engine (63 controls)
-│   ├── gap-analysis.ts         # Per-control remediation recommendations
+│   ├── gap-analysis.ts         # Per-control remediation recommendations + priority scoring
+│   ├── alerts.ts               # Continuous monitoring: regression detection + alert creation
+│   ├── benchmarks.ts           # Data flywheel: nightly aggregation + percentile computation
 │   ├── github.ts               # GitHub REST API client
+│   ├── github-sync.ts          # Repository sync orchestration
 │   ├── auth.ts                 # NextAuth configuration + callbacks
 │   ├── db.ts                   # Prisma singleton (serverless-safe)
-│   ├── notifications.ts        # Resend email dispatch (weekly digest)
+│   ├── notifications.ts        # Resend email dispatch (weekly digest + alerts)
 │   ├── stripe.ts               # Stripe checkout + portal helpers
 │   ├── cache.ts                # Upstash Redis cache wrapper
 │   ├── rate-limit.ts           # Upstash sliding-window rate limiter
@@ -659,7 +974,8 @@ audittrail-dev/
 │   ├── pdf.tsx                 # PDF report renderer
 │   └── api/request.ts          # API request parsing helpers
 ├── prisma/
-│   ├── schema.prisma           # Full database schema
+│   ├── schema.prisma           # Full database schema (16 models)
+│   ├── migrations/             # SQL migration files
 │   └── seed.ts                 # Framework + control seed data
 ├── types/
 │   └── compliance.ts           # Shared TypeScript types (EvidenceStatus, etc.)
@@ -690,7 +1006,7 @@ graph TB
         GH["GitHub API\nread-only OAuth"]
         SB["Supabase\nPostgres + pgbouncer"]
         STR["Stripe\nbilling + webhooks"]
-        RSD["Resend\nweekly digest email"]
+        RSD["Resend\nweekly digest + alert email"]
         RDS["Upstash Redis\noptional cache + rate-limit"]
     end
 
@@ -729,7 +1045,27 @@ The `vercel.json` at the repo root schedules the daily sync:
 }
 ```
 
+The cron job:
+
+1. Syncs all active repositories across all organisations
+2. Stores a daily `ComplianceSnapshot` per org
+3. Runs `detectAndCreateAlerts()` to detect compliance regressions
+4. Sends weekly digest emails on Mondays
+5. Runs `computeIndustryBenchmarks()` once to refresh the benchmark dataset
+
 The endpoint validates `Authorization: Bearer $CRON_SECRET`. Vercel Cron sends this automatically.
+
+### Database Migration
+
+Apply the migration SQL when your database is available:
+
+```bash
+# Development (direct connection)
+npx prisma migrate dev
+
+# Production (if running SQL manually)
+psql $DATABASE_URL -f prisma/migrations/014_add_growth_features.sql
+```
 
 ### Stripe Webhook
 
