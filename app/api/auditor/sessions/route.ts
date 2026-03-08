@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api";
+import { requireAuth, requireSubscription } from "@/lib/api";
 import { db } from "@/lib/db";
 import { handleApiError, AppError } from "@/lib/error-handler";
 
@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 export async function GET(_request: NextRequest) {
   try {
     const { orgId } = await requireAuth();
+    await requireSubscription(orgId, "pro");
 
     const sessions = await db.auditorSession.findMany({
       where: { orgId },
@@ -44,6 +45,7 @@ export async function GET(_request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { orgId } = await requireAuth();
+    await requireSubscription(orgId, "pro");
 
     const body = (await request.json()) as {
       auditorEmail?: string;

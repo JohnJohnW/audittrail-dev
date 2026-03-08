@@ -33,9 +33,15 @@ export const GITHUB_CONFIG = {
 // Subscription limits
 export const PLAN_LIMITS = {
   /** Maximum repositories for free plan */
-  FREE_REPO_LIMIT: 3,
+  FREE_REPO_LIMIT: 2,
   /** Maximum repositories for pro plan (unlimited) */
   PRO_REPO_LIMIT: Infinity,
+  /**
+   * Maximum compliance frameworks accessible on the free plan.
+   * Free users may track any 3 of the 8 supported frameworks.
+   * Enforcement is applied in the evidence API and compliance engine.
+   */
+  FREE_FRAMEWORK_LIMIT: 3,
 } as const;
 
 // Data limits

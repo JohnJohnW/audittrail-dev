@@ -5,20 +5,25 @@ import { FadeIn, StaggerChildren } from "@/components/ui/Motion";
 
 // Static feature lists - defined outside component to avoid recreation on every render
 const FREE_FEATURES = [
-  "Up to 3 repositories",
-  "GitHub integration",
-  "View compliance evidence",
-  "All 8 compliance frameworks",
-  "Email support",
+  "Up to 2 repositories",
+  "3 compliance frameworks",
+  "Live compliance scoring & evidence dashboard",
+  "Gap analysis with prioritised action steps",
+  "Basic compliance alerts",
+  "Control notes & exceptions",
 ];
+
+const FREE_EXCLUDED = ["Exports, auditor portal, or shareable reports"];
 
 const PRO_FEATURES = [
   "Unlimited repositories",
   "All 8 compliance frameworks",
-  "Unlimited PDF exports",
-  "Unlimited CSV exports",
+  "PDF & CSV exports",
+  "Auditor portal (comments, sign-offs, ZIP)",
+  "Shareable read-only reports",
+  "Full industry benchmark data",
+  "Advanced alerts & full alert history",
   "Priority support",
-  "Export history & audit log",
 ];
 
 export function Pricing() {
@@ -28,7 +33,7 @@ export function Pricing() {
         <FadeIn direction="up" className="text-center mb-12">
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Pricing</p>
           <h2 className="text-2xl font-semibold text-gray-900">
-            Start free, upgrade when you need exports
+            Start free, upgrade when you&apos;re ready to scale
           </h2>
         </FadeIn>
 
@@ -62,22 +67,24 @@ export function Pricing() {
                   {feature}
                 </li>
               ))}
-              <li className="flex items-start gap-3 text-sm text-gray-400">
-                <svg
-                  className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                No exports
-              </li>
+              {FREE_EXCLUDED.map((feature, idx) => (
+                <li key={idx} className="flex items-start gap-3 text-sm text-gray-400">
+                  <svg
+                    className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  {feature}
+                </li>
+              ))}
             </ul>
 
             <Link

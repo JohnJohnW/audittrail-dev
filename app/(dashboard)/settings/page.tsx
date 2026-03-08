@@ -288,7 +288,8 @@ function SettingsContent() {
                 <CheckIcon className="w-5 h-5 text-green-600" />
               </div>
               <p className="text-green-700 font-medium">
-                Successfully upgraded to Pro! Enjoy unlimited exports.
+                Successfully upgraded to Pro! Unlimited repositories, all 8 frameworks, and exports
+                are now unlocked.
               </p>
             </div>
           </motion.div>
@@ -361,8 +362,8 @@ function SettingsContent() {
                 </div>
                 <p className="text-sm sm:text-base text-gray-500 mt-1">
                   {subscription?.plan === "pro"
-                    ? "Unlimited repositories and exports"
-                    : "3 repositories, no exports"}
+                    ? "Unlimited repositories, all 8 frameworks, and exports"
+                    : "2 repositories, 3 frameworks — no exports or auditor portal"}
                 </p>
                 {subscription?.currentPeriodEnd && (
                   <p className="text-sm text-gray-500 mt-2">
@@ -408,9 +409,12 @@ function SettingsContent() {
                 >
                   <p className="font-semibold text-gray-900 mb-4">Free</p>
                   <ul className="space-y-3 text-sm">
-                    <FeatureItem included>Up to 3 repositories</FeatureItem>
-                    <FeatureItem included>View compliance evidence</FeatureItem>
-                    <FeatureItem>No PDF/CSV exports</FeatureItem>
+                    <FeatureItem included>Up to 2 repositories</FeatureItem>
+                    <FeatureItem included>3 compliance frameworks</FeatureItem>
+                    <FeatureItem included>Evidence dashboard & gap analysis</FeatureItem>
+                    <FeatureItem included>Basic compliance alerts</FeatureItem>
+                    <FeatureItem included>Control notes & exceptions</FeatureItem>
+                    <FeatureItem>Exports or auditor portal</FeatureItem>
                   </ul>
                 </motion.div>
                 <motion.div
@@ -423,10 +427,11 @@ function SettingsContent() {
                   </div>
                   <ul className="space-y-3 text-sm">
                     <FeatureItem included>Unlimited repositories</FeatureItem>
-                    <FeatureItem included>View compliance evidence</FeatureItem>
-                    <FeatureItem included>Unlimited PDF exports</FeatureItem>
-                    <FeatureItem included>Unlimited CSV exports</FeatureItem>
+                    <FeatureItem included>All 8 compliance frameworks</FeatureItem>
+                    <FeatureItem included>PDF & CSV exports</FeatureItem>
+                    <FeatureItem included>Auditor portal (comments, sign-offs)</FeatureItem>
                     <FeatureItem included>Shareable read-only reports</FeatureItem>
+                    <FeatureItem included>Full industry benchmarks</FeatureItem>
                     <FeatureItem included>Priority support</FeatureItem>
                   </ul>
                 </motion.div>
@@ -700,6 +705,24 @@ function SettingsContent() {
               packages.
             </p>
 
+            {/* Pro gate */}
+            {subscription?.plan !== "pro" && (
+              <div className="mb-5 rounded-xl border border-yellow-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-4">
+                <p className="font-semibold text-yellow-800 text-sm">Pro feature</p>
+                <p className="text-sm text-yellow-700 mt-1">
+                  The auditor portal is available on the Pro plan. Upgrade to invite external
+                  auditors and share evidence packages.
+                </p>
+                <button
+                  onClick={handleUpgrade}
+                  disabled={upgrading}
+                  className="mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900 transition-colors"
+                >
+                  {upgrading ? "Processing…" : "Upgrade to Pro →"}
+                </button>
+              </div>
+            )}
+
             {/* New link shown after creation */}
             <AnimatePresence>
               {newSessionLink && (
@@ -737,97 +760,101 @@ function SettingsContent() {
               )}
             </AnimatePresence>
 
-            {/* Invite form */}
-            <div className="flex flex-col sm:flex-row gap-2 mb-5">
-              <input
-                type="email"
-                value={newAuditorEmail}
-                onChange={(e) => setNewAuditorEmail(e.target.value)}
-                placeholder="auditor@example.com"
-                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-              <input
-                type="text"
-                value={newAuditorName}
-                onChange={(e) => setNewAuditorName(e.target.value)}
-                placeholder="Name (optional)"
-                className="sm:w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-              <select
-                value={newAuditorDays}
-                onChange={(e) => setNewAuditorDays(e.target.value)}
-                className="sm:w-32 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent bg-white"
-              >
-                <option value="7">7 days</option>
-                <option value="14">14 days</option>
-                <option value="30">30 days</option>
-                <option value="60">60 days</option>
-                <option value="90">90 days</option>
-              </select>
-              <Button
-                variant="accent"
-                onClick={createAuditorSession}
-                loading={creatingSession}
-                disabled={creatingSession || !newAuditorEmail.trim()}
-                className="shrink-0"
-              >
-                Invite Auditor
-              </Button>
-            </div>
+            {/* Invite form — Pro only */}
+            {subscription?.plan === "pro" && (
+              <>
+                <div className="flex flex-col sm:flex-row gap-2 mb-5">
+                  <input
+                    type="email"
+                    value={newAuditorEmail}
+                    onChange={(e) => setNewAuditorEmail(e.target.value)}
+                    placeholder="auditor@example.com"
+                    className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <input
+                    type="text"
+                    value={newAuditorName}
+                    onChange={(e) => setNewAuditorName(e.target.value)}
+                    placeholder="Name (optional)"
+                    className="sm:w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <select
+                    value={newAuditorDays}
+                    onChange={(e) => setNewAuditorDays(e.target.value)}
+                    className="sm:w-32 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent bg-white"
+                  >
+                    <option value="7">7 days</option>
+                    <option value="14">14 days</option>
+                    <option value="30">30 days</option>
+                    <option value="60">60 days</option>
+                    <option value="90">90 days</option>
+                  </select>
+                  <Button
+                    variant="accent"
+                    onClick={createAuditorSession}
+                    loading={creatingSession}
+                    disabled={creatingSession || !newAuditorEmail.trim()}
+                    className="shrink-0"
+                  >
+                    Invite Auditor
+                  </Button>
+                </div>
 
-            {/* Active sessions list */}
-            {auditorSessions.length > 0 ? (
-              <div className="divide-y divide-gray-100 border border-gray-100 rounded-lg">
-                {auditorSessions.map((s) => {
-                  const isExpired = new Date(s.expiresAt) < new Date();
-                  return (
-                    <div key={s.id} className="flex items-center justify-between px-4 py-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900">
-                            {s.auditorName ?? s.auditorEmail}
-                          </span>
-                          {isExpired ? (
-                            <Badge variant="error" size="sm">
-                              Expired
-                            </Badge>
-                          ) : (
-                            <Badge variant="success" size="sm">
-                              Active
-                            </Badge>
-                          )}
+                {/* Active sessions list */}
+                {auditorSessions.length > 0 ? (
+                  <div className="divide-y divide-gray-100 border border-gray-100 rounded-lg">
+                    {auditorSessions.map((s) => {
+                      const isExpired = new Date(s.expiresAt) < new Date();
+                      return (
+                        <div key={s.id} className="flex items-center justify-between px-4 py-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900">
+                                {s.auditorName ?? s.auditorEmail}
+                              </span>
+                              {isExpired ? (
+                                <Badge variant="error" size="sm">
+                                  Expired
+                                </Badge>
+                              ) : (
+                                <Badge variant="success" size="sm">
+                                  Active
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {s.auditorEmail}
+                              {" · "}
+                              {isExpired
+                                ? `Expired ${new Date(s.expiresAt).toLocaleDateString()}`
+                                : `Expires ${new Date(s.expiresAt).toLocaleDateString()}`}
+                              {s.lastActiveAt &&
+                                ` · Last active ${new Date(s.lastActiveAt).toLocaleDateString()}`}
+                            </p>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (
+                                !confirm(
+                                  "Revoke this auditor's access? They will no longer be able to view evidence."
+                                )
+                              )
+                                return;
+                              await fetch(`/api/auditor/sessions/${s.id}`, { method: "DELETE" });
+                              fetchAuditorSessions();
+                            }}
+                            className="text-xs text-red-500 hover:text-red-700 font-medium ml-4 shrink-0"
+                          >
+                            Revoke
+                          </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {s.auditorEmail}
-                          {" · "}
-                          {isExpired
-                            ? `Expired ${new Date(s.expiresAt).toLocaleDateString()}`
-                            : `Expires ${new Date(s.expiresAt).toLocaleDateString()}`}
-                          {s.lastActiveAt &&
-                            ` · Last active ${new Date(s.lastActiveAt).toLocaleDateString()}`}
-                        </p>
-                      </div>
-                      <button
-                        onClick={async () => {
-                          if (
-                            !confirm(
-                              "Revoke this auditor's access? They will no longer be able to view evidence."
-                            )
-                          )
-                            return;
-                          await fetch(`/api/auditor/sessions/${s.id}`, { method: "DELETE" });
-                          fetchAuditorSessions();
-                        }}
-                        className="text-xs text-red-500 hover:text-red-700 font-medium ml-4 shrink-0"
-                      >
-                        Revoke
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-400 text-center py-4">No auditor sessions yet.</p>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-4">No auditor sessions yet.</p>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

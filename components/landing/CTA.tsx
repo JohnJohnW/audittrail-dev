@@ -14,8 +14,8 @@ export function CTA() {
           Stop screenshotting GitHub for auditors
         </h2>
         <p className="text-sm text-gray-500 mb-8 max-w-lg mx-auto">
-          Connect your repositories and generate your first compliance report in under 10 minutes.
-          Free to start.
+          Connect your repositories and see your compliance score in under 10 minutes. Free to start
+          — no credit card required.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link

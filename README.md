@@ -85,18 +85,20 @@ graph LR
 
 |                                           | Free    | Pro       |
 | ----------------------------------------- | ------- | --------- |
-| Repositories                              | Up to 3 | Unlimited |
-| All 8 compliance frameworks               | Yes     | Yes       |
+| Repositories                              | Up to 2 | Unlimited |
+| Compliance frameworks                     | 3 of 8  | All 8     |
 | Live evidence dashboard                   | Yes     | Yes       |
 | Gap analysis with action steps            | Yes     | Yes       |
-| Continuous compliance alerts              | Yes     | Yes       |
+| Basic compliance alerts                   | Yes     | Yes       |
 | Control notes & exceptions                | Yes     | Yes       |
 | PDF / CSV exports                         | No      | Yes       |
 | Shareable auditor links                   | No      | Yes       |
 | Auditor portal (comments, sign-offs, ZIP) | No      | Yes       |
-| Industry benchmark comparisons            | Yes     | Yes       |
+| Industry benchmark comparisons            | Limited | Full      |
+| Advanced alerts & full alert history      | No      | Yes       |
 | Weekly email digest                       | Yes     | Yes       |
 | API key access                            | Yes     | Yes       |
+| Priority support                          | No      | Yes       |
 
 ### Revenue Flow
 
@@ -200,15 +202,18 @@ Org teams manage auditor sessions from Settings → Auditor Access. Once an audi
 
 | Feature                                   | Free | Pro |
 | ----------------------------------------- | ---- | --- |
-| Up to 3 repositories                      | Yes  | Yes |
+| Up to 2 repositories                      | Yes  |     |
 | Unlimited repositories                    | No   | Yes |
-| All 8 compliance frameworks               | Yes  | Yes |
+| 3 compliance frameworks                   | Yes  |     |
+| All 8 compliance frameworks               | No   | Yes |
 | Live evidence dashboard                   | Yes  | Yes |
 | Gap analysis with action steps            | Yes  | Yes |
 | Prioritised gap remediation               | Yes  | Yes |
-| Continuous compliance alerts              | Yes  | Yes |
+| Basic compliance alerts                   | Yes  | Yes |
+| Advanced alerts & full alert history      | No   | Yes |
 | Control notes & exceptions                | Yes  | Yes |
-| Industry benchmark comparisons            | Yes  | Yes |
+| Limited industry benchmarks               | Yes  |     |
+| Full industry benchmarks (per-control)    | No   | Yes |
 | PDF exports                               | No   | Yes |
 | CSV exports                               | No   | Yes |
 | Shareable read-only report links          | No   | Yes |

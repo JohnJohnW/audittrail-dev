@@ -173,9 +173,12 @@ export default function ExportsPage() {
                     <WarningIcon className="w-5 h-5 text-yellow-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-yellow-800">Upgrade required for exports</p>
+                    <p className="font-semibold text-yellow-800">
+                      Pro feature — exports require an upgrade
+                    </p>
                     <p className="text-sm text-yellow-700 mt-1">
-                      PDF and CSV exports are available on the Pro plan.
+                      PDF and CSV exports are a Pro feature. Pro also unlocks all 8 compliance
+                      frameworks, the auditor portal, shareable reports, and unlimited repositories.
                     </p>
                     <Link
                       href="/settings"
