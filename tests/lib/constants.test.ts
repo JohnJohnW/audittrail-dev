@@ -44,8 +44,9 @@ describe("constants", () => {
 
   describe("PLAN_LIMITS", () => {
     it("should have correct values", () => {
-      expect(PLAN_LIMITS.FREE_REPO_LIMIT).toBe(3);
+      expect(PLAN_LIMITS.FREE_REPO_LIMIT).toBe(2);
       expect(PLAN_LIMITS.PRO_REPO_LIMIT).toBe(Infinity);
+      expect(PLAN_LIMITS.FREE_FRAMEWORK_LIMIT).toBe(3);
     });
   });
 
