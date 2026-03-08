@@ -49,7 +49,7 @@ flowchart LR
 1. **Connect**: Sign in with GitHub and select the repositories you want to track.
 2. **Sync**: Audit Trail pulls commits, pull requests, code reviews, and branch protection settings via the GitHub API (read-only; we never access your source code).
 3. **Map**: The compliance engine scores each of the 63 controls across 8 frameworks based on your real activity.
-4. **Monitor**: Alerts fire when your posture changes — score drops, control regressions, branch protection weakened, PRs merged without review.
+4. **Monitor**: Alerts fire when your posture changes: score drops, control regressions, branch protection weakened, PRs merged without review.
 5. **Report**: View a live dashboard, invite auditors to a token-gated workspace, generate PDF/CSV reports, or share a public read-only link.
 6. **Benchmark**: See how your score compares to similar companies (same industry, same size) using anonymised aggregate data.
 
@@ -128,7 +128,7 @@ Audit Trail is built around four compounding growth mechanics that make the prod
 
 ### 1. Proprietary Data Flywheel
 
-Every organisation that uses Audit Trail contributes anonymised, aggregated compliance signals to a proprietary benchmark dataset. No individual org's data is ever exposed — cohorts require a minimum of 5 organisations before any benchmark is published. But as more companies join, the dataset becomes uniquely valuable:
+Every organisation that uses Audit Trail contributes anonymised, aggregated compliance signals to a proprietary benchmark dataset. No individual org's data is ever exposed; cohorts require a minimum of 5 organisations before any benchmark is published. But as more companies join, the dataset becomes uniquely valuable:
 
 - **Percentile rankings**: "Your SOC 2 score is in the 73rd percentile for 11–50 person SaaS companies."
 - **Control-level pass rates**: "62% of similar companies have evidence for CC6.1."
@@ -166,13 +166,13 @@ flowchart LR
 
 Two features accumulate value over time and make migration painful:
 
-**Control Notes** — Team-authored narrative explanations for how your organisation satisfies each control (e.g. "We use protected branches + required reviews instead of a separate code-signing process"). These build up over months and represent institutional compliance knowledge that lives exclusively in Audit Trail.
+**Control Notes:** Team-authored narrative explanations for how your organisation satisfies each control (e.g. "We use protected branches + required reviews instead of a separate code-signing process"). These build up over months and represent institutional compliance knowledge that lives exclusively in Audit Trail.
 
-**Evidence Exceptions** — Controls marked as "not applicable to us" with a reason and optional expiry date. An organisation that has exception-annotated dozens of controls would need to recreate that entire context from scratch in any competing tool.
+**Evidence Exceptions:** Controls marked as "not applicable to us" with a reason and optional expiry date. An organisation that has exception-annotated dozens of controls would need to recreate that entire context from scratch in any competing tool.
 
 ### 3. Continuous Compliance Monitoring
 
-Audit Trail doesn't just show you where you stand — it alerts you the moment your posture degrades:
+Audit Trail doesn't just show you where you stand; it alerts you the moment your posture degrades:
 
 | Alert Type                 | Trigger                                                 | Default Severity       |
 | -------------------------- | ------------------------------------------------------- | ---------------------- |
@@ -185,14 +185,14 @@ Alerts deduplicate over 24h windows and email org owners/admins via Resend.
 
 ### 4. Auditor Portal
 
-External auditors get a time-limited, token-gated workspace at `/auditor/{token}` — no account creation required. From there they can:
+External auditors get a time-limited, token-gated workspace at `/auditor/{token}`. No account creation required. From there they can:
 
 - **Browse** the full evidence dataset (filtered by framework if specified)
 - **Comment** on individual controls to request additional evidence
 - **Sign off** with a verdict: Approved / Needs More Info / Rejected
 - **Download** a ZIP evidence package (README + summary.csv + evidence.csv)
 
-Org teams manage auditor sessions from Settings → Auditor Access. Once an auditor has left comments and verdicts across an audit, that history becomes part of the org's compliance record — adding more migration cost.
+Org teams manage auditor sessions from Settings → Auditor Access. Once an auditor has left comments and verdicts across an audit, that history becomes part of the org's compliance record, adding more migration cost.
 
 ---
 
@@ -224,7 +224,7 @@ Org teams manage auditor sessions from Settings → Auditor Access. Once an audi
 - **Gap analysis**: every control with missing or partial evidence shows a numbered action list explaining exactly what your team needs to do in GitHub to generate evidence. Gap controls are sortable by score impact ("Fix This First").
 - **Continuous monitoring**: post-sync alert detection catches regressions before your next audit.
 - **Auditor portal**: token-gated, no account required. Auditors view evidence, comment, sign off controls, and download a ZIP package.
-- **Industry benchmarks**: proprietary percentile data built from anonymised usage — your compliance score ranked against companies with a similar profile.
+- **Industry benchmarks**: proprietary percentile data built from anonymised usage; your compliance score ranked against companies with a similar profile.
 - **Shareable reports**: generate a tokenised public URL (no login required) to share a read-only compliance snapshot with stakeholders.
 - **Email notifications**: weekly compliance digest emailed via Resend; notification preferences configurable per organisation.
 
@@ -370,7 +370,7 @@ sequenceDiagram
 
 Session tokens contain `userId`, `orgId`, and `plan`. Enough context for every API route to authorise requests without an extra database round-trip.
 
-The **Auditor Portal** (`/auditor/{token}`) is intentionally unauthenticated — it validates a 32-byte random token stored in `AuditorSession` and checks expiry on every request.
+The **Auditor Portal** (`/auditor/{token}`) is intentionally unauthenticated; it validates a 32-byte random token stored in `AuditorSession` and checks expiry on every request.
 
 ---
 
@@ -426,48 +426,17 @@ Audit Trail supports **8 frameworks** covering **63 controls** in total.
 ### Control Coverage Map
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
-mindmap
-  root((Audit Trail - 63 Controls))
-    ISO 27001
-      A.5.15 Access Control
-      A.5.16 Identity Mgmt
-      A.5.17 Auth Information
-      A.5.18 Access Rights
-      A.8.4 Source Code Access
-      A.8.9 Config Management
-      A.8.25 Dev Lifecycle
-      A.8.28 Secure Coding
-      A.8.32 Change Management
-      9 more controls
-    Essential Eight
-      Application Control
-      Patch Applications
-      Restrict Admin
-      Patch OS
-      Regular Backups
-      MFA
-    NIST CSF 2.0
-      PR.PS-01 Policy
-      PR.PS-02 Processes
-      DE.CM-09 Monitoring
-    NIST 800-53
-      AC-2 Accounts
-      CM-3 Config Changes
-      SA-10 Dev Config
-    SOC 2
-      CC6 Logical Access
-      CC7 Operations
-      CC8 Change Mgmt
-    GDPR
-      Art 25 Privacy by Design
-      Art 32 Security
-    SOCI Act
-      PSO 1-4 Obligations
-    PCI DSS 4.0
-      Req 6 Secure Systems
-      Req 7 Access Control
-      Req 8 Identity Mgmt
+graph LR
+    AT(("63 Controls\nacross 8 frameworks"))
+
+    AT --> ISO["ISO 27001:2022\n19 controls"]
+    AT --> E8["Essential Eight\n6 controls"]
+    AT --> NCSF["NIST CSF 2.0\n7 controls"]
+    AT --> N800["NIST SP 800-53\n7 controls"]
+    AT --> SOC["SOC 2\n5 controls"]
+    AT --> GDPR["GDPR\n9 controls"]
+    AT --> SOCI["SOCI Act\n4 controls"]
+    AT --> PCI["PCI DSS 4.0\n6 controls"]
 ```
 
 ---
@@ -478,36 +447,34 @@ The compliance engine maps four types of GitHub artifacts to control requirement
 
 ```mermaid
 flowchart LR
-    subgraph Artifacts ["GitHub Artifacts"]
-        C["Commits\nsha, message, GPG"]
-        PR["Pull Requests\nreviews, approvals"]
-        BP["Branch Protection\nrules, status checks"]
-        CI["CI Workflows\nbuild, test, deploy"]
-    end
+    C["Commits\nsha · message · GPG"]
+    PR["Pull Requests\nreviews · approvals"]
+    BP["Branch Protection\nrules · status checks"]
+    CI["CI Workflows\nbuild · test · deploy"]
 
-    subgraph Engine ["Compliance Engine"]
-        KW["Keyword matching"]
-        RC["Review thresholds"]
-        BP2["Protection checks"]
-        WF["Workflow patterns"]
-    end
+    KW["Keyword\nmatching"]
+    RC["Review\nthresholds"]
+    BP2["Protection\nchecks"]
+    WF["Workflow\npatterns"]
 
-    subgraph Status ["Evidence Status"]
-        HE["Has Evidence"]
-        PA["Partial"]
-        LI["Limited"]
-        NE["No Evidence"]
-    end
+    HE(["Has Evidence"])
+    PA(["Partial"])
+    LI(["Limited"])
+    NE(["No Evidence"])
 
-    C --> KW
+    C  --> KW
     PR --> RC
     BP --> BP2
     CI --> WF
 
-    KW --> HE & PA
-    RC --> HE & PA
-    BP2 --> HE & LI
-    WF --> HE & NE
+    KW  --> HE
+    KW  --> PA
+    RC  --> HE
+    RC  --> PA
+    BP2 --> HE
+    BP2 --> LI
+    WF  --> HE
+    WF  --> NE
 ```
 
 ### Gap Analysis
@@ -594,7 +561,7 @@ Org members can mark alerts as read or resolve them from the **Alerts Panel** (b
 
 ## Auditor Portal
 
-The auditor portal is a separate, public-facing workspace at `/auditor/{token}`. It requires no account — only the 32-byte token issued when an org creates an auditor session.
+The auditor portal is a separate, public-facing workspace at `/auditor/{token}`. It requires no account; only the 32-byte token issued when an org creates an auditor session.
 
 ```mermaid
 sequenceDiagram
@@ -854,13 +821,13 @@ graph TB
 | `/api/github/sync`                   | POST              | Trigger manual repository sync                            |
 | `/api/exports`                       | GET, POST         | List past exports / generate new PDF or CSV               |
 | `/api/reports/shareable`             | GET, POST, DELETE | Manage shareable report tokens                            |
-| `/api/reports/public/[token]`        | GET               | Public evidence summary — no auth required                |
+| `/api/reports/public/[token]`        | GET               | Public evidence summary (no auth required)                |
 | `/api/settings`                      | GET, PUT          | Org info + notification preferences                       |
 | `/api/keys`                          | GET, POST, DELETE | API key management (create, list, revoke)                 |
 | `/api/stripe/checkout`               | POST              | Create Stripe Checkout session                            |
 | `/api/stripe/portal`                 | GET               | Redirect to Stripe billing portal                         |
-| `/api/webhooks/stripe`               | POST              | Stripe event handler — no auth, HMAC-verified             |
-| `/api/cron/sync`                     | POST              | Scheduled daily sync — bearer token auth                  |
+| `/api/webhooks/stripe`               | POST              | Stripe event handler (no auth, HMAC-verified)             |
+| `/api/cron/sync`                     | POST              | Scheduled daily sync (bearer token auth)                  |
 | `/api/onboarding`                    | POST              | Update onboarding step progress                           |
 | `/api/alerts`                        | GET               | Unread count + recent alerts (filter by type/resolved)    |
 | `/api/alerts/[id]`                   | PATCH             | Mark alert as read or resolve                             |
@@ -881,24 +848,24 @@ graph TB
 
 ## Tech Stack
 
-| Layer         | Technology                                                                      | Notes                                       |
-| ------------- | ------------------------------------------------------------------------------- | ------------------------------------------- |
-| Framework     | [Next.js 14](https://nextjs.org/) App Router                                    | Server + client components, API routes      |
-| Language      | TypeScript (strict)                                                             | Full type coverage                          |
-| Database      | [PostgreSQL](https://www.postgresql.org/) via [Supabase](https://supabase.com/) | Free tier works for dev                     |
-| ORM           | [Prisma](https://www.prisma.io/)                                                | Type-safe queries, schema-as-code           |
-| Auth          | [NextAuth.js v5](https://authjs.dev/)                                           | GitHub OAuth, JWT sessions, Prisma adapter  |
-| Payments      | [Stripe](https://stripe.com/)                                                   | Subscriptions, billing portal, webhooks     |
-| Email         | [Resend](https://resend.com/)                                                   | Weekly digest + compliance alert emails     |
-| Styling       | [Tailwind CSS](https://tailwindcss.com/)                                        | Utility-first, custom accent colour         |
-| Animations    | [Framer Motion](https://www.framer.com/motion/)                                 | Page transitions, micro-interactions        |
-| Charts        | [Recharts](https://recharts.org/)                                               | Bar + pie charts for compliance scores      |
-| PDF           | [@react-pdf/renderer](https://react-pdf.org/)                                   | Server-side PDF generation                  |
-| ZIP           | [fflate](https://github.com/101arrowz/fflate)                                   | Evidence package export for auditor portal  |
-| Caching       | [Upstash Redis](https://upstash.com/)                                           | Optional — falls back gracefully if unset   |
-| Rate Limiting | Upstash Ratelimit                                                               | Optional — sliding window per endpoint type |
-| Hosting       | [Vercel](https://vercel.com/)                                                   | Zero-config, cron jobs, edge middleware     |
-| Analytics     | [Vercel Analytics](https://vercel.com/analytics)                                | Privacy-friendly, no cookie banner needed   |
+| Layer         | Technology                                                                      | Notes                                      |
+| ------------- | ------------------------------------------------------------------------------- | ------------------------------------------ |
+| Framework     | [Next.js 14](https://nextjs.org/) App Router                                    | Server + client components, API routes     |
+| Language      | TypeScript (strict)                                                             | Full type coverage                         |
+| Database      | [PostgreSQL](https://www.postgresql.org/) via [Supabase](https://supabase.com/) | Free tier works for dev                    |
+| ORM           | [Prisma](https://www.prisma.io/)                                                | Type-safe queries, schema-as-code          |
+| Auth          | [NextAuth.js v5](https://authjs.dev/)                                           | GitHub OAuth, JWT sessions, Prisma adapter |
+| Payments      | [Stripe](https://stripe.com/)                                                   | Subscriptions, billing portal, webhooks    |
+| Email         | [Resend](https://resend.com/)                                                   | Weekly digest + compliance alert emails    |
+| Styling       | [Tailwind CSS](https://tailwindcss.com/)                                        | Utility-first, custom accent colour        |
+| Animations    | [Framer Motion](https://www.framer.com/motion/)                                 | Page transitions, micro-interactions       |
+| Charts        | [Recharts](https://recharts.org/)                                               | Bar + pie charts for compliance scores     |
+| PDF           | [@react-pdf/renderer](https://react-pdf.org/)                                   | Server-side PDF generation                 |
+| ZIP           | [fflate](https://github.com/101arrowz/fflate)                                   | Evidence package export for auditor portal |
+| Caching       | [Upstash Redis](https://upstash.com/)                                           | Optional; falls back gracefully if unset   |
+| Rate Limiting | Upstash Ratelimit                                                               | Optional; sliding window per endpoint type |
+| Hosting       | [Vercel](https://vercel.com/)                                                   | Zero-config, cron jobs, edge middleware    |
+| Analytics     | [Vercel Analytics](https://vercel.com/analytics)                                | Privacy-friendly, no cookie banner needed  |
 
 ---
 
