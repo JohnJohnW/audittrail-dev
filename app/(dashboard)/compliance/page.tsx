@@ -68,6 +68,18 @@ export default function CompliancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [benchmarks, setBenchmarks] = useState<BenchmarkEntry[]>([]);
+  const [auditorPatterns, setAuditorPatterns] = useState<{
+    sessionCount: number;
+    patterns: {
+      controlCode: string;
+      frameworkName: string;
+      approved: number;
+      needsMoreInfo: number;
+      rejected: number;
+      totalSignoffs: number;
+      attentionScore: number;
+    }[];
+  } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -79,6 +91,16 @@ export default function CompliancePage() {
       })
       .catch(() => {
         /* benchmarks are optional */
+      });
+
+    // Fetch auditor patterns (non-blocking)
+    fetch("/api/insights/auditor")
+      .then((r) => r.json())
+      .then((d: typeof auditorPatterns) => {
+        if (d && Array.isArray(d.patterns)) setAuditorPatterns(d);
+      })
+      .catch(() => {
+        /* auditor insights are optional */
       });
   }, []);
 
@@ -496,6 +518,53 @@ export default function CompliancePage() {
           </CardContent>
         </Card>
       </FadeIn>
+
+      {/* Auditor Patterns — controls flagged by auditors */}
+      {auditorPatterns && auditorPatterns.patterns.length > 0 && (
+        <FadeIn delay={0.55}>
+          <Card variant="elevated" className="mb-6 sm:mb-8">
+            <CardHeader>
+              <CardTitle>Auditor Attention Areas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-500 mb-4">
+                Controls that auditors have most frequently flagged across{" "}
+                {auditorPatterns.sessionCount} session
+                {auditorPatterns.sessionCount !== 1 ? "s" : ""}.
+              </p>
+              <div className="space-y-3">
+                {auditorPatterns.patterns.map((p) => (
+                  <div
+                    key={`${p.controlCode}-${p.frameworkName}`}
+                    className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded font-medium">
+                          {p.controlCode}
+                        </span>
+                        <span className="text-xs text-gray-500">{p.frameworkName}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {p.rejected > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">
+                          {p.rejected} rejected
+                        </span>
+                      )}
+                      {p.needsMoreInfo > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                          {p.needsMoreInfo} needs info
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      )}
 
       {/* Industry Benchmarks — "How you compare" */}
       {benchmarks.some((b) => b.percentile !== null) && (

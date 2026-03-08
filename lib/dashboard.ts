@@ -25,6 +25,7 @@ export interface DashboardData {
   scoreDelta: number | null;
   weakestFramework: { name: string; score: number } | null;
   lastSyncedAt: Date | null;
+  remediationVelocity: { controlsFixed: number; avgDaysToFix: number | null } | null;
 }
 
 /**
@@ -35,42 +36,58 @@ export interface DashboardData {
 export async function getDashboardData(orgId: string): Promise<DashboardData> {
   let githubConnectionFetchFailed = false;
 
-  const [githubConnection, repositories, subscription, recentExports, complianceSnapshots] =
-    await Promise.all([
-      db.gitHubConnection.findUnique({ where: { orgId } }).catch((err) => {
-        logger.error("Failed to fetch GitHub connection", err);
-        githubConnectionFetchFailed = true;
-        return null;
-      }),
-      db.repository
-        .findMany({
-          where: { orgId, isActive: true },
-          include: {
-            _count: {
-              select: {
-                commits: true,
-                pullRequests: true,
-              },
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [
+    githubConnection,
+    repositories,
+    subscription,
+    recentExports,
+    complianceSnapshots,
+    remediationEvents,
+  ] = await Promise.all([
+    db.gitHubConnection.findUnique({ where: { orgId } }).catch((err) => {
+      logger.error("Failed to fetch GitHub connection", err);
+      githubConnectionFetchFailed = true;
+      return null;
+    }),
+    db.repository
+      .findMany({
+        where: { orgId, isActive: true },
+        include: {
+          _count: {
+            select: {
+              commits: true,
+              pullRequests: true,
             },
           },
-        })
-        .catch(() => [] as RepositoryWithCount[]),
-      db.subscription.findUnique({ where: { orgId } }).catch(() => null),
-      db.export
-        .findMany({
-          where: { orgId },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-        .catch(() => [] as Awaited<ReturnType<typeof db.export.findMany>>),
-      db.complianceSnapshot
-        .findMany({
-          where: { orgId },
-          orderBy: { snapshotDate: "desc" },
-          take: 2,
-        })
-        .catch(() => [] as Awaited<ReturnType<typeof db.complianceSnapshot.findMany>>),
-    ]);
+        },
+      })
+      .catch(() => [] as RepositoryWithCount[]),
+    db.subscription.findUnique({ where: { orgId } }).catch(() => null),
+    db.export
+      .findMany({
+        where: { orgId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      })
+      .catch(() => [] as Awaited<ReturnType<typeof db.export.findMany>>),
+    db.complianceSnapshot
+      .findMany({
+        where: { orgId },
+        orderBy: { snapshotDate: "desc" },
+        take: 2,
+      })
+      .catch(() => [] as Awaited<ReturnType<typeof db.complianceSnapshot.findMany>>),
+    db.remediationEvent
+      .findMany({
+        where: { orgId, detectedAt: { gte: thirtyDaysAgo } },
+        select: { controlCode: true, frameworkName: true, daysToFix: true },
+      })
+      .catch(
+        () => [] as { controlCode: string; frameworkName: string; daysToFix: number | null }[]
+      ),
+  ]);
 
   // Derived metrics
   const totalCommits = repositories.reduce((sum, r) => sum + r._count.commits, 0);
@@ -107,6 +124,20 @@ export async function getDashboardData(orgId: string): Promise<DashboardData> {
     null as Date | null
   );
 
+  // Remediation velocity — only populated once we have at least one event
+  let remediationVelocity: DashboardData["remediationVelocity"] = null;
+  if (remediationEvents.length > 0) {
+    // Count distinct controls fixed (de-duplicate same control fixed multiple times in window)
+    const fixedKeys = new Set(remediationEvents.map((e) => `${e.controlCode}|${e.frameworkName}`));
+    const controlsFixed = fixedKeys.size;
+    const withDays = remediationEvents.filter((e) => e.daysToFix !== null);
+    const avgDaysToFix =
+      withDays.length > 0
+        ? Math.round(withDays.reduce((s, e) => s + (e.daysToFix ?? 0), 0) / withDays.length)
+        : null;
+    remediationVelocity = { controlsFixed, avgDaysToFix };
+  }
+
   return {
     githubConnection,
     githubConnectionFetchFailed,
@@ -119,5 +150,6 @@ export async function getDashboardData(orgId: string): Promise<DashboardData> {
     scoreDelta,
     weakestFramework,
     lastSyncedAt,
+    remediationVelocity,
   };
 }

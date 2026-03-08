@@ -98,6 +98,9 @@ model Organization {
   auditorComments      AuditorComment[]
   controlSignoffs      ControlSignoff[]
   orgProfile           OrgProfile?
+  controlStatusSnapshots ControlStatusSnapshot[]
+  remediationEvents      RemediationEvent[]
+  evidenceFeedback       EvidenceFeedback[]
 
   @@map("organizations")
 }
@@ -534,3 +537,57 @@ model IndustryBenchmark {
   @@map("industry_benchmarks")
 }
 
+// ============================================
+// SELF-IMPROVING COMPLIANCE INTELLIGENCE
+// ============================================
+
+model ControlStatusSnapshot {
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  controlCode   String   @map("control_code")
+  frameworkName String   @map("framework_name")
+  status        String   // "has_evidence" | "partial" | "limited" | "no_evidence"
+  evidenceCount Int      @map("evidence_count")
+  snapshotDate  DateTime @map("snapshot_date") @db.Date
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, controlCode, frameworkName, snapshotDate])
+  @@index([orgId, snapshotDate])
+  @@index([controlCode, frameworkName, snapshotDate])
+  @@map("control_status_snapshots")
+}
+
+model RemediationEvent {
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  controlCode   String   @map("control_code")
+  frameworkName String   @map("framework_name")
+  fromStatus    String   @map("from_status")
+  toStatus      String   @default("has_evidence") @map("to_status")
+  daysToFix     Int?     @map("days_to_fix")
+  detectedAt    DateTime @default(now()) @map("detected_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, detectedAt])
+  @@index([controlCode, frameworkName, detectedAt])
+  @@map("remediation_events")
+}
+
+model EvidenceFeedback {
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  controlCode   String   @map("control_code")
+  frameworkName String   @map("framework_name")
+  evidenceHash  String   @map("evidence_hash")
+  rating        String   // "positive" | "negative"
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, controlCode, frameworkName, evidenceHash])
+  @@index([controlCode, frameworkName, evidenceHash])
+  @@map("evidence_feedback")
+}

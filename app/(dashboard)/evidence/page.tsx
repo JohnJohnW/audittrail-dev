@@ -514,6 +514,11 @@ function FilterButton({
   );
 }
 
+/** Stable, ephemeral-safe identity for one evidence item used as the feedback key. */
+function makeEvidenceHash(item: { type: string; title: string; repositoryId?: string }): string {
+  return `${item.type}|${item.title.slice(0, 50)}|${item.repositoryId ?? ""}`;
+}
+
 function ControlItem({
   control,
   totalControls,
@@ -537,6 +542,14 @@ function ControlItem({
   const [exceptionReason, setExceptionReason] = useState("");
   const [exceptionExpiry, setExceptionExpiry] = useState("");
   const [exceptionSaving, setExceptionSaving] = useState(false);
+  const [ratings, setRatings] = useState<Record<string, string>>({});
+  const [ratingLoading, setRatingLoading] = useState<string | null>(null);
+  const [controlBenchmark, setControlBenchmark] = useState<{
+    passRate: number;
+    p50: number;
+    sampleCount: number;
+    orgPasses: boolean;
+  } | null>(null);
 
   // Fetch note + exception when expanded for the first time
   useEffect(() => {
@@ -550,11 +563,20 @@ function ControlItem({
       fetch(`/api/controls/${encoded}/exceptions?framework=${fw}`)
         .then((r) => r.json())
         .catch(() => null),
-    ]).then(([noteData, excData]) => {
+      fetch(`/api/controls/${encoded}/evidence-feedback?framework=${fw}`)
+        .then((r) => r.json())
+        .catch(() => null),
+      fetch(`/api/benchmarks/controls?framework=${fw}&controlCode=${encoded}`)
+        .then((r) => r.json())
+        .catch(() => null),
+    ]).then(([noteData, excData, feedbackData, benchmarkData]) => {
       if (noteData?.note?.content) setNoteContent(noteData.note.content);
       if (excData?.isActive && excData.exception) {
         setException({ reason: excData.exception.reason, expiresAt: excData.exception.expiresAt });
       }
+      if (feedbackData?.ratings) setRatings(feedbackData.ratings as Record<string, string>);
+      if (benchmarkData?.benchmark)
+        setControlBenchmark(benchmarkData.benchmark as typeof controlBenchmark);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpanded]);
@@ -601,6 +623,31 @@ function ControlItem({
       { method: "DELETE" }
     );
     setException(null);
+  };
+
+  const submitFeedback = async (hash: string, rating: "positive" | "negative") => {
+    // Toggle off if same rating clicked again
+    const newRating: "positive" | "negative" | null = ratings[hash] === rating ? null : rating;
+    setRatings((prev) => {
+      const next = { ...prev };
+      if (newRating === null) delete next[hash];
+      else next[hash] = newRating;
+      return next;
+    });
+    setRatingLoading(hash);
+    try {
+      await fetch(`/api/controls/${encodeURIComponent(control.controlCode)}/evidence-feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          frameworkName: control.frameworkName,
+          evidenceHash: hash,
+          rating: newRating,
+        }),
+      });
+    } finally {
+      setRatingLoading(null);
+    }
   };
 
   return (
@@ -677,6 +724,29 @@ function ControlItem({
             className="overflow-hidden"
           >
             <div className="px-5 pb-5 pt-2 border-t border-gray-100 bg-gray-50/30">
+              {/* Industry benchmark chip */}
+              {controlBenchmark && (
+                <div className="flex items-center gap-2 mb-4">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border",
+                      controlBenchmark.orgPasses
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-gray-50 text-gray-600 border-gray-200"
+                    )}
+                    title={`Based on ${controlBenchmark.sampleCount} similar organisations`}
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    </svg>
+                    {Math.round(controlBenchmark.passRate * 100)}% of peers pass this control
+                    {controlBenchmark.orgPasses && (
+                      <span className="text-emerald-500">· You pass</span>
+                    )}
+                  </span>
+                </div>
+              )}
+
               {control.controlDescription && (
                 <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">
                   {control.controlDescription}
@@ -712,32 +782,76 @@ function ControlItem({
                       transition={{ delay: idx * 0.05 }}
                       className="bg-white rounded-lg p-4 text-sm border border-gray-200 shadow-sm"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900">{item.title}</p>
-                          <p className="text-gray-600 mt-1">{item.description}</p>
-                        </div>
-                        {item.url && (
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-accent hover:text-accent-hover ml-4 flex-shrink-0 transition-colors"
-                          >
-                            <ExternalLinkIcon className="w-4 h-4" />
-                          </a>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-xs text-gray-400">
-                          {new Date(item.timestamp).toLocaleString()}
-                        </p>
-                        {item.repositoryFullName && (
-                          <Badge variant="info" className="text-xs">
-                            {item.repositoryFullName}
-                          </Badge>
-                        )}
-                      </div>
+                      {(() => {
+                        const hash = makeEvidenceHash(item);
+                        const myRating = ratings[hash];
+                        const isLoading = ratingLoading === hash;
+                        return (
+                          <>
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="font-medium text-gray-900">{item.title}</p>
+                                <p className="text-gray-600 mt-1">{item.description}</p>
+                              </div>
+                              <div className="flex items-center gap-1 ml-4 flex-shrink-0">
+                                {/* Thumbs feedback */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void submitFeedback(hash, "positive");
+                                  }}
+                                  disabled={isLoading}
+                                  title="Relevant evidence"
+                                  className={cn(
+                                    "p-1 rounded transition-colors",
+                                    myRating === "positive"
+                                      ? "text-emerald-600"
+                                      : "text-gray-300 hover:text-emerald-500"
+                                  )}
+                                >
+                                  <ThumbUpIcon className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void submitFeedback(hash, "negative");
+                                  }}
+                                  disabled={isLoading}
+                                  title="Not relevant"
+                                  className={cn(
+                                    "p-1 rounded transition-colors",
+                                    myRating === "negative"
+                                      ? "text-red-500"
+                                      : "text-gray-300 hover:text-red-400"
+                                  )}
+                                >
+                                  <ThumbDownIcon className="w-3.5 h-3.5" />
+                                </button>
+                                {item.url && (
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-accent hover:text-accent-hover ml-1 transition-colors"
+                                  >
+                                    <ExternalLinkIcon className="w-4 h-4" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between mt-2">
+                              <p className="text-xs text-gray-400">
+                                {new Date(item.timestamp).toLocaleString()}
+                              </p>
+                              {item.repositoryFullName && (
+                                <Badge variant="info" className="text-xs">
+                                  {item.repositoryFullName}
+                                </Badge>
+                              )}
+                            </div>
+                          </>
+                        );
+                      })()}
                     </motion.div>
                   ))}
                 </div>
@@ -947,6 +1061,22 @@ function ExternalLinkIcon({ className }: { className?: string }) {
         strokeWidth={2}
         d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
       />
+    </svg>
+  );
+}
+
+function ThumbUpIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+    </svg>
+  );
+}
+
+function ThumbDownIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
     </svg>
   );
 }

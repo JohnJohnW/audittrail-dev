@@ -66,6 +66,7 @@ export default async function DashboardPage() {
       scoreDelta={data?.scoreDelta ?? null}
       weakestFramework={data?.weakestFramework ?? null}
       lastSyncedAt={data?.lastSyncedAt ?? null}
+      remediationVelocity={data?.remediationVelocity ?? null}
     />
   );
 }

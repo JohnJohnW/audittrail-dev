@@ -13,6 +13,7 @@ import { logger } from "@/lib/logger";
 import { syncRepository, CRON_SYNC_OPTIONS } from "@/lib/github-sync";
 import { detectAndCreateAlerts } from "@/lib/alerts";
 import { computeIndustryBenchmarks } from "@/lib/benchmarks";
+import { detectRemediationEvents } from "@/lib/remediation";
 
 // Cron job endpoint for automatic syncing
 // Protected by CRON_SECRET to prevent unauthorized access
@@ -196,6 +197,44 @@ async function storeComplianceSnapshot(orgId: string) {
         frameworkScores,
       },
     });
+
+    // Write per-control snapshots so we can track per-control history over time.
+    // evidence.controls is already in scope — no extra DB round-trip needed.
+    const controlSnapshots = evidence.controls.map((c) => ({
+      orgId,
+      controlCode: c.controlCode,
+      frameworkName: c.frameworkName,
+      status: c.status as string,
+      evidenceCount: c.evidenceCount,
+      snapshotDate: today,
+    }));
+
+    // Chunk into batches of 50 to stay within Prisma transaction limits
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < controlSnapshots.length; i += BATCH_SIZE) {
+      const batch = controlSnapshots.slice(i, i + BATCH_SIZE);
+      await db.$transaction(
+        batch.map((s) =>
+          db.controlStatusSnapshot.upsert({
+            where: {
+              orgId_controlCode_frameworkName_snapshotDate: {
+                orgId: s.orgId,
+                controlCode: s.controlCode,
+                frameworkName: s.frameworkName,
+                snapshotDate: s.snapshotDate,
+              },
+            },
+            update: { status: s.status, evidenceCount: s.evidenceCount },
+            create: s,
+          })
+        )
+      );
+    }
+
+    // Detect any controls that improved since the previous snapshot (non-blocking)
+    detectRemediationEvents(orgId).catch((err) =>
+      logger.warn("Remediation detection failed", { orgId, error: String(err) })
+    );
 
     logger.info(`Stored compliance snapshot for org ${orgId}: ${summary.score}%`);
   } catch (error) {

@@ -138,6 +138,108 @@ export async function computeIndustryBenchmarks(): Promise<void> {
       }
     }
 
+    // ── Per-control benchmarks (from ControlStatusSnapshot) ───────────────────
+    // Single query: last 2 days of per-control snapshots for qualifying orgs
+    const twoDaysAgo = new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000);
+    const allControlSnaps = await db.controlStatusSnapshot.findMany({
+      where: { orgId: { in: orgIds }, snapshotDate: { gte: twoDaysAgo } },
+      select: {
+        orgId: true,
+        controlCode: true,
+        frameworkName: true,
+        status: true,
+        snapshotDate: true,
+      },
+      orderBy: { snapshotDate: "desc" },
+    });
+
+    // Keep only the most recent snapshot per org (deduplicate)
+    const latestDatePerOrg = new Map<string, Date>();
+    for (const snap of allControlSnaps) {
+      const existing = latestDatePerOrg.get(snap.orgId);
+      if (!existing || snap.snapshotDate > existing) {
+        latestDatePerOrg.set(snap.orgId, snap.snapshotDate);
+      }
+    }
+    const freshSnaps = allControlSnaps.filter((s) => {
+      const latest = latestDatePerOrg.get(s.orgId);
+      return latest && s.snapshotDate.getTime() === latest.getTime();
+    });
+
+    // Group by cohort (industry × companySize × framework × controlCode)
+    const profileByOrgId = new Map(profiles.map((p) => [p.orgId, p]));
+    type ControlCohortValue = {
+      industry: string | null;
+      companySize: string | null;
+      frameworkName: string;
+      controlCode: string;
+      values: number[];
+    };
+    const controlCohorts = new Map<string, ControlCohortValue>();
+
+    for (const snap of freshSnaps) {
+      const profile = profileByOrgId.get(snap.orgId);
+      if (!profile) continue;
+      const key = `${profile.industry}::${profile.companySize}::${snap.frameworkName}::${snap.controlCode}`;
+      if (!controlCohorts.has(key)) {
+        controlCohorts.set(key, {
+          industry: profile.industry,
+          companySize: profile.companySize,
+          frameworkName: snap.frameworkName,
+          controlCode: snap.controlCode,
+          values: [],
+        });
+      }
+      // Weighted score: has_evidence=1, partial=0.5, limited=0.25, no_evidence=0
+      const score =
+        snap.status === "has_evidence"
+          ? 1
+          : snap.status === "partial"
+            ? 0.5
+            : snap.status === "limited"
+              ? 0.25
+              : 0;
+      controlCohorts.get(key)!.values.push(score);
+    }
+
+    // Write per-control benchmarks
+    for (const [, cc] of Array.from(controlCohorts)) {
+      if (cc.values.length < MINIMUM_COHORT_SIZE) continue;
+
+      const sorted = [...cc.values].sort((a, b) => a - b);
+      const avgScore = (cc.values.reduce((s, v) => s + v, 0) / cc.values.length) * 100;
+      const passRate = cc.values.filter((v) => v >= 1).length / cc.values.length;
+      const p25 = (percentile(sorted, 25) ?? 0) * 100;
+      const p50 = (percentile(sorted, 50) ?? 0) * 100;
+      const p75 = (percentile(sorted, 75) ?? 0) * 100;
+
+      await db.industryBenchmark.deleteMany({
+        where: {
+          framework: cc.frameworkName,
+          industry: cc.industry,
+          companySize: cc.companySize,
+          controlCode: cc.controlCode,
+          computedAt: today,
+        },
+      });
+      await db.industryBenchmark.create({
+        data: {
+          framework: cc.frameworkName,
+          industry: cc.industry,
+          companySize: cc.companySize,
+          controlCode: cc.controlCode,
+          passRate,
+          avgScore,
+          p25,
+          p50,
+          p75,
+          sampleCount: cc.values.length,
+          computedAt: today,
+        },
+      });
+      benchmarksWritten++;
+    }
+
     logger.info(`Benchmark computation complete: ${benchmarksWritten} entries written`);
   } catch (error) {
     logger.error("Benchmark computation error", error);
@@ -207,6 +309,59 @@ export async function getOrgBenchmarkPercentile(
     p75: benchmark.p75,
     percentile: pctile,
     sampleCount: benchmark.sampleCount,
+  };
+}
+
+/**
+ * Get control-level benchmark for a single org + framework + controlCode.
+ * Returns the industry pass rate and where the org sits relative to peers.
+ * Returns null if no benchmark data exists yet (less than 5 peer orgs).
+ */
+export async function getControlBenchmark(
+  orgId: string,
+  framework: string,
+  controlCode: string
+): Promise<{
+  passRate: number;
+  p50: number;
+  sampleCount: number;
+  orgPasses: boolean;
+} | null> {
+  const profile = await db.orgProfile.findUnique({ where: { orgId } });
+  if (!profile?.industry || !profile.companySize) return null;
+
+  // Org's current status for this control
+  const currentSnap = await db.controlStatusSnapshot.findFirst({
+    where: { orgId, controlCode, frameworkName: framework },
+    orderBy: { snapshotDate: "desc" },
+    select: { status: true },
+  });
+
+  // Exact cohort first, then industry-only fallback
+  let benchmark = await db.industryBenchmark.findFirst({
+    where: {
+      framework,
+      industry: profile.industry,
+      companySize: profile.companySize,
+      controlCode,
+    },
+    orderBy: { computedAt: "desc" },
+  });
+
+  if (!benchmark) {
+    benchmark = await db.industryBenchmark.findFirst({
+      where: { framework, industry: profile.industry, companySize: null, controlCode },
+      orderBy: { computedAt: "desc" },
+    });
+  }
+
+  if (!benchmark) return null;
+
+  return {
+    passRate: benchmark.passRate,
+    p50: benchmark.p50,
+    sampleCount: benchmark.sampleCount,
+    orgPasses: currentSnap?.status === "has_evidence",
   };
 }
 

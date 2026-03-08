@@ -43,6 +43,7 @@ interface DashboardContentProps {
   scoreDelta: number | null;
   weakestFramework: { name: string; score: number } | null;
   lastSyncedAt: Date | null;
+  remediationVelocity: { controlsFixed: number; avgDaysToFix: number | null } | null;
 }
 
 export function DashboardContent({
@@ -57,6 +58,7 @@ export function DashboardContent({
   scoreDelta,
   weakestFramework,
   lastSyncedAt,
+  remediationVelocity,
 }: DashboardContentProps) {
   return (
     <div>
@@ -124,6 +126,28 @@ export function DashboardContent({
           )}
         </StatCardGrid>
       </FadeIn>
+
+      {/* Remediation Velocity — only shown once we have 30-day history */}
+      {remediationVelocity && remediationVelocity.controlsFixed > 0 && (
+        <FadeIn delay={0.15}>
+          <StatCardGrid columns={{ default: 2 }} className="mb-6 sm:mb-8">
+            <StatCard
+              label="Controls Remediated"
+              value={remediationVelocity.controlsFixed}
+              subtitle="last 30 days"
+              icon={<RemediationIcon />}
+            />
+            {remediationVelocity.avgDaysToFix !== null && (
+              <StatCard
+                label="Avg. Days to Fix"
+                value={remediationVelocity.avgDaysToFix}
+                subtitle="from gap to evidence"
+                icon={<ClockIcon />}
+              />
+            )}
+          </StatCardGrid>
+        </FadeIn>
+      )}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -477,6 +501,32 @@ function ChartIcon() {
         strokeLinejoin="round"
         strokeWidth={1.5}
         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+      />
+    </svg>
+  );
+}
+
+function RemediationIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
       />
     </svg>
   );
