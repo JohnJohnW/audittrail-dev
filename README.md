@@ -447,37 +447,11 @@ graph LR
 The compliance engine maps four types of GitHub artifacts to control requirements:
 
 ```mermaid
-flowchart TD
-    subgraph Artifacts["GitHub Artifacts"]
-        C["Commits\nsha · message · GPG"]
-        PR["Pull Requests\nreviews · approvals"]
-        BP["Branch Protection\nrules · status checks"]
-        CI["CI Workflows\nbuild · test · deploy"]
-    end
-
-    subgraph Engine["Compliance Engine"]
-        KW["Keyword\nmatching"]
-        RC["Review\nthresholds"]
-        BP2["Protection\nchecks"]
-        WF["Workflow\npatterns"]
-    end
-
-    subgraph Status["Evidence Status"]
-        HE(["Has Evidence"])
-        PA(["Partial"])
-        LI(["Limited"])
-        NE(["No Evidence"])
-    end
-
-    C  --> KW
-    PR --> RC
-    BP --> BP2
-    CI --> WF
-
-    KW  --> HE & PA
-    RC  --> HE & PA
-    BP2 --> HE & LI
-    WF  --> HE & NE
+flowchart LR
+    C["Commits\nsha · message · GPG"]   --> KW["Keyword\nmatching"]   --> O1(["Has Evidence / Partial"])
+    PR["Pull Requests\nreviews · approvals"] --> RC["Review\nthresholds"]  --> O2(["Has Evidence / Partial"])
+    BP["Branch Protection\nrules · status checks"] --> BP2["Protection\nchecks"] --> O3(["Has Evidence / Limited"])
+    CI["CI Workflows\nbuild · test · deploy"]  --> WF["Workflow\npatterns"]  --> O4(["Has Evidence / No Evidence"])
 ```
 
 ### Gap Analysis
