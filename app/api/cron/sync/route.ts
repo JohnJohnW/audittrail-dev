@@ -11,6 +11,8 @@ import {
 import { sendWeeklyDigest } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
 import { syncRepository, CRON_SYNC_OPTIONS } from "@/lib/github-sync";
+import { detectAndCreateAlerts } from "@/lib/alerts";
+import { computeIndustryBenchmarks } from "@/lib/benchmarks";
 
 // Cron job endpoint for automatic syncing
 // Protected by CRON_SECRET to prevent unauthorized access
@@ -97,6 +99,11 @@ export async function GET(request: NextRequest) {
         // Store daily compliance snapshot after sync
         await storeComplianceSnapshot(org.id);
 
+        // Detect compliance regressions and create alerts (non-blocking)
+        detectAndCreateAlerts(org.id, org.repositories).catch((err) =>
+          logger.warn("Alert detection failed", { orgId: org.id, error: String(err) })
+        );
+
         // Send weekly digest on Mondays (cron runs at 2am UTC daily)
         const today = new Date();
         if (today.getUTCDay() === 1) {
@@ -123,6 +130,11 @@ export async function GET(request: NextRequest) {
 
     const successCount = results.filter((r) => r.status === "success").length;
     logger.info(`Sync completed: ${successCount}/${organizations.length} organizations synced`);
+
+    // Recompute industry benchmarks once per cron run (non-blocking)
+    computeIndustryBenchmarks().catch((err) =>
+      logger.warn("Benchmark computation failed", { error: String(err) })
+    );
 
     return NextResponse.json({
       success: true,

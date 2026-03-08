@@ -556,6 +556,48 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
   },
 };
 
+export interface GapPriority {
+  /** Points added to overall compliance score if this gap is closed */
+  scoreImpact: number;
+  /** Implementation effort level */
+  effort: "low" | "medium" | "high";
+  /** Rough estimate of days to fix */
+  daysToFix: number;
+}
+
+// Maps evidenceType → effort + days estimate
+const EFFORT_BY_EVIDENCE_TYPE: Record<string, Pick<GapPriority, "effort" | "daysToFix">> = {
+  branch_protection: { effort: "low", daysToFix: 1 },
+  pr_approvals: { effort: "low", daysToFix: 2 },
+  pr: { effort: "low", daysToFix: 2 },
+  commit_history: { effort: "medium", daysToFix: 7 },
+  ci: { effort: "medium", daysToFix: 5 },
+};
+
+/**
+ * Returns a priority score for a compliance gap.
+ * Partial controls count as half-improvement (0.5x scoreImpact).
+ *
+ * @param evidenceType - The control's evidence type
+ * @param status - Current control status
+ * @param totalControls - Total number of controls in scope (for score impact calculation)
+ */
+export function getGapPriority(
+  evidenceType: string,
+  status: "partial" | "no_evidence" | "limited",
+  totalControls: number
+): GapPriority {
+  const perControlImpact = totalControls > 0 ? (1 / totalControls) * 100 : 0;
+  // Partial only needs half the improvement to become "full"
+  const scoreImpact = parseFloat(
+    (status === "partial" ? perControlImpact * 0.5 : perControlImpact).toFixed(1)
+  );
+
+  const effortData = EFFORT_BY_EVIDENCE_TYPE[evidenceType] ?? { effort: "high", daysToFix: 14 };
+
+  return { scoreImpact, ...effortData };
+}
+
 /**
  * Return an actionable recommendation for a control with missing or weak evidence.
  * Returns null for controls that already have full evidence.

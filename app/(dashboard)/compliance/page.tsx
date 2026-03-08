@@ -51,15 +51,35 @@ interface ComplianceScore {
 // Monochromatic accent palette for consistent, professional look
 const PIE_COLORS = [chart.primary, chart.secondary, chart.tertiary];
 
+interface BenchmarkEntry {
+  framework: string;
+  orgScore: number;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  percentile: number | null;
+  sampleCount: number | null;
+}
+
 export default function CompliancePage() {
   const [score, setScore] = useState<ComplianceScore | null>(null);
   const [repositories, setRepositories] = useState<RepositoryRef[]>([]);
   const [selectedRepositories, setSelectedRepositories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [benchmarks, setBenchmarks] = useState<BenchmarkEntry[]>([]);
 
   useEffect(() => {
     fetchData();
+    // Fetch benchmarks (non-blocking, may have no data until flywheel has enough orgs)
+    fetch("/api/benchmarks")
+      .then((r) => r.json())
+      .then((d: { benchmarks?: BenchmarkEntry[] }) => {
+        if (Array.isArray(d.benchmarks)) setBenchmarks(d.benchmarks);
+      })
+      .catch(() => {
+        /* benchmarks are optional */
+      });
   }, []);
 
   useEffect(() => {
@@ -476,6 +496,74 @@ export default function CompliancePage() {
           </CardContent>
         </Card>
       </FadeIn>
+
+      {/* Industry Benchmarks — "How you compare" */}
+      {benchmarks.some((b) => b.percentile !== null) && (
+        <FadeIn delay={0.6}>
+          <Card variant="elevated">
+            <CardHeader>
+              <CardTitle>How You Compare</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-500 mb-5">
+                Your compliance score vs. companies with a similar profile.
+              </p>
+              <div className="space-y-5">
+                {benchmarks
+                  .filter((b) => b.p25 !== null && b.percentile !== null)
+                  .map((b) => (
+                    <div key={b.framework}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-900">{b.framework}</span>
+                        <span className="text-sm text-gray-500">
+                          {b.percentile !== null ? `${Math.round(b.percentile)}th percentile` : ""}
+                          {b.sampleCount ? ` · ${b.sampleCount} similar companies` : ""}
+                        </span>
+                      </div>
+                      {/* Bar chart showing p25/p50/p75/orgScore */}
+                      <div className="relative h-8 bg-gray-100 rounded-full overflow-hidden">
+                        {/* p25–p75 band */}
+                        {b.p25 !== null && b.p75 !== null && (
+                          <div
+                            className="absolute top-0 h-full bg-blue-100 rounded"
+                            style={{
+                              left: `${b.p25}%`,
+                              width: `${Math.max(0, (b.p75 ?? 0) - (b.p25 ?? 0))}%`,
+                            }}
+                          />
+                        )}
+                        {/* Median marker */}
+                        {b.p50 !== null && (
+                          <div
+                            className="absolute top-1 h-6 w-0.5 bg-blue-400 rounded"
+                            style={{ left: `${b.p50}%` }}
+                            title={`Median: ${b.p50}%`}
+                          />
+                        )}
+                        {/* Org score marker */}
+                        <div
+                          className="absolute top-1 h-6 w-1 bg-accent rounded"
+                          style={{ left: `${Math.min(b.orgScore, 99)}%` }}
+                          title={`Your score: ${b.orgScore}%`}
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0%</span>
+                        <span className="text-accent font-medium">You: {b.orgScore}%</span>
+                        {b.p50 !== null && <span>Median: {b.p50}%</span>}
+                        <span>100%</span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-4">
+                Benchmarks are derived from anonymised, aggregated data across similar
+                organisations. Individual org data is never shared.
+              </p>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      )}
     </div>
   );
 }

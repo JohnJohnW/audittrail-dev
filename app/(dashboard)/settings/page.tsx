@@ -41,6 +41,17 @@ interface NotificationPrefsData {
   subscriptionUpdates: boolean;
 }
 
+interface AuditorSessionData {
+  id: string;
+  auditorEmail: string;
+  auditorName: string | null;
+  frameworkFilter: string | null;
+  expiresAt: string;
+  createdAt: string;
+  lastActiveAt: string | null;
+  token: string;
+}
+
 function SettingsContent() {
   const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
@@ -61,6 +72,21 @@ function SettingsContent() {
   });
   const [savingPrefs, setSavingPrefs] = useState(false);
 
+  // Org profile state
+  const [orgIndustry, setOrgIndustry] = useState("");
+  const [orgSize, setOrgSize] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  // Auditor session state
+  const [auditorSessions, setAuditorSessions] = useState<AuditorSessionData[]>([]);
+  const [newAuditorEmail, setNewAuditorEmail] = useState("");
+  const [newAuditorName, setNewAuditorName] = useState("");
+  const [newAuditorDays, setNewAuditorDays] = useState("30");
+  const [creatingSession, setCreatingSession] = useState(false);
+  const [newSessionLink, setNewSessionLink] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
 
@@ -76,10 +102,57 @@ function SettingsContent() {
     }
   }, []);
 
+  const fetchAuditorSessions = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auditor/sessions");
+      if (res.ok) {
+        const data = await res.json();
+        setAuditorSessions(data.sessions ?? []);
+      }
+    } catch {
+      // non-critical
+    }
+  }, []);
+
+  const fetchOrgProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/org/profile");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.profile) {
+          setOrgIndustry(data.profile.industry ?? "");
+          setOrgSize(data.profile.companySize ?? "");
+        }
+      }
+    } catch {
+      // non-critical
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
     fetchApiKeys();
-  }, [fetchApiKeys]);
+    fetchAuditorSessions();
+    fetchOrgProfile();
+  }, [fetchApiKeys, fetchAuditorSessions, fetchOrgProfile]);
+
+  const saveOrgProfile = async () => {
+    setSavingProfile(true);
+    try {
+      await fetch("/api/org/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          industry: orgIndustry || null,
+          companySize: orgSize || null,
+        }),
+      });
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2000);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -147,6 +220,32 @@ function SettingsContent() {
       alert("Failed to open billing portal. Please try again.");
     } finally {
       setManagingBilling(false);
+    }
+  };
+
+  const createAuditorSession = async () => {
+    if (!newAuditorEmail.trim()) return;
+    setCreatingSession(true);
+    try {
+      const res = await fetch("/api/auditor/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          auditorEmail: newAuditorEmail.trim(),
+          auditorName: newAuditorName.trim() || null,
+          expiresInDays: parseInt(newAuditorDays, 10) || 30,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNewSessionLink(data.portalLink);
+        setNewAuditorEmail("");
+        setNewAuditorName("");
+        setNewAuditorDays("30");
+        fetchAuditorSessions();
+      }
+    } finally {
+      setCreatingSession(false);
     }
   };
 
@@ -527,6 +626,208 @@ function SettingsContent() {
               </div>
             ) : (
               <p className="text-sm text-gray-400 text-center py-4">No API keys yet.</p>
+            )}
+          </CardContent>
+        </Card>
+      </FadeIn>
+
+      {/* Org Profile — used for benchmark segmentation */}
+      <FadeIn delay={0.45}>
+        <Card variant="elevated">
+          <CardHeader>
+            <CardTitle>Company Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 mb-5">
+              Help us show you how your compliance compares to similar companies. This data is never
+              shared — it&apos;s only used to segment anonymised benchmarks.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Industry</label>
+                <select
+                  value={orgIndustry}
+                  onChange={(e) => setOrgIndustry(e.target.value)}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent bg-white"
+                >
+                  <option value="">Select industry</option>
+                  <option value="saas">SaaS</option>
+                  <option value="fintech">Fintech</option>
+                  <option value="healthcare">Healthcare</option>
+                  <option value="government">Government</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Team Size</label>
+                <select
+                  value={orgSize}
+                  onChange={(e) => setOrgSize(e.target.value)}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent bg-white"
+                >
+                  <option value="">Select size</option>
+                  <option value="1-10">1–10 people</option>
+                  <option value="11-50">11–50 people</option>
+                  <option value="51-200">51–200 people</option>
+                  <option value="201-1000">201–1,000 people</option>
+                  <option value="1000+">1,000+ people</option>
+                </select>
+              </div>
+            </div>
+            <Button
+              variant="accent"
+              onClick={saveOrgProfile}
+              loading={savingProfile}
+              disabled={savingProfile}
+              size="sm"
+            >
+              {profileSaved ? "Saved!" : "Save Profile"}
+            </Button>
+          </CardContent>
+        </Card>
+      </FadeIn>
+
+      {/* Auditor Access */}
+      <FadeIn delay={0.5}>
+        <Card variant="elevated">
+          <CardHeader>
+            <CardTitle>Auditor Access</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 mb-5">
+              Create time-limited, token-gated links for external auditors. No account required —
+              auditors can view evidence, add comments, sign off controls, and download evidence
+              packages.
+            </p>
+
+            {/* New link shown after creation */}
+            <AnimatePresence>
+              {newSessionLink && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+                >
+                  <p className="text-sm font-medium text-blue-800 mb-2">
+                    ✓ Auditor link created — share this with your auditor:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-white border border-blue-200 px-3 py-2 rounded font-mono break-all">
+                      {newSessionLink}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(newSessionLink);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      className="shrink-0 px-3 py-2 text-xs font-medium bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
+                    >
+                      {copiedLink ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setNewSessionLink(null)}
+                    className="text-xs text-blue-600 hover:text-blue-800 mt-2"
+                  >
+                    Dismiss
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Invite form */}
+            <div className="flex flex-col sm:flex-row gap-2 mb-5">
+              <input
+                type="email"
+                value={newAuditorEmail}
+                onChange={(e) => setNewAuditorEmail(e.target.value)}
+                placeholder="auditor@example.com"
+                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+              />
+              <input
+                type="text"
+                value={newAuditorName}
+                onChange={(e) => setNewAuditorName(e.target.value)}
+                placeholder="Name (optional)"
+                className="sm:w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+              />
+              <select
+                value={newAuditorDays}
+                onChange={(e) => setNewAuditorDays(e.target.value)}
+                className="sm:w-32 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent bg-white"
+              >
+                <option value="7">7 days</option>
+                <option value="14">14 days</option>
+                <option value="30">30 days</option>
+                <option value="60">60 days</option>
+                <option value="90">90 days</option>
+              </select>
+              <Button
+                variant="accent"
+                onClick={createAuditorSession}
+                loading={creatingSession}
+                disabled={creatingSession || !newAuditorEmail.trim()}
+                className="shrink-0"
+              >
+                Invite Auditor
+              </Button>
+            </div>
+
+            {/* Active sessions list */}
+            {auditorSessions.length > 0 ? (
+              <div className="divide-y divide-gray-100 border border-gray-100 rounded-lg">
+                {auditorSessions.map((s) => {
+                  const isExpired = new Date(s.expiresAt) < new Date();
+                  return (
+                    <div key={s.id} className="flex items-center justify-between px-4 py-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            {s.auditorName ?? s.auditorEmail}
+                          </span>
+                          {isExpired ? (
+                            <Badge variant="error" size="sm">
+                              Expired
+                            </Badge>
+                          ) : (
+                            <Badge variant="success" size="sm">
+                              Active
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {s.auditorEmail}
+                          {" · "}
+                          {isExpired
+                            ? `Expired ${new Date(s.expiresAt).toLocaleDateString()}`
+                            : `Expires ${new Date(s.expiresAt).toLocaleDateString()}`}
+                          {s.lastActiveAt &&
+                            ` · Last active ${new Date(s.lastActiveAt).toLocaleDateString()}`}
+                        </p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (
+                            !confirm(
+                              "Revoke this auditor's access? They will no longer be able to view evidence."
+                            )
+                          )
+                            return;
+                          await fetch(`/api/auditor/sessions/${s.id}`, { method: "DELETE" });
+                          fetchAuditorSessions();
+                        }}
+                        className="text-xs text-red-500 hover:text-red-700 font-medium ml-4 shrink-0"
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-4">No auditor sessions yet.</p>
             )}
           </CardContent>
         </Card>

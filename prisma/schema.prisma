@@ -25,6 +25,8 @@ model User {
   sessions    Session[]
   memberships OrgMembership[]
   exports     Export[]
+  controlNotes   ControlNote[]
+  auditorComments AuditorComment[]
 
   @@map("users")
 }
@@ -89,6 +91,13 @@ model Organization {
   apiKeys                 ApiKey[]
   notificationPreferences NotificationPreferences?
   shareableReports        ShareableReport[]
+  alerts               ComplianceAlert[]
+  controlNotes         ControlNote[]
+  evidenceExceptions   EvidenceException[]
+  auditorSessions      AuditorSession[]
+  auditorComments      AuditorComment[]
+  controlSignoffs      ControlSignoff[]
+  orgProfile           OrgProfile?
 
   @@map("organizations")
 }
@@ -367,5 +376,161 @@ model ShareableReport {
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@map("shareable_reports")
+}
+
+// ============================================
+// COMPLIANCE MONITORING & ALERTS
+// ============================================
+
+model ComplianceAlert {
+  id          String    @id @default(cuid())
+  orgId       String    @map("org_id")
+  type        String
+  severity    String    @default("medium")
+  title       String
+  description String    @db.Text
+  metadata    Json?
+  resolvedAt  DateTime? @map("resolved_at")
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, resolvedAt, createdAt])
+  @@map("compliance_alerts")
+}
+
+// ============================================
+// LOCK-IN FEATURES
+// ============================================
+
+model ControlNote {
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  controlCode   String   @map("control_code")
+  frameworkName String   @map("framework_name")
+  content       String   @db.Text
+  authorId      String   @map("author_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  author       User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, controlCode, frameworkName])
+  @@map("control_notes")
+}
+
+model EvidenceException {
+  id            String    @id @default(cuid())
+  orgId         String    @map("org_id")
+  controlCode   String    @map("control_code")
+  frameworkName String    @map("framework_name")
+  reason        String    @db.Text
+  expiresAt     DateTime? @map("expires_at")
+  createdBy     String    @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, controlCode, frameworkName])
+  @@map("evidence_exceptions")
+}
+
+// ============================================
+// AUDITOR PORTAL
+// ============================================
+
+model AuditorSession {
+  id              String    @id @default(cuid())
+  orgId           String    @map("org_id")
+  auditorEmail    String    @map("auditor_email")
+  auditorName     String?   @map("auditor_name")
+  token           String    @unique
+  frameworkFilter String?   @map("framework_filter")
+  expiresAt       DateTime  @map("expires_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  lastActiveAt    DateTime? @map("last_active_at")
+
+  organization Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  comments     AuditorComment[]
+  signoffs     ControlSignoff[]
+
+  @@index([orgId])
+  @@map("auditor_sessions")
+}
+
+model AuditorComment {
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  sessionId     String   @map("session_id")
+  controlCode   String   @map("control_code")
+  frameworkName String   @map("framework_name")
+  body          String   @db.Text
+  status        String   @default("open")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  organization Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  session      AuditorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  author       User?          @relation(fields: [resolvedBy], references: [id])
+  resolvedBy   String?        @map("resolved_by")
+
+  @@index([orgId, controlCode])
+  @@map("auditor_comments")
+}
+
+model ControlSignoff {
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  sessionId     String   @map("session_id")
+  controlCode   String   @map("control_code")
+  frameworkName String   @map("framework_name")
+  verdict       String
+  note          String?  @db.Text
+  signedAt      DateTime @default(now()) @map("signed_at")
+
+  organization Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  session      AuditorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, controlCode, frameworkName])
+  @@index([orgId, controlCode])
+  @@map("control_signoffs")
+}
+
+// ============================================
+// DATA FLYWHEEL
+// ============================================
+
+model OrgProfile {
+  id          String   @id @default(cuid())
+  orgId       String   @unique @map("org_id")
+  industry    String?
+  companySize String?  @map("company_size")
+  techStack   String[]
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("org_profiles")
+}
+
+model IndustryBenchmark {
+  id          String   @id @default(cuid())
+  framework   String
+  industry    String?
+  companySize String?  @map("company_size")
+  controlCode String   @map("control_code")
+  passRate    Float    @map("pass_rate")
+  avgScore    Float    @map("avg_score")
+  p25         Float
+  p50         Float
+  p75         Float
+  sampleCount Int      @map("sample_count")
+  computedAt  DateTime @default(now()) @map("computed_at")
+
+  @@unique([framework, industry, companySize, controlCode, computedAt])
+  @@index([framework, industry, companySize, computedAt])
+  @@map("industry_benchmarks")
 }
 
