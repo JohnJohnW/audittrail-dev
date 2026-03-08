@@ -160,7 +160,7 @@ flowchart TD
     AGG --> BM
     BM --> PCT
     BM --> CR
-    PCT & CR -->|shown in dashboard| Orgs
+    Value -->|shown in dashboard| Orgs
 ```
 
 ### 2. Workflow Lock-In
@@ -383,21 +383,20 @@ The **Auditor Portal** (`/auditor/{token}`) is intentionally unauthenticated; it
 Billing is handled entirely by Stripe. The application reacts to Stripe webhook events to keep subscription state in sync.
 
 ```mermaid
-stateDiagram-v2
-    state "Checkout Pending" as Checkout
-    state "Past Due" as PastDue
+flowchart TD
+    INIT(( )) -->|GitHub sign-up| Free[Free]
 
-    [*] --> Free : GitHub sign-up
+    Free -->|click Upgrade| Checkout[Checkout Pending]
+    Checkout -->|abandoned| Free
+    Checkout -->|checkout.session.completed| Pro[Pro]
 
-    Free --> Checkout : click Upgrade
-    Checkout --> Free : abandoned
-    Checkout --> Pro : checkout.session.completed
+    Pro -->|invoice.payment_failed| PastDue[Past Due]
+    PastDue -->|payment retry succeeded| Pro
+    PastDue -->|subscription.deleted| Free
 
-    Pro --> PastDue : invoice.payment_failed
-    PastDue --> Pro : payment retry succeeded
-    PastDue --> Free : subscription.deleted
+    Pro -->|user cancels| Free
 
-    Pro --> Free : user cancels
+    style INIT fill:#333,color:#333,stroke:#333
 ```
 
 Stripe events handled by `/api/webhooks/stripe`:
@@ -476,8 +475,8 @@ flowchart TD
     BP --> BP2
     CI --> WF
 
-    KW  --> HE
     KW  --> PA
+    KW  --> HE
     RC  --> HE
     RC  --> PA
     BP2 --> HE
