@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -277,6 +278,7 @@ function EmptyGitHubState() {
 }
 
 function ConnectionErrorState() {
+  const router = useRouter();
   return (
     <div className="text-center py-8">
       <div className="w-14 h-14 bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
@@ -298,7 +300,7 @@ function ConnectionErrorState() {
       <p className="text-xs text-gray-500 mb-4">
         There was a temporary issue. Refresh the page to try again.
       </p>
-      <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
+      <Button variant="secondary" size="sm" onClick={() => router.refresh()}>
         Refresh page
       </Button>
     </div>

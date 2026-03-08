@@ -4,6 +4,13 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "2mb",
     },
+    // Prevent the client-side router cache from serving stale server component
+    // payloads for dynamic pages. Without this, navigating away from /compliance
+    // and back to /dashboard can serve a cached (potentially errored) payload
+    // for up to 30 seconds even though the page uses force-dynamic.
+    staleTimes: {
+      dynamic: 0,
+    },
   },
 
   async headers() {

@@ -15,6 +15,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Legend,
 } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
@@ -597,13 +598,13 @@ export default function CompliancePage() {
                           cy="50%"
                           labelLine={true}
                           label={(props: PieLabelProps) => {
-                            const { name, percent } = props;
+                            const { percent } = props;
                             // Only show label if segment is significant (>5%)
                             if (!percent || percent < 0.05) return "";
-                            return `${name || ""}\n${(percent * 100).toFixed(0)}%`;
+                            return `${(percent * 100).toFixed(0)}%`;
                           }}
-                          outerRadius={100}
-                          innerRadius={60}
+                          outerRadius={90}
+                          innerRadius={55}
                           fill={chart.primary}
                           dataKey="value"
                           strokeWidth={2}
@@ -617,11 +618,12 @@ export default function CompliancePage() {
                         </Pie>
                         <Tooltip
                           contentStyle={chartStyles.tooltip.contentStyle}
-                          formatter={(value: unknown) => {
+                          formatter={(value: unknown, name: unknown) => {
                             const numValue = typeof value === "number" ? value : 0;
-                            return `${numValue} controls`;
+                            return [`${numValue} controls`, name];
                           }}
                         />
+                        <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (

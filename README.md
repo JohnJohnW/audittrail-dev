@@ -140,7 +140,7 @@ This dataset only exists inside Audit Trail. It cannot be replicated by a compet
 
 ```mermaid
 flowchart TD
-    subgraph Orgs["Participating Organisations (anonymised)"]
+    subgraph Orgs["Participating Orgs"]
         O1[Startup A]
         O2[Startup B]
         O3[Startup C]
@@ -151,7 +151,7 @@ flowchart TD
     AGG["Nightly aggregation\n≥5 org privacy floor"]
     BM["IndustryBenchmark table\np25 / p50 / p75 per control"]
 
-    subgraph Value["Value Returned"]
+    subgraph Value["Value Returned to Orgs"]
         PCT["Percentile rank\nper framework"]
         CR["Control pass rates\nvs peer cohort"]
     end
@@ -160,7 +160,6 @@ flowchart TD
     AGG --> BM
     BM --> PCT
     BM --> CR
-    Value -->|shown in dashboard| Orgs
 ```
 
 ### 2. Workflow Lock-In
@@ -448,36 +447,37 @@ graph LR
 The compliance engine maps four types of GitHub artifacts to control requirements:
 
 ```mermaid
-flowchart LR
-    C["Commits\nsha · message · GPG"]
-    PR["Pull Requests\nreviews · approvals"]
-    BP["Branch Protection\nrules · status checks"]
-    CI["CI Workflows\nbuild · test · deploy"]
+flowchart TD
+    subgraph Artifacts["GitHub Artifacts"]
+        C["Commits\nsha · message · GPG"]
+        PR["Pull Requests\nreviews · approvals"]
+        BP["Branch Protection\nrules · status checks"]
+        CI["CI Workflows\nbuild · test · deploy"]
+    end
 
-    KW["Keyword\nmatching"]
-    RC["Review\nthresholds"]
-    BP2["Protection\nchecks"]
-    WF["Workflow\npatterns"]
+    subgraph Engine["Compliance Engine"]
+        KW["Keyword\nmatching"]
+        RC["Review\nthresholds"]
+        BP2["Protection\nchecks"]
+        WF["Workflow\npatterns"]
+    end
 
-    PA(["Partial"])
-    HE(["Has Evidence"])
-    LI(["Limited"])
-    NE(["No Evidence"])
+    subgraph Status["Evidence Status"]
+        HE(["Has Evidence"])
+        PA(["Partial"])
+        LI(["Limited"])
+        NE(["No Evidence"])
+    end
 
     C  --> KW
     PR --> RC
     BP --> BP2
     CI --> WF
 
-    KW  --> HE
-    RC  --> HE
-    BP2 --> HE
-    WF  --> HE
-
-    KW  --> PA
-    RC  --> PA
-    BP2 --> LI
-    WF  --> NE
+    KW  --> HE & PA
+    RC  --> HE & PA
+    BP2 --> HE & LI
+    WF  --> HE & NE
 ```
 
 ### Gap Analysis
