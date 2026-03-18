@@ -109,3 +109,83 @@ export async function sendWeeklyDigest(
     `,
   });
 }
+
+/**
+ * Send weekly GRC digest for pro orgs.
+ * Includes AI-drafted summary, score delta, open alerts, open gaps.
+ */
+export async function sendWeeklyGRCDigest(
+  userId: string,
+  orgId: string,
+  data: {
+    scoreDelta: number;
+    currentScore: number;
+    openAlerts: number;
+    openGaps: number;
+    openRisks: number;
+  }
+): Promise<void> {
+  const resend = getResend();
+  if (!resend) return;
+
+  const prefs = await getOrgNotificationPreferences(orgId);
+  if (!prefs.weeklyDigest) return;
+
+  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (!user?.email) return;
+
+  await resend.emails.send({
+    from: "Audit Trail <notifications@audittrail.dev>",
+    to: user.email,
+    subject: `Weekly GRC Digest — Score: ${Number(data.currentScore)}%${data.scoreDelta !== 0 ? ` (${data.scoreDelta > 0 ? "+" : ""}${Number(data.scoreDelta)}%)` : ""}`,
+    html: `
+      <h2>Weekly GRC Digest</h2>
+      <ul>
+        <li><strong>Compliance Score:</strong> ${Number(data.currentScore)}% (${data.scoreDelta > 0 ? "+" : ""}${Number(data.scoreDelta)}% change)</li>
+        <li><strong>Open Alerts:</strong> ${Number(data.openAlerts)}</li>
+        <li><strong>Open Gaps:</strong> ${Number(data.openGaps)}</li>
+        <li><strong>Open Risk Treatments:</strong> ${Number(data.openRisks)}</li>
+      </ul>
+      <p><a href="${process.env.NEXTAUTH_URL}/grc">View GRC Dashboard</a></p>
+    `,
+  });
+}
+
+/**
+ * Send monthly CISO summary with posture trend and critical risk delta.
+ */
+export async function sendMonthlyCISOSummary(
+  userId: string,
+  orgId: string,
+  data: {
+    currentScore: number;
+    monthlyDelta: number;
+    criticalRisks: number;
+    activeAudits: number;
+  }
+): Promise<void> {
+  const resend = getResend();
+  if (!resend) return;
+
+  const prefs = await getOrgNotificationPreferences(orgId);
+  if (!prefs.weeklyDigest) return; // Reuse weeklyDigest pref for now
+
+  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (!user?.email) return;
+
+  await resend.emails.send({
+    from: "Audit Trail <notifications@audittrail.dev>",
+    to: user.email,
+    subject: `Monthly CISO Summary — ${Number(data.currentScore)}% compliance`,
+    html: `
+      <h2>Monthly Security Posture Summary</h2>
+      <ul>
+        <li><strong>Compliance Score:</strong> ${Number(data.currentScore)}%</li>
+        <li><strong>Monthly Change:</strong> ${data.monthlyDelta > 0 ? "+" : ""}${Number(data.monthlyDelta)}%</li>
+        <li><strong>Critical Risks:</strong> ${Number(data.criticalRisks)}</li>
+        <li><strong>Active Audits:</strong> ${Number(data.activeAudits)}</li>
+      </ul>
+      <p><a href="${process.env.NEXTAUTH_URL}/ciso">View CISO Dashboard</a></p>
+    `,
+  });
+}

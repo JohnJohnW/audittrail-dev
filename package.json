@@ -23,9 +23,12 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.79.0",
     "@auth/prisma-adapter": "^2.11.1",
+    "@google/genai": "^1.45.0",
     "@prisma/client": "^6.3.1",
     "@react-pdf/renderer": "^4.3.0",
+    "@supabase/supabase-js": "^2.99.2",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.1",
     "@vercel/analytics": "^1.6.1",

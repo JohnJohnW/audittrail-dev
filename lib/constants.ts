@@ -140,6 +140,14 @@ export const RATE_LIMIT_CONFIG = {
   EXPORT: { limit: 10, window: "1 h" as const },
 } as const;
 
+// Webhook configuration
+export const WEBHOOK_CONFIG = {
+  /** Maximum payload size in bytes (10MB) */
+  MAX_PAYLOAD_SIZE: 10 * 1024 * 1024,
+  /** Deduplication window in hours */
+  DEDUP_WINDOW_HOURS: 24,
+} as const;
+
 // HTTP status codes for consistency
 export const HTTP_STATUS = {
   OK: 200,

@@ -293,10 +293,24 @@ export async function getComplianceEvidence(
           orderBy: { snapshotAt: "desc" },
           take: 1,
         },
+        ciArtifacts: {
+          orderBy: { createdAt: "desc" },
+          take: 20,
+        },
+        deploymentEnvironments: {
+          orderBy: { syncedAt: "desc" },
+        },
       },
     });
 
     logger.info("Repositories fetched", { count: repositories.length });
+
+    // Fetch org membership events (separate query — not tied to repos)
+    const membershipEvents = await db.orgMembershipEvent.findMany({
+      where: { orgId },
+      orderBy: { occurredAt: "desc" },
+      take: 50,
+    });
 
     // Create maps to track which repository each commit/PR belongs to
     const commitToRepo = new Map<string, { id: string; name: string; fullName: string }>();
@@ -323,11 +337,16 @@ export async function getComplianceEvidence(
     const allCommits = repositories.flatMap((r) => r.commits);
     const allPRs = repositories.flatMap((r) => r.pullRequests);
     const allBranchProtections = repositories.flatMap((r) => r.branchProtections);
+    const allCIArtifacts = repositories.flatMap((r) => r.ciArtifacts);
+    const allDeploymentEnvironments = repositories.flatMap((r) => r.deploymentEnvironments);
 
     logger.info("Aggregated data", {
       commits: allCommits.length,
       prs: allPRs.length,
       branchProtections: allBranchProtections.length,
+      ciArtifacts: allCIArtifacts.length,
+      deploymentEnvironments: allDeploymentEnvironments.length,
+      membershipEvents: membershipEvents.length,
     });
 
     // Categorize commits for smarter matching
@@ -553,6 +572,150 @@ export async function getComplianceEvidence(
               }
             }
             break;
+          }
+        }
+
+        // =========================================================
+        // Supplementary evidence from new signal sources (Phase 1)
+        // These enrich controls regardless of primary evidence type.
+        // =========================================================
+
+        // CI Artifacts: security scans, SBOMs, test reports
+        const ciControlCodes = [
+          "A.8.29",
+          "A.8.28",
+          "A.8.26",
+          "A.8.33", // Security testing, secure coding
+          "CSF-DE.CM-09", // Continuous monitoring
+          "SOC2-CC7.1",
+          "SOC2-CC7.2", // System operations monitoring
+          "800-53-SA-11", // Developer security testing
+        ];
+        if (ciControlCodes.includes(control.code) && allCIArtifacts.length > 0) {
+          const sarifArtifacts = allCIArtifacts.filter((a) => a.artifactType === "sarif");
+          const testArtifacts = allCIArtifacts.filter((a) => a.artifactType === "test_report");
+          const coverageArtifacts = allCIArtifacts.filter((a) => a.artifactType === "coverage");
+
+          for (const artifact of [...sarifArtifacts, ...testArtifacts, ...coverageArtifacts].slice(
+            0,
+            5
+          )) {
+            const repo = repositories.find((r) => r.id === artifact.repoId);
+            evidence.push({
+              type: "commit", // Use "commit" type for backward compat with existing UI
+              title: `CI: ${artifact.name}`,
+              description: `${artifact.artifactType.replace("_", " ")} from workflow run`,
+              timestamp: artifact.createdAt,
+              metadata: {
+                artifactType: artifact.artifactType,
+                runId: artifact.runId,
+              },
+              relevance: "high",
+              repositoryId: repo?.id,
+              repositoryName: repo?.name,
+              repositoryFullName: repo?.fullName,
+            });
+          }
+
+          // SBOM artifacts strengthen supply chain controls
+          if (["A.8.30", "E8-PA"].includes(control.code)) {
+            const sbomArtifacts = allCIArtifacts.filter((a) => a.artifactType === "sbom");
+            for (const artifact of sbomArtifacts.slice(0, 3)) {
+              const repo = repositories.find((r) => r.id === artifact.repoId);
+              evidence.push({
+                type: "commit",
+                title: `SBOM: ${artifact.name}`,
+                description: "Software Bill of Materials from CI pipeline",
+                timestamp: artifact.createdAt,
+                metadata: { artifactType: "sbom", runId: artifact.runId },
+                relevance: "high",
+                repositoryId: repo?.id,
+                repositoryName: repo?.name,
+                repositoryFullName: repo?.fullName,
+              });
+            }
+          }
+
+          // Upgrade status if CI evidence found
+          if (status === "no_evidence" && evidence.length > 0) {
+            status = "partial";
+          } else if (
+            status === "partial" &&
+            evidence.filter((e) => e.relevance === "high").length >= 3
+          ) {
+            status = "has_evidence";
+          }
+        }
+
+        // Deployment Environment Protection: segregation of duties evidence
+        const envControlCodes = [
+          "A.8.31",
+          "A.8.32", // Environment separation, change management
+          "SOC2-CC8.1", // Change management
+          "800-53-CM-3",
+          "800-53-CM-4", // Configuration change control
+        ];
+        if (envControlCodes.includes(control.code) && allDeploymentEnvironments.length > 0) {
+          for (const env of allDeploymentEnvironments.slice(0, 5)) {
+            const repo = repositories.find((r) => r.id === env.repoId);
+            const hasReviewers = env.requireReviewers && env.reviewerCount > 0;
+            evidence.push({
+              type: "branch_protection",
+              title: `Environment: ${env.name} (${repo?.fullName || "Unknown"})`,
+              description: hasReviewers
+                ? `${env.reviewerCount} required reviewer(s)${env.preventSelfReview ? ", no self-review" : ""}`
+                : "No required reviewers",
+              timestamp: env.syncedAt,
+              metadata: {
+                environmentName: env.name,
+                requireReviewers: env.requireReviewers,
+                reviewerCount: env.reviewerCount,
+                preventSelfReview: env.preventSelfReview,
+                branchPolicy: env.deploymentBranchPolicy,
+              },
+              relevance: hasReviewers ? "high" : "low",
+              repositoryId: repo?.id,
+              repositoryName: repo?.name,
+              repositoryFullName: repo?.fullName,
+            });
+          }
+
+          if (status === "no_evidence" && evidence.length > 0) {
+            status = "partial";
+          }
+        }
+
+        // Membership Events: access management evidence
+        const accessControlCodes = [
+          "A.5.15",
+          "A.5.16",
+          "A.5.18", // Access control, identity management
+          "SOC2-CC6.1",
+          "SOC2-CC6.2",
+          "SOC2-CC6.3", // Logical access security
+          "800-53-AC-2", // Account management
+        ];
+        if (accessControlCodes.includes(control.code) && membershipEvents.length > 0) {
+          for (const event of membershipEvents.slice(0, 10)) {
+            evidence.push({
+              type: "commit", // Use "commit" for backward compat
+              title: `Access: ${event.githubLogin} ${event.action}`,
+              description: `GitHub org membership ${event.action}${event.role ? ` (${event.role})` : ""}`,
+              timestamp: event.occurredAt,
+              metadata: {
+                githubLogin: event.githubLogin,
+                action: event.action,
+                role: event.role,
+                previousRole: event.previousRole,
+              },
+              relevance: "high",
+            });
+          }
+
+          if (status === "no_evidence" && evidence.length > 0) {
+            status = "partial";
+          } else if (status === "partial" && membershipEvents.length >= 3) {
+            status = "has_evidence";
           }
         }
 

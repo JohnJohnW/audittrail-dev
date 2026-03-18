@@ -8,12 +8,14 @@ import {
   getEvidenceSummary,
   calculateFrameworkScores,
 } from "@/lib/compliance";
-import { sendWeeklyDigest } from "@/lib/notifications";
+import { sendWeeklyDigest, sendWeeklyGRCDigest, sendMonthlyCISOSummary } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
 import { syncRepository, CRON_SYNC_OPTIONS } from "@/lib/github-sync";
 import { detectAndCreateAlerts } from "@/lib/alerts";
 import { computeIndustryBenchmarks } from "@/lib/benchmarks";
 import { detectRemediationEvents } from "@/lib/remediation";
+import { checkAutoCloseRiskTreatments } from "@/lib/risk-treatments";
+import { hasProSubscription } from "@/lib/db";
 
 // Cron job endpoint for automatic syncing
 // Protected by CRON_SECRET to prevent unauthorized access
@@ -58,6 +60,7 @@ export async function GET(request: NextRequest) {
           where: { isActive: true },
           select: {
             id: true,
+            orgId: true,
             fullName: true,
             defaultBranch: true,
             lastSyncedAt: true,
@@ -105,11 +108,28 @@ export async function GET(request: NextRequest) {
           logger.warn("Alert detection failed", { orgId: org.id, error: String(err) })
         );
 
+        // Auto-close risk treatments that now have evidence (non-blocking)
+        checkAutoCloseRiskTreatments(org.id).catch((err) =>
+          logger.warn("Risk treatment auto-close failed", { orgId: org.id, error: String(err) })
+        );
+
         // Send weekly digest on Mondays (cron runs at 2am UTC daily)
         const today = new Date();
         if (today.getUTCDay() === 1) {
           await sendWeeklyDigestForOrg(org.id, syncedRepos).catch((err) =>
             logger.warn("Weekly digest failed for org", { orgId: org.id, error: String(err) })
+          );
+
+          // Also send GRC digest for pro orgs
+          sendWeeklyGRCDigestForOrg(org.id).catch((err) =>
+            logger.warn("GRC digest failed", { orgId: org.id, error: String(err) })
+          );
+        }
+
+        // Send monthly CISO summary on 1st of month
+        if (today.getUTCDate() === 1) {
+          sendMonthlyCISOSummaryForOrg(org.id).catch((err) =>
+            logger.warn("Monthly CISO summary failed", { orgId: org.id, error: String(err) })
           );
         }
 
@@ -285,6 +305,94 @@ async function sendWeeklyDigestForOrg(orgId: string, repositoriesSynced: number)
         newCommits,
         newPRs,
         complianceScore,
+      })
+    )
+  );
+}
+
+/**
+ * Send weekly GRC digest to all members of a pro org.
+ */
+async function sendWeeklyGRCDigestForOrg(orgId: string) {
+  const isPro = await hasProSubscription(orgId);
+  if (!isPro) return;
+
+  const latestSnapshot = await db.complianceSnapshot.findFirst({
+    where: { orgId },
+    orderBy: { snapshotDate: "desc" },
+  });
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const previousSnapshot = await db.complianceSnapshot.findFirst({
+    where: { orgId, snapshotDate: { lte: sevenDaysAgo } },
+    orderBy: { snapshotDate: "desc" },
+  });
+
+  const currentScore = latestSnapshot?.overallScore ?? 0;
+  const scoreDelta = previousSnapshot ? currentScore - previousSnapshot.overallScore : 0;
+
+  const [openAlerts, openGaps, openRisks] = await Promise.all([
+    db.complianceAlert.count({ where: { orgId, resolvedAt: null } }),
+    db.gapAssignment.count({ where: { orgId, status: "open" } }),
+    db.riskTreatment.count({ where: { orgId, status: { in: ["open", "overdue"] } } }),
+  ]);
+
+  const memberships = await db.orgMembership.findMany({
+    where: { orgId },
+    select: { userId: true },
+  });
+
+  await Promise.allSettled(
+    memberships.map(({ userId }) =>
+      sendWeeklyGRCDigest(userId, orgId, {
+        currentScore,
+        scoreDelta,
+        openAlerts,
+        openGaps,
+        openRisks,
+      })
+    )
+  );
+}
+
+/**
+ * Send monthly CISO summary to all members of a pro org.
+ */
+async function sendMonthlyCISOSummaryForOrg(orgId: string) {
+  const isPro = await hasProSubscription(orgId);
+  if (!isPro) return;
+
+  const latestSnapshot = await db.complianceSnapshot.findFirst({
+    where: { orgId },
+    orderBy: { snapshotDate: "desc" },
+  });
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const previousSnapshot = await db.complianceSnapshot.findFirst({
+    where: { orgId, snapshotDate: { lte: thirtyDaysAgo } },
+    orderBy: { snapshotDate: "desc" },
+  });
+
+  const currentScore = latestSnapshot?.overallScore ?? 0;
+  const monthlyDelta = previousSnapshot ? currentScore - previousSnapshot.overallScore : 0;
+
+  const [criticalRisks, activeAudits] = await Promise.all([
+    db.riskTreatment.count({ where: { orgId, status: { in: ["open", "overdue"] } } }),
+    db.auditCycle.count({ where: { orgId, status: { not: "closed" } } }),
+  ]);
+
+  const memberships = await db.orgMembership.findMany({
+    where: { orgId },
+    select: { userId: true },
+  });
+
+  await Promise.allSettled(
+    memberships.map(({ userId }) =>
+      sendMonthlyCISOSummary(userId, orgId, {
+        currentScore,
+        monthlyDelta,
+        criticalRisks,
+        activeAudits,
       })
     )
   );

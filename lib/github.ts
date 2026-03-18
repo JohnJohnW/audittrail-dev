@@ -144,6 +144,80 @@ export class GitHubClient {
       return null;
     }
   }
+
+  async getWorkflowRunArtifacts(
+    owner: string,
+    repo: string,
+    runId: string
+  ): Promise<
+    Array<{
+      id: number;
+      name: string;
+      size_in_bytes: number;
+      archive_download_url: string;
+      expired: boolean;
+      created_at: string;
+    }>
+  > {
+    const response = await this.fetch<{
+      total_count: number;
+      artifacts: Array<{
+        id: number;
+        name: string;
+        size_in_bytes: number;
+        archive_download_url: string;
+        expired: boolean;
+        created_at: string;
+      }>;
+    }>(`/repos/${owner}/${repo}/actions/runs/${runId}/artifacts`);
+    return response.artifacts;
+  }
+
+  async getEnvironments(
+    owner: string,
+    repo: string
+  ): Promise<
+    Array<{
+      id: number;
+      name: string;
+      protection_rules?: Array<{
+        id: number;
+        type: string;
+        reviewers?: Array<{ type: string; reviewer: { login: string } }>;
+        wait_timer?: number;
+        prevent_self_review?: boolean;
+      }>;
+      deployment_branch_policy?: {
+        protected_branches: boolean;
+        custom_branch_policies: boolean;
+      } | null;
+    }>
+  > {
+    try {
+      const response = await this.fetch<{
+        total_count: number;
+        environments: Array<{
+          id: number;
+          name: string;
+          protection_rules?: Array<{
+            id: number;
+            type: string;
+            reviewers?: Array<{ type: string; reviewer: { login: string } }>;
+            wait_timer?: number;
+            prevent_self_review?: boolean;
+          }>;
+          deployment_branch_policy?: {
+            protected_branches: boolean;
+            custom_branch_policies: boolean;
+          } | null;
+        }>;
+      }>(`/repos/${owner}/${repo}/environments`);
+      return response.environments;
+    } catch (_error) {
+      // Environments API may not be available for all repos
+      return [];
+    }
+  }
 }
 
 export async function getGitHubClientForOrg(orgId: string): Promise<GitHubClient | null> {

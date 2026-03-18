@@ -48,6 +48,7 @@ export interface RepositorySyncResult {
   pullRequests?: number;
   reviews?: number;
   branchProtection?: "synced" | "not configured" | "error";
+  environments?: number;
   error?: string;
 }
 
@@ -352,7 +353,71 @@ export async function syncBranchProtection(
 }
 
 /**
- * Sync a single repository (commits, PRs, branch protection).
+ * Sync deployment environment protection rules from GitHub.
+ */
+export async function syncDeploymentEnvironments(
+  client: GitHubClient,
+  repoId: string,
+  orgId: string,
+  owner: string,
+  repoName: string
+): Promise<{ synced: number; error?: string }> {
+  try {
+    const environments = await client.getEnvironments(owner, repoName);
+    if (environments.length === 0) return { synced: 0 };
+
+    let synced = 0;
+    for (const env of environments) {
+      const reviewerRule = env.protection_rules?.find((r) => r.type === "required_reviewers");
+      const preventSelfReview = reviewerRule?.prevent_self_review ?? false;
+      const reviewerCount = reviewerRule?.reviewers?.length ?? 0;
+
+      let branchPolicy: string | null = null;
+      if (env.deployment_branch_policy) {
+        branchPolicy = env.deployment_branch_policy.protected_branches
+          ? "protected_branches"
+          : "custom";
+      }
+
+      await db.deploymentEnvironment.upsert({
+        where: {
+          repoId_name: {
+            repoId,
+            name: env.name,
+          },
+        },
+        update: {
+          requireReviewers: reviewerCount > 0,
+          reviewerCount,
+          preventSelfReview,
+          deploymentBranchPolicy: branchPolicy,
+          syncedAt: new Date(),
+        },
+        create: {
+          repoId,
+          orgId,
+          name: env.name,
+          requireReviewers: reviewerCount > 0,
+          reviewerCount,
+          preventSelfReview,
+          deploymentBranchPolicy: branchPolicy,
+          syncedAt: new Date(),
+        },
+      });
+      synced++;
+    }
+
+    return { synced };
+  } catch (error) {
+    return {
+      synced: 0,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Sync a single repository (commits, PRs, branch protection, environments).
  *
  * @param client - GitHub API client
  * @param repo - Repository data
@@ -363,6 +428,7 @@ export async function syncRepository(
   client: GitHubClient,
   repo: {
     id: string;
+    orgId: string;
     fullName: string;
     defaultBranch: string;
     lastSyncedAt: Date | null;
@@ -397,6 +463,18 @@ export async function syncRepository(
       repo.defaultBranch
     );
 
+    // Sync deployment environments (non-blocking)
+    const environments = await syncDeploymentEnvironments(
+      client,
+      repo.id,
+      repo.orgId,
+      owner,
+      repoName
+    ).catch((error) => {
+      logger.error(`Error syncing environments for ${repo.fullName}`, error);
+      return { synced: 0 };
+    });
+
     // Update last synced timestamp
     await db.repository.update({
       where: { id: repo.id },
@@ -409,6 +487,7 @@ export async function syncRepository(
       pullRequests: prs.count,
       reviews: prs.reviewCount,
       branchProtection: protection.synced ? "synced" : "not configured",
+      environments: environments.synced,
     };
   } catch (error) {
     logger.error(`Error syncing ${repo.fullName}`, error);

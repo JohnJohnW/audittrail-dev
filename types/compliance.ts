@@ -58,6 +58,10 @@ export interface ControlEvidence {
   evidenceCount: number;
   evidence: EvidenceItem[];
   note?: string;
+  /** Embedding-based mapping confidence (0-1), undefined if embeddings unavailable */
+  confidence?: number;
+  /** Confidence tier: high (≥0.85), medium (0.60-0.84), low (<0.60), auditor_confirmed */
+  confidenceTier?: "high" | "medium" | "low" | "auditor_confirmed";
 }
 
 /**

@@ -27,6 +27,12 @@ model User {
   exports     Export[]
   controlNotes   ControlNote[]
   auditorComments AuditorComment[]
+  ownedTreatments    RiskTreatment[] @relation("TreatmentOwner")
+  createdTreatments  RiskTreatment[] @relation("TreatmentCreator")
+  assignedGaps       GapAssignment[] @relation("GapAssignee")
+  assignedByGaps     GapAssignment[] @relation("GapAssigner")
+  createdAuditCycles AuditCycle[]
+  assignedRequests   AuditorRequest[]
 
   @@map("users")
 }
@@ -101,6 +107,15 @@ model Organization {
   controlStatusSnapshots ControlStatusSnapshot[]
   remediationEvents      RemediationEvent[]
   evidenceFeedback       EvidenceFeedback[]
+  webhookEvents          WebhookEvent[]
+  orgMembershipEvents    OrgMembershipEvent[]
+  ciArtifacts            CIArtifact[]
+  deploymentEnvironments DeploymentEnvironment[]
+  riskTreatments         RiskTreatment[]
+  gapAssignments         GapAssignment[]
+  auditCycles            AuditCycle[]
+  auditFindings          AuditFinding[]
+  auditorRequests        AuditorRequest[]
 
   @@map("organizations")
 }
@@ -136,6 +151,9 @@ model GitHubConnection {
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
+  installationId Int?     @map("installation_id")
+  webhookSecret  String?  @db.Text @map("webhook_secret")
+
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@map("github_connections")
@@ -154,10 +172,15 @@ model Repository {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  organization      Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  commits           Commit[]
-  pullRequests      PullRequest[]
-  branchProtections BranchProtection[]
+  lastWebhookAt DateTime? @map("last_webhook_at")
+  webhookEnabled Boolean  @default(false) @map("webhook_enabled")
+
+  organization           Organization          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  commits                Commit[]
+  pullRequests           PullRequest[]
+  branchProtections      BranchProtection[]
+  ciArtifacts            CIArtifact[]
+  deploymentEnvironments DeploymentEnvironment[]
 
   @@map("repositories")
 }
@@ -590,4 +613,228 @@ model EvidenceFeedback {
   @@unique([orgId, controlCode, frameworkName, evidenceHash])
   @@index([controlCode, frameworkName, evidenceHash])
   @@map("evidence_feedback")
+}
+
+// ============================================
+// GITHUB WEBHOOKS
+// ============================================
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  orgId       String    @map("org_id")
+  repoId      String?   @map("repo_id")
+  deliveryId  String    @unique @map("delivery_id")
+  eventType   String    @map("event_type")
+  action      String?
+  payload     Json
+  processedAt DateTime? @map("processed_at")
+  error       String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, eventType, createdAt])
+  @@map("webhook_events")
+}
+
+// ============================================
+// ORG MEMBERSHIP EVENTS
+// ============================================
+
+model OrgMembershipEvent {
+  id           String   @id @default(cuid())
+  orgId        String   @map("org_id")
+  githubLogin  String   @map("github_login")
+  githubUserId Int      @map("github_user_id")
+  action       String   // "added" | "removed" | "role_changed"
+  role         String?
+  previousRole String?  @map("previous_role")
+  occurredAt   DateTime @map("occurred_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, occurredAt])
+  @@map("org_membership_events")
+}
+
+// ============================================
+// CI ARTIFACTS
+// ============================================
+
+model CIArtifact {
+  id           String   @id @default(cuid())
+  repoId       String   @map("repo_id")
+  orgId        String   @map("org_id")
+  runId        String   @map("run_id")
+  name         String
+  artifactType String   @map("artifact_type") // "sarif" | "sbom" | "test_report" | "coverage" | "unknown"
+  summary      Json?
+  rawUrl       String?  @map("raw_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  repository   Repository   @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([repoId, runId, artifactType])
+  @@index([repoId, artifactType, createdAt])
+  @@map("ci_artifacts")
+}
+
+// ============================================
+// DEPLOYMENT ENVIRONMENTS
+// ============================================
+
+model DeploymentEnvironment {
+  id                    String   @id @default(cuid())
+  repoId                String   @map("repo_id")
+  orgId                 String   @map("org_id")
+  name                  String
+  requireReviewers      Boolean  @default(false) @map("require_reviewers")
+  reviewerCount         Int      @default(0) @map("reviewer_count")
+  preventSelfReview     Boolean  @default(false) @map("prevent_self_review")
+  requiredBranches      String[] @map("required_branches")
+  deploymentBranchPolicy String? @map("deployment_branch_policy")
+  syncedAt              DateTime @default(now()) @map("synced_at")
+
+  repository   Repository   @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([repoId, name])
+  @@index([repoId])
+  @@map("deployment_environments")
+}
+
+// ============================================
+// RISK TREATMENTS
+// ============================================
+
+model RiskTreatment {
+  id              String    @id @default(cuid())
+  orgId           String    @map("org_id")
+  controlCode     String    @map("control_code")
+  frameworkName   String    @map("framework_name")
+  treatmentType   String    @map("treatment_type") // "remediate" | "accept" | "transfer" | "avoid"
+  status          String    @default("open") // "open" | "in_progress" | "closed" | "overdue"
+  rationale       String    @db.Text
+  ownerId         String?   @map("owner_id")
+  reviewDate      DateTime? @map("review_date")
+  linkedGithubIssue String? @map("linked_github_issue")
+  closedAt        DateTime? @map("closed_at")
+  closedByEvidence String?  @map("closed_by_evidence")
+  createdById     String    @map("created_by_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  owner        User?        @relation("TreatmentOwner", fields: [ownerId], references: [id])
+  createdBy    User         @relation("TreatmentCreator", fields: [createdById], references: [id])
+
+  @@unique([orgId, controlCode, frameworkName])
+  @@index([orgId, status])
+  @@map("risk_treatments")
+}
+
+// ============================================
+// GAP ASSIGNMENTS
+// ============================================
+
+model GapAssignment {
+  id            String    @id @default(cuid())
+  orgId         String    @map("org_id")
+  controlCode   String    @map("control_code")
+  frameworkName  String    @map("framework_name")
+  assigneeId    String    @map("assignee_id")
+  assignedById  String    @map("assigned_by_id")
+  dueDate       DateTime? @map("due_date")
+  notes         String?   @db.Text
+  status        String    @default("open") // "open" | "resolved" | "deferred"
+  resolvedAt    DateTime? @map("resolved_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignee     User         @relation("GapAssignee", fields: [assigneeId], references: [id])
+  assignedBy   User         @relation("GapAssigner", fields: [assignedById], references: [id])
+
+  @@unique([orgId, controlCode, frameworkName])
+  @@index([orgId, status])
+  @@index([assigneeId])
+  @@map("gap_assignments")
+}
+
+// ============================================
+// AUDIT CYCLES
+// ============================================
+
+model AuditCycle {
+  id                 String    @id @default(cuid())
+  orgId              String    @map("org_id")
+  frameworkName      String    @map("framework_name")
+  auditType          String    @map("audit_type") // "internal" | "external" | "certification"
+  status             String    @default("planning") // "planning" | "fieldwork" | "reporting" | "closed"
+  periodStart        DateTime  @map("period_start")
+  periodEnd          DateTime  @map("period_end")
+  auditorName        String?   @map("auditor_name")
+  auditorFirm        String?   @map("auditor_firm")
+  auditorSessionId   String?   @map("auditor_session_id")
+  outcome            String?   // "passed" | "passed_with_findings" | "failed" | null
+  targetCloseDate    DateTime? @map("target_close_date")
+  closedAt           DateTime? @map("closed_at")
+  evidenceSnapshotId String?   @map("evidence_snapshot_id")
+  createdById        String    @map("created_by_id")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  organization Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdBy    User            @relation(fields: [createdById], references: [id])
+  findings     AuditFinding[]
+  requests     AuditorRequest[]
+
+  @@index([orgId, status])
+  @@map("audit_cycles")
+}
+
+model AuditFinding {
+  id                     String    @id @default(cuid())
+  auditCycleId           String    @map("audit_cycle_id")
+  orgId                  String    @map("org_id")
+  controlCode            String    @map("control_code")
+  frameworkName          String    @map("framework_name")
+  severity               String    // "critical" | "major" | "minor" | "observation"
+  description            String    @db.Text
+  auditorNotes           String?   @db.Text @map("auditor_notes")
+  remediationCommitment  String?   @db.Text @map("remediation_commitment")
+  remediationDueDate     DateTime? @map("remediation_due_date")
+  status                 String    @default("open") // "open" | "remediated" | "accepted"
+  createdAt              DateTime  @default(now()) @map("created_at")
+
+  auditCycle   AuditCycle   @relation(fields: [auditCycleId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([auditCycleId])
+  @@index([orgId, controlCode])
+  @@map("audit_findings")
+}
+
+model AuditorRequest {
+  id             String    @id @default(cuid())
+  auditCycleId   String    @map("audit_cycle_id")
+  orgId          String    @map("org_id")
+  controlCode    String?   @map("control_code")
+  frameworkName  String?   @map("framework_name")
+  requestText    String    @db.Text @map("request_text")
+  status         String    @default("open") // "open" | "in_progress" | "resolved" | "deferred"
+  assigneeId     String?   @map("assignee_id")
+  dueDate        DateTime? @map("due_date")
+  resolvedAt     DateTime? @map("resolved_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  auditCycle   AuditCycle   @relation(fields: [auditCycleId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignee     User?        @relation(fields: [assigneeId], references: [id])
+
+  @@index([auditCycleId])
+  @@index([orgId, status])
+  @@map("auditor_requests")
 }
