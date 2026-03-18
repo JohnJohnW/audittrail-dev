@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { timingSafeEqual } from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -20,6 +21,16 @@ import { hasProSubscription } from "@/lib/db";
 // Cron job endpoint for automatic syncing
 // Protected by CRON_SECRET to prevent unauthorized access
 export async function GET(request: NextRequest) {
+  const checkInId = Sentry.captureCheckIn(
+    { monitorSlug: "daily-github-sync", status: "in_progress" },
+    {
+      schedule: { type: "crontab", value: "0 2 * * *" },
+      checkinMargin: 5,
+      maxRuntime: 10,
+      timezone: "UTC",
+    }
+  );
+
   try {
     // Verify cron secret
     const authHeader = request.headers.get("authorization");
@@ -27,6 +38,7 @@ export async function GET(request: NextRequest) {
 
     if (!cronSecret) {
       logger.error("CRON_SECRET not configured");
+      Sentry.captureCheckIn({ monitorSlug: "daily-github-sync", checkInId, status: "error" });
       return NextResponse.json({ error: "Cron not configured" }, { status: 500 });
     }
 
@@ -38,6 +50,7 @@ export async function GET(request: NextRequest) {
       timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
 
     if (!isValid) {
+      Sentry.captureCheckIn({ monitorSlug: "daily-github-sync", checkInId, status: "error" });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -157,6 +170,8 @@ export async function GET(request: NextRequest) {
       logger.warn("Benchmark computation failed", { error: String(err) })
     );
 
+    Sentry.captureCheckIn({ monitorSlug: "daily-github-sync", checkInId, status: "ok" });
+
     return NextResponse.json({
       success: true,
       synced: successCount,
@@ -165,6 +180,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     logger.error("Cron sync error", error);
+    Sentry.captureCheckIn({ monitorSlug: "daily-github-sync", checkInId, status: "error" });
     return NextResponse.json(
       { error: "Sync failed", details: error instanceof Error ? error.message : "Unknown" },
       { status: 500 }

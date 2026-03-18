@@ -534,6 +534,194 @@ async function main() {
     });
   }
 
+  // NIST SP 800-207 (Zero Trust Architecture) Framework
+  const nist800207 = await prisma.complianceFramework.upsert({
+    where: { name: "NIST SP 800-207" },
+    update: {},
+    create: {
+      name: "NIST SP 800-207",
+      version: "2020",
+      description:
+        "NIST Special Publication 800-207: Zero Trust Architecture. Defines zero trust principles and logical components for enterprise security.",
+    },
+  });
+
+  // NIST SP 800-207 Controls
+  const nist800207Controls = [
+    {
+      code: "ZTA-T1",
+      title: "All Resources Protected",
+      description:
+        "All data sources and computing services are treated as resources. Access is never granted based on network location alone.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "ZTA-T2",
+      title: "Per-Session Access",
+      description:
+        "Access to enterprise resources is granted on a per-session basis with least privilege enforced. Trust is re-evaluated before each access.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "ZTA-T3",
+      title: "Dynamic Policy Engine",
+      description:
+        "Access decisions are determined by dynamic policy incorporating identity, device health, and environmental attributes evaluated continuously.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "ZTA-T4",
+      title: "Asset Monitoring",
+      description:
+        "All owned and associated assets are continuously monitored for security posture. No asset is inherently trusted.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "ZTA-T5",
+      title: "Authentication & Authorization",
+      description:
+        "All resource authentication and authorization is dynamic and strictly enforced before access is allowed. MFA is required for enterprise resources.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "ZTA-T6",
+      title: "Audit Logging",
+      description:
+        "The enterprise collects comprehensive information about asset state, network infrastructure, and communications to improve security posture.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "ZTA-PE",
+      title: "Policy Enforcement Points",
+      description:
+        "Policy Enforcement Points mediate all access requests between subjects and resources. No resource is reachable without traversing a PEP.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "ZTA-ID",
+      title: "Identity Governance",
+      description:
+        "A robust identity management system maintains user accounts, roles, and assigned assets. Federated identity is supported for cross-boundary collaboration.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "ZTA-CDM",
+      title: "Continuous Diagnostics",
+      description:
+        "A continuous diagnostics and mitigation system tracks asset health including OS version, patch level, and software integrity.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "ZTA-TI",
+      title: "Threat Intelligence",
+      description:
+        "Threat intelligence feeds inform the policy engine with newly discovered vulnerabilities, active malware signatures, and attack patterns.",
+      evidenceType: "commit_history",
+    },
+  ];
+
+  for (const control of nist800207Controls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: nist800207.id, code: control.code } },
+      update: {},
+      create: { frameworkId: nist800207.id, ...control },
+    });
+  }
+
+  // ASD MDA Foundations (2025) Framework
+  const asdMda = await prisma.complianceFramework.upsert({
+    where: { name: "ASD MDA Foundations" },
+    update: {},
+    create: {
+      name: "ASD MDA Foundations",
+      version: "October 2025",
+      description:
+        "Australian Signals Directorate Modern Defensible Architecture Foundations. Guidance for building cyber-resilient enterprise architecture aligned with zero trust principles.",
+    },
+  });
+
+  // ASD MDA Foundations Controls
+  const asdMdaControls = [
+    {
+      code: "MDA-F1",
+      title: "Centrally Managed Identities",
+      description:
+        "Enterprise identities are managed from the fewest authoritative sources possible. All user and non-user identities are granted only minimum required privileges with separation of duties enforced.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "MDA-F2",
+      title: "High Confidence Authentication",
+      description:
+        "Phishing-resistant multi-factor authentication is used for all authentication events. Non-user identities authenticate via hardware or service-bound cryptographic factors.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "MDA-F3",
+      title: "Contextual Authorisation",
+      description:
+        "Authorisation is initially and continuously validated using identity, task, environment, and data context. Access is revoked immediately when confidence drops below threshold.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "MDA-F4",
+      title: "Reliable Asset Inventory",
+      description:
+        "A centralised repository maintains complete knowledge of all endpoints, networks, applications, cryptographic assets, and data stores including SBOM, HBOM, and AIBOM.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "MDA-F5",
+      title: "Secure Endpoints",
+      description:
+        "Endpoints are hardened per security baselines, resilient to cyber threats, and continuously provide contextual security posture information to inform authorisation decisions.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "MDA-F6",
+      title: "Reduced Attack Surface",
+      description:
+        "The number of exploitable attack surfaces is minimised across endpoints, networks, applications, and data stores. End-of-life assets are removed or replaced.",
+      evidenceType: "commit_history",
+    },
+    {
+      code: "MDA-F7",
+      title: "Resilient Networks",
+      description:
+        "Networks restrict lateral (east/west) and vertical (north/south) movement to authorised requests only. Redundant paths and automated failover protect availability.",
+      evidenceType: "branch_protection",
+    },
+    {
+      code: "MDA-F8",
+      title: "Secure by Design",
+      description:
+        "Hardware and software are designed, built, and delivered through security-first principles including threat modelling, memory-safe languages, SBOMs, and code signing.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "MDA-F9",
+      title: "Comprehensive Validation",
+      description:
+        "Security measures are continuously validated through assurance activities including DLP controls, baseline auditing, and immutability verification.",
+      evidenceType: "pr_approvals",
+    },
+    {
+      code: "MDA-F10",
+      title: "Continuous Monitoring",
+      description:
+        "Real-time automated visibility and response using high-fidelity inputs. SIEM platforms feed confidence signals to the authorisation model for continuous access evaluation.",
+      evidenceType: "commit_history",
+    },
+  ];
+
+  for (const control of asdMdaControls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: asdMda.id, code: control.code } },
+      update: {},
+      create: { frameworkId: asdMda.id, ...control },
+    });
+  }
+
   console.log("Seeding completed!");
   console.log(`- ISO 27001: ${isoControls.length} controls`);
   console.log(`- Essential Eight: ${e8Controls.length} controls`);
@@ -543,6 +731,8 @@ async function main() {
   console.log(`- GDPR: ${gdprControls.length} controls`);
   console.log(`- SOCI Act: ${sociControls.length} controls`);
   console.log(`- PCI DSS 4.0: ${pciControls.length} controls`);
+  console.log(`- NIST SP 800-207 (Zero Trust Architecture): ${nist800207Controls.length} controls`);
+  console.log(`- ASD MDA Foundations: ${asdMdaControls.length} controls`);
 }
 
 main()

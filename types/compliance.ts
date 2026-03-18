@@ -11,6 +11,20 @@ export type EvidenceType = "commit" | "pr" | "review" | "branch_protection";
 // Relevance levels for evidence items
 export type EvidenceRelevance = "high" | "medium" | "low";
 
+// Zero Trust Architecture pillar classification
+export type ZtaPillar = "identity" | "device" | "application" | "data" | "network" | "visibility";
+
+// MITRE ATT&CK tactic coverage (derived from MDA Foundation mappings)
+export type AttackTactic =
+  | "initial-access"
+  | "persistence"
+  | "privilege-escalation"
+  | "defense-evasion"
+  | "credential-access"
+  | "lateral-movement"
+  | "exfiltration"
+  | "impact";
+
 /**
  * Individual piece of evidence linked to a control.
  * Used internally with Date objects.
@@ -62,6 +76,10 @@ export interface ControlEvidence {
   confidence?: number;
   /** Confidence tier: high (≥0.85), medium (0.60-0.84), low (<0.60), auditor_confirmed */
   confidenceTier?: "high" | "medium" | "low" | "auditor_confirmed";
+  /** Zero Trust Architecture pillar this control maps to */
+  ztaPillar?: ZtaPillar;
+  /** MITRE ATT&CK tactics this control helps mitigate */
+  attackTactics?: AttackTactic[];
 }
 
 /**
