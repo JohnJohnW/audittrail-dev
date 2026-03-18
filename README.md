@@ -2,7 +2,7 @@
 
 > Real-time compliance evidence from your GitHub activity. Automatically.
 
-Audit Trail connects to your GitHub repositories via a GitHub App and maps commits, pull requests, code reviews, branch protection rules, Dependabot alerts, code scanning findings, secret scanning alerts, and deployment approvals to the controls inside 8 major compliance frameworks — in real time as events happen, not just at audit time.
+Audit Trail connects to your GitHub repositories via a GitHub App and maps commits, pull requests, code reviews, branch protection rules, Dependabot alerts, code scanning findings, secret scanning alerts, and deployment approvals to the controls inside 10 major compliance frameworks — in real time as events happen, not just at audit time.
 
 ---
 
@@ -135,6 +135,17 @@ Anonymized signal capture (`lib/flywheel.ts`) gated by `FLYWHEEL_ENABLED=true`:
 **Monthly CISO summary** — 1st of month: posture trend, benchmark, critical risk delta
 Opt-out via `NotificationPreferences.grcWeeklyDigest` and `cisoMonthlySummary`
 
+### Observability & Security Infrastructure
+
+**PostHog analytics** (`lib/posthog.ts`) — conservative B2B config: identify by `orgId` only (no email/PII), respect DNT, mask all inputs in session replay, manual pageview control, allowlist-only autocapture
+
+**Sentry error tracking** — server-side error capture with cron job monitoring for `/api/cron/sync`
+
+**Zero Trust Architecture support** — two layers:
+
+- _Product feature_: ZTA dashboard (`app/api/dashboards/zta/`) maps GitHub evidence to NIST SP 800-207 and ASD MDA Foundations controls across six ZTA pillars (identity, device, application, data, network, visibility)
+- _App security_: structured ZTA audit log (`lib/zta-audit-log.ts`) records security-relevant events (session start/end, org mismatch, webhook signature failures, exports) with the `[ZTA]` prefix for forensic analysis
+
 ---
 
 ## Architecture
@@ -220,16 +231,18 @@ If no org is found, we return `200 { received: true, processed: false }` to prev
 
 ## Compliance Frameworks
 
-| Framework            | Controls | Mapped evidence types                                |
-| -------------------- | -------- | ---------------------------------------------------- |
-| ISO 27001:2022       | 19       | Commits, PRs, reviews, branch protection, alerts     |
-| Essential Eight      | 13       | Patching, MFA, application control, backups          |
-| NIST CSF 2.0         | 7        | Configuration, software dev, monitoring              |
-| NIST SP 800-53 Rev 5 | 7        | Account management, change control, flaw remediation |
-| SOC 2                | 5        | Access control, change management, monitoring        |
-| GDPR                 | 3        | Privacy by design, security of processing, records   |
-| SOCI Act             | 4        | Access control, system security (policy-based)       |
-| PCI DSS 4.0          | 5        | Vulnerability management, web app security, access   |
+| Framework            | Controls | Mapped evidence types                                                        |
+| -------------------- | -------- | ---------------------------------------------------------------------------- |
+| ISO 27001:2022       | 19       | Commits, PRs, reviews, branch protection, alerts                             |
+| Essential Eight      | 13       | Patching, MFA, application control, backups                                  |
+| NIST CSF 2.0         | 7        | Configuration, software dev, monitoring                                      |
+| NIST SP 800-53 Rev 5 | 7        | Account management, change control, flaw remediation                         |
+| SOC 2                | 5        | Access control, change management, monitoring                                |
+| GDPR                 | 3        | Privacy by design, security of processing, records                           |
+| SOCI Act             | 4        | Access control, system security (policy-based)                               |
+| PCI DSS 4.0          | 5        | Vulnerability management, web app security, access                           |
+| NIST SP 800-207      | 10       | Zero Trust Architecture: identity, device, network, visibility pillars       |
+| ASD MDA Foundations  | 10       | Modern Defensible Architecture (October 2025): identity, endpoints, networks |
 
 ---
 

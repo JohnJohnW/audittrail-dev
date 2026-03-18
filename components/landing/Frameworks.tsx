@@ -95,6 +95,18 @@ const frameworks = [
     description: "Payment Card Industry Data Security Standard",
     icon: lockIcon,
   },
+  {
+    name: "NIST SP 800-207",
+    controls: 10,
+    description: "Zero Trust Architecture — identity, device, network, visibility pillars",
+    icon: shieldIcon,
+  },
+  {
+    name: "ASD MDA Foundations",
+    controls: 10,
+    description: "Modern Defensible Architecture (October 2025)",
+    icon: dbIcon,
+  },
 ];
 
 export function Frameworks() {
@@ -109,8 +121,8 @@ export function Frameworks() {
             Pre-mapped compliance controls
           </h2>
           <p className="text-sm text-gray-500 max-w-lg mx-auto">
-            We&apos;ve done the control mapping for you. Eight frameworks covering global and
-            regional standards. Connect once, evidence them all.
+            We&apos;ve done the control mapping for you. Ten frameworks covering global and regional
+            standards — including Zero Trust Architecture. Connect once, evidence them all.
           </p>
         </FadeIn>
 
