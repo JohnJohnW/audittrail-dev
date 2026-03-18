@@ -12,9 +12,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Audit Trail - GitHub to Compliance Evidence",
+  title: "Vigil — Compliance Infrastructure",
   description:
-    "Automatically map GitHub activity to compliance controls for ISO 27001, NIST CSF, SOC 2, GDPR, Essential Eight and more. Audit-ready evidence in minutes.",
+    "Compliance that works in the background. Surfaces when it counts. Connects to GitHub once, then silently maps your commits, PRs, branch protections, and deployments across 10 frameworks.",
   keywords: [
     "compliance",
     "audit",
@@ -28,23 +28,23 @@ export const metadata: Metadata = {
     "GitHub",
     "security",
     "GRC",
-    "compliance evidence",
-    "audit trail",
+    "compliance infrastructure",
+    "vigil",
   ],
   icons: {
     icon: "/icon.svg",
   },
   openGraph: {
-    title: "Audit Trail - GitHub to Compliance Evidence",
+    title: "Vigil — Compliance Infrastructure",
     description:
-      "Automatically map GitHub activity to compliance controls for ISO 27001, NIST CSF, SOC 2, GDPR and more.",
+      "Compliance that works in the background. Surfaces when it counts. Ten frameworks, zero manual work.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Audit Trail",
+    title: "Vigil — Compliance Infrastructure",
     description:
-      "Automatically map GitHub activity to compliance controls for ISO 27001, NIST CSF, SOC 2, GDPR and more.",
+      "Compliance that works in the background. Surfaces when it counts. Ten frameworks, zero manual work.",
   },
 };
 

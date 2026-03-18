@@ -9,7 +9,9 @@ export function Problem() {
         <div className="grid md:grid-cols-2 gap-16 md:gap-20">
           <FadeIn direction="right" delay={0}>
             <p className="text-xs text-gray-400 uppercase tracking-wider mb-4">The problem</p>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Audit prep is painful</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Compliance is treated as work
+            </h2>
             <ul className="space-y-4 text-[15px] leading-relaxed">
               <li className="flex gap-3 group">
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xs font-medium group-hover:scale-110 transition-transform">
@@ -43,15 +45,17 @@ export function Problem() {
 
           <FadeIn direction="left" delay={0.15}>
             <p className="text-xs text-gray-400 uppercase tracking-wider mb-4">The solution</p>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">One-click evidence packs</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Compliance infrastructure. Not compliance overhead.
+            </h2>
             <ul className="space-y-4 text-[15px] leading-relaxed">
               <li className="flex gap-3 group">
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-medium group-hover:scale-110 transition-transform">
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Install the GitHub App once. Webhooks stream commits, PRs, reviews, Dependabot
-                  alerts, and deployment approvals in real time — no daily batch lag.
+                  Install once. Vigil watches everything. Webhooks stream commits, PRs, reviews,
+                  Dependabot alerts, and deployment approvals in real time — no daily batch lag.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -60,7 +64,8 @@ export function Problem() {
                 </span>
                 <span className="text-gray-600">
                   Every artifact maps to specific controls across ISO 27001, NIST CSF, NIST SP
-                  800-53, SOC 2, GDPR, SOCI Act, PCI DSS, and Essential Eight — automatically.
+                  800-53, SOC 2, GDPR, SOCI Act, PCI DSS, Essential Eight, NIST 800-207, and ASD MDA
+                  Foundations — automatically.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -68,8 +73,9 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Critical gaps — secret leaks, unreviewed merges, disabled branch protection —
-                  trigger instant alerts so you fix them before the auditor arrives.
+                  Only surfaces what matters. Critical gaps — secret leaks, unreviewed merges,
+                  disabled branch protection — trigger alerts so you fix them before the auditor
+                  arrives.
                 </span>
               </li>
             </ul>

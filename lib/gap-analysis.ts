@@ -17,7 +17,7 @@ const EVIDENCE_TYPE_DEFAULTS: Record<string, GapRecommendation> = {
   commit_history: {
     summary: "No relevant commit activity detected",
     actions: [
-      "Sync your repositories so Audit Trail can analyse recent commits",
+      "Sync your repositories so Vigil can analyse recent commits",
       "Make sure commits include descriptive messages referencing the change type (fix, feat, security, patch)",
     ],
   },

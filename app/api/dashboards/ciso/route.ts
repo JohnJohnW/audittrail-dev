@@ -9,7 +9,11 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { handleApiError, AppError } from "@/lib/error-handler";
 import { db, hasProSubscription } from "@/lib/db";
-import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
+import {
+  getComplianceEvidence,
+  getEvidenceSummary,
+  calculateFrameworkScores,
+} from "@/lib/compliance";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +47,23 @@ export async function GET() {
     // Current state
     const evidence = await getComplianceEvidence(orgId);
     const summary = getEvidenceSummary(evidence.controls);
+
+    // Compliance Readiness Score — the single number that surfaces when you need it.
+    // Weighted average of per-framework scores: SOC 2 and ISO 27001 carry weight 1.5, all others 1.0.
+    const FRAMEWORK_WEIGHTS: Record<string, number> = {
+      "SOC 2": 1.5,
+      "ISO 27001": 1.5,
+      "ISO 27001:2022": 1.5,
+    };
+    const frameworkScoreArray = calculateFrameworkScores(evidence);
+    let weightedSum = 0;
+    let totalWeight = 0;
+    for (const { framework, score } of frameworkScoreArray) {
+      const weight = FRAMEWORK_WEIGHTS[framework] ?? 1.0;
+      weightedSum += score * weight;
+      totalWeight += weight;
+    }
+    const readinessScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
 
     // Critical risks: open risk treatments with no evidence
     const criticalRisks = await db.riskTreatment.findMany({
@@ -80,6 +101,7 @@ export async function GET() {
 
     return NextResponse.json({
       currentScore: summary.score,
+      readinessScore,
       postureTrend: snapshots,
       summary,
       criticalRisks,

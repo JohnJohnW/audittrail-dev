@@ -316,7 +316,7 @@ function EmptyGitHubState() {
       </div>
       <p className="text-sm font-medium text-gray-900 mb-1">Connect GitHub to get started</p>
       <p className="text-xs text-gray-500 mb-4">
-        Install the Audit Trail GitHub App to start collecting compliance evidence in real time.
+        Install the Vigil GitHub App to start collecting compliance evidence in real time.
       </p>
       <Button variant="primary" href={GITHUB_APP_INSTALL_URL} size="sm">
         Install GitHub App →

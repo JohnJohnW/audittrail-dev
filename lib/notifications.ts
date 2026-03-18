@@ -92,13 +92,18 @@ export async function sendWeeklyDigest(
   const resend = getResend();
   if (!resend) return;
 
+  const dateStr = new Date().toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
   await resend.emails.send({
-    from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
+    from: process.env.EMAIL_FROM || "Vigil <noreply@vigil.dev>",
     to: user.email,
-    subject: `Weekly Compliance Digest - ${escapeHtml(org?.name || "Organization")}`,
+    subject: `Your compliance posture — ${dateStr}`,
     html: `
-      <h2>Weekly Compliance Summary</h2>
-      <p>Here's your compliance activity for the past week:</p>
+      <h2>Compliance posture — ${escapeHtml(org?.name || "Organization")}</h2>
+      <p>What happened in your repositories this week:</p>
       <ul>
         <li><strong>Repositories Synced:</strong> ${Number(summary.repositoriesSynced)}</li>
         <li><strong>New Commits:</strong> ${Number(summary.newCommits)}</li>
@@ -134,14 +139,19 @@ export async function sendWeeklyGRCDigest(
   const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
   if (!user?.email) return;
 
+  const grcDateStr = new Date().toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
   await resend.emails.send({
-    from: "Audit Trail <notifications@audittrail.dev>",
+    from: "Vigil <notifications@vigil.dev>",
     to: user.email,
-    subject: `Weekly GRC Digest — Score: ${Number(data.currentScore)}%${data.scoreDelta !== 0 ? ` (${data.scoreDelta > 0 ? "+" : ""}${Number(data.scoreDelta)}%)` : ""}`,
+    subject: `Your compliance posture — ${grcDateStr}`,
     html: `
-      <h2>Weekly GRC Digest</h2>
+      <h2>Compliance posture — ${grcDateStr}</h2>
       <ul>
-        <li><strong>Compliance Score:</strong> ${Number(data.currentScore)}% (${data.scoreDelta > 0 ? "+" : ""}${Number(data.scoreDelta)}% change)</li>
+        <li><strong>Compliance Score:</strong> ${Number(data.currentScore)}%${data.scoreDelta !== 0 ? ` (${data.scoreDelta > 0 ? "+" : ""}${Number(data.scoreDelta)}% this week)` : ""}</li>
         <li><strong>Open Alerts:</strong> ${Number(data.openAlerts)}</li>
         <li><strong>Open Gaps:</strong> ${Number(data.openGaps)}</li>
         <li><strong>Open Risk Treatments:</strong> ${Number(data.openRisks)}</li>
@@ -174,11 +184,11 @@ export async function sendMonthlyCISOSummary(
   if (!user?.email) return;
 
   await resend.emails.send({
-    from: "Audit Trail <notifications@audittrail.dev>",
+    from: "Vigil <notifications@vigil.dev>",
     to: user.email,
-    subject: `Monthly CISO Summary — ${Number(data.currentScore)}% compliance`,
+    subject: `Vigil — Monthly posture summary`,
     html: `
-      <h2>Monthly Security Posture Summary</h2>
+      <h2>Monthly posture summary</h2>
       <ul>
         <li><strong>Compliance Score:</strong> ${Number(data.currentScore)}%</li>
         <li><strong>Monthly Change:</strong> ${data.monthlyDelta > 0 ? "+" : ""}${Number(data.monthlyDelta)}%</li>

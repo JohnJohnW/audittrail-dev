@@ -27,12 +27,12 @@ export function Header() {
     >
       <nav className="max-w-5xl mx-auto px-6" aria-label="Main navigation">
         <div className="flex items-center justify-between h-14">
-          <Link href="/" className="flex items-center gap-2" aria-label="Audit Trail home">
+          <Link href="/" className="flex items-center gap-2" aria-label="Vigil home">
             <div className="relative w-6 h-6 rounded-md overflow-hidden flex-shrink-0">
               <Image src="/icon.svg" alt="" width={24} height={24} />
             </div>
             <span className="text-lg font-semibold text-gray-900 tracking-tight">
-              Audit <span className="text-accent">Trail</span>
+              <span className="text-accent">Vigil</span>
             </span>
           </Link>
 

@@ -1,6 +1,7 @@
 {
-  "name": "audittrail",
+  "name": "vigil",
   "version": "1.0.0",
+  "description": "Compliance infrastructure that works in the background. Surfaces when it counts.",
   "private": true,
   "scripts": {
     "dev": "next dev",

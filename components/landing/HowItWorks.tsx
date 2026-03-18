@@ -6,9 +6,9 @@ export function HowItWorks() {
   const steps = [
     {
       number: "1",
-      title: "Install the GitHub App",
+      title: "Connects once. Watches everything.",
       description:
-        "One-click install. We get read-only access to your repos — no code is ever stored. Webhooks activate immediately.",
+        "One-click install. Vigil gets read-only access to your repos — no code ever stored. Webhooks activate immediately and never need touching again.",
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path
@@ -21,9 +21,9 @@ export function HowItWorks() {
     },
     {
       number: "2",
-      title: "Evidence maps in real time",
+      title: "Evidence builds itself, automatically.",
       description:
-        "Every push, PR, review, Dependabot alert, and deployment approval is mapped to compliance controls the moment it happens.",
+        "Every push, PR, review, Dependabot alert, and deployment approval is mapped to compliance controls the moment it happens. No manual tagging, no spreadsheets.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -37,9 +37,9 @@ export function HowItWorks() {
     },
     {
       number: "3",
-      title: "Gaps get flagged instantly",
+      title: "Only surfaces what matters.",
       description:
-        "Security alerts, unreviewed PRs, and weakened branch protection trigger compliance alerts before your auditor sees them.",
+        "Security alerts, unreviewed PRs, and weakened branch protection trigger compliance alerts before your auditor sees them. Everything else runs silently.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -53,9 +53,9 @@ export function HowItWorks() {
     },
     {
       number: "4",
-      title: "Export for your auditor",
+      title: "When auditors arrive, you're already ready.",
       description:
-        "Generate audit-ready PDFs or CSV files with timestamped evidence, control mappings, and source references.",
+        "Generate audit-ready PDFs or CSV files with timestamped evidence, control mappings, and source references. Everything is already there.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -75,7 +75,7 @@ export function HowItWorks() {
         <FadeIn direction="up" className="text-center mb-14">
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">How it works</p>
           <h2 className="text-2xl font-semibold text-gray-900">
-            From GitHub to audit report in 3 steps
+            Working silently. Surfacing when it counts.
           </h2>
         </FadeIn>
 

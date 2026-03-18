@@ -1,4 +1,4 @@
-# AuditTrail.dev Design System
+# Vigil Design System
 
 This document outlines the design guidelines and patterns used throughout the application to ensure visual consistency.
 

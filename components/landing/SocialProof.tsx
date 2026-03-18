@@ -18,7 +18,7 @@ const stats = [
     ),
   },
   {
-    value: "8",
+    value: "10",
     label: "Compliance frameworks",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

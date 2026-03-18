@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Audit Trail - GitHub to Compliance Evidence";
+export const alt = "Vigil — Compliance Infrastructure";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -44,22 +44,11 @@ export default async function Image() {
           style={{
             fontSize: "56px",
             fontWeight: 700,
-            color: "#ffffff",
-            letterSpacing: "-1px",
-          }}
-        >
-          Audit
-        </span>
-        <span
-          style={{
-            fontSize: "56px",
-            fontWeight: 700,
             color: "#f97316",
             letterSpacing: "-1px",
-            marginLeft: "12px",
           }}
         >
-          Trail
+          Vigil
         </span>
       </div>
 
@@ -74,7 +63,7 @@ export default async function Image() {
           maxWidth: "700px",
         }}
       >
-        Turn GitHub activity into audit-ready compliance evidence.
+        Compliance that works in the background. Surfaces when it counts.
       </div>
 
       {/* Framework pills */}

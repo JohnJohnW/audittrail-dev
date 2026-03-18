@@ -18,12 +18,12 @@ const faqs = [
   {
     question: "Which compliance controls can you evidence?",
     answer:
-      "We map Git activity to controls across eight frameworks. For ISO 27001, that includes A.8.32 (Change Management), A.8.4 (Access to Source Code), and secure development lifecycle controls. For NIST CSF, we cover configuration management (PR.PS-01), software development security (PR.PS-02), and continuous monitoring (DE.CM-09). For GDPR, we evidence privacy-by-design (Art. 25) and security of processing (Art. 32). SOC 2, NIST SP 800-53, SOCI Act, PCI DSS, and Essential Eight are also fully mapped. Full control mappings are available in the dashboard.",
+      "We map Git activity to controls across ten frameworks. For ISO 27001, that includes A.8.32 (Change Management), A.8.4 (Access to Source Code), and secure development lifecycle controls. For NIST CSF, we cover configuration management (PR.PS-01), software development security (PR.PS-02), and continuous monitoring (DE.CM-09). For GDPR, we evidence privacy-by-design (Art. 25) and security of processing (Art. 32). SOC 2, NIST SP 800-53, SOCI Act, PCI DSS, Essential Eight, NIST SP 800-207 (Zero Trust Architecture), and ASD MDA Foundations are all fully mapped. Full control mappings are available in the dashboard.",
   },
   {
     question: "Which frameworks do you support?",
     answer:
-      "We support eight frameworks out of the box: ISO 27001:2022, ACSC Essential Eight, NIST CSF 2.0, NIST SP 800-53 Rev 5, SOC 2, GDPR, SOCI Act, and PCI DSS 4.0. Free plans include access to 3 frameworks; Pro unlocks all 8. Essential Eight is mandated by the ACSC for Australian government suppliers. NIST frameworks are widely required for US federal and enterprise environments. GDPR applies to any organisation handling EU personal data. Enterprise plans add IRAP, HIPAA, and custom framework mappings.",
+      "We support ten frameworks out of the box: ISO 27001:2022, ACSC Essential Eight, NIST CSF 2.0, NIST SP 800-53 Rev 5, SOC 2, GDPR, SOCI Act, PCI DSS 4.0, NIST SP 800-207 (Zero Trust Architecture), and ASD MDA Foundations. Free plans include access to 3 frameworks; Pro unlocks all 10. Essential Eight is mandated by the ACSC for Australian government suppliers. NIST frameworks are widely required for US federal and enterprise environments. GDPR applies to any organisation handling EU personal data. Enterprise plans add IRAP, HIPAA, and custom framework mappings.",
   },
   {
     question: "Will auditors accept these reports?",
@@ -43,12 +43,12 @@ const faqs = [
   {
     question: "Can I use this for my certification audit?",
     answer:
-      "Yes. Audit Trail generates evidence that supports certification and compliance audits across ISO 27001, NIST, SOC 2, GDPR, and other frameworks. However, we're one part of your compliance program. You'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
+      "Yes. Vigil generates evidence that supports certification and compliance audits across ISO 27001, NIST, SOC 2, GDPR, and other frameworks. However, we're one part of your compliance program. You'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
   },
   {
     question: "What's included in the free plan?",
     answer:
-      "The free plan gives you up to 2 repositories and access to 3 of the 8 supported compliance frameworks. You get the full evidence dashboard, gap analysis with action steps, basic compliance alerts, and control notes and exceptions. Exports (PDF and CSV), the auditor portal, shareable reports, and full benchmark data are Pro features.",
+      "The free plan gives you up to 2 repositories and access to 3 of the 10 supported compliance frameworks. You get the full evidence dashboard, gap analysis with action steps, basic compliance alerts, and control notes and exceptions. Exports (PDF and CSV), the auditor portal, shareable reports, and full benchmark data are Pro features.",
   },
   {
     question: "Do you offer enterprise plans?",

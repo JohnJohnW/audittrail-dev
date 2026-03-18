@@ -1,5 +1,5 @@
 /**
- * Test fixtures for AuditTrail.dev
+ * Test fixtures for Vigil
  */
 
 export const fixtures = {

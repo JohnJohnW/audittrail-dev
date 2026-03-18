@@ -118,11 +118,12 @@ export function Frameworks() {
             Compliance Frameworks
           </p>
           <h2 className="text-2xl font-semibold text-gray-900 mb-3">
-            Pre-mapped compliance controls
+            Ten frameworks. Zero manual work.
           </h2>
           <p className="text-sm text-gray-500 max-w-lg mx-auto">
             We&apos;ve done the control mapping for you. Ten frameworks covering global and regional
-            standards — including Zero Trust Architecture. Connect once, evidence them all.
+            standards — including Zero Trust Architecture and ASD MDA Foundations. Connect once,
+            evidence them all, invisibly.
           </p>
         </FadeIn>
 

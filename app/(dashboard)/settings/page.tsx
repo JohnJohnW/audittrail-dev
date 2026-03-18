@@ -514,7 +514,7 @@ function SettingsContent() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500 mb-4">
-              Create API keys for programmatic access to Audit Trail.
+              Create API keys for programmatic access to Vigil.
             </p>
 
             {/* Create new key */}

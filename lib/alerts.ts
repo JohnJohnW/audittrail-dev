@@ -345,7 +345,7 @@ async function sendAlertEmail(
       .filter((m) => m.user.email)
       .map((m) =>
         resend.emails.send({
-          from: process.env.EMAIL_FROM || "Audit Trail <noreply@audittrail.dev>",
+          from: process.env.EMAIL_FROM || "Vigil <noreply@vigil.dev>",
           to: m.user.email!,
           subject: `[${alert.severity.toUpperCase()}] ${alert.title} — ${escapeHtml(org?.name ?? "Your Organization")}`,
           html: `

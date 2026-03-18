@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy | Audit Trail",
-  description: "Privacy Policy for Audit Trail",
+  title: "Privacy Policy | Vigil",
+  description: "Privacy Policy for Vigil",
 };
 
 export default function PrivacyPage() {
@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <header className="border-b border-gray-100 py-4 px-6">
         <div className="max-w-3xl mx-auto">
           <Link href="/" className="text-lg font-semibold text-gray-900">
-            Audit <span className="text-accent">Trail</span>
+            <span className="text-accent">Vigil</span>
           </Link>
         </div>
       </header>
@@ -25,9 +25,8 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-medium text-gray-900 mt-8 mb-4">Overview</h2>
             <p>
-              Audit Trail (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) is committed to
-              protecting your privacy. This policy explains how we collect, use, and protect your
-              data.
+              Vigil (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) is committed to protecting
+              your privacy. This policy explains how we collect, use, and protect your data.
             </p>
           </section>
 

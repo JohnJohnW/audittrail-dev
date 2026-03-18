@@ -11,7 +11,7 @@ export function CTA() {
 
       <FadeIn direction="up" className="max-w-2xl mx-auto text-center relative">
         <h2 className="text-2xl font-semibold text-gray-900 mb-3">
-          Stop screenshotting GitHub for auditors
+          Your compliance posture, running in the background.
         </h2>
         <p className="text-sm text-gray-500 mb-8 max-w-lg mx-auto">
           Connect your repositories and see your compliance score in under 10 minutes. Free to start

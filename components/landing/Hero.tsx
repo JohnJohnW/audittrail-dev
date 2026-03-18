@@ -12,16 +12,17 @@ export function Hero() {
       <div className="max-w-3xl mx-auto text-center relative">
         <FadeInOnLoad delay={0}>
           <p className="text-sm text-gray-500 mb-4">
-            ISO 27001 · NIST CSF · SOC 2 · GDPR · PCI DSS · Essential Eight and more
+            ISO 27001 · NIST CSF · SOC 2 · GDPR · PCI DSS · Essential Eight · NIST 800-207 · ASD MDA
+            and more
           </p>
         </FadeInOnLoad>
 
         <FadeInOnLoad delay={0.1}>
           <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 tracking-tight leading-[1.15] mb-6">
-            Real-time compliance evidence
+            You won&apos;t notice Vigil working.
             <br />
             <span className="relative">
-              from your GitHub activity
+              Your auditor will.
               <svg
                 className="absolute -bottom-2 left-0 w-full h-3 text-accent/30"
                 viewBox="0 0 200 12"
@@ -41,9 +42,9 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
-            Install the GitHub App once. Every commit, PR, code review, Dependabot alert, and
-            deployment approval is automatically mapped to compliance controls across 8 frameworks —
-            in real time, not just at audit time.
+            Connect GitHub once, then forget about compliance. Vigil silently maps every commit, PR,
+            branch protection, and deployment to ten frameworks — automatically, continuously,
+            invisibly. When audit day arrives, everything is already there.
           </p>
         </FadeInOnLoad>
 
