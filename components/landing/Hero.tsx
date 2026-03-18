@@ -11,15 +11,17 @@ export function Hero() {
 
       <div className="max-w-3xl mx-auto text-center relative">
         <FadeInOnLoad delay={0}>
-          <p className="text-sm text-gray-500 mb-4">ISO 27001, NIST CSF, GDPR, SOC 2 and more</p>
+          <p className="text-sm text-gray-500 mb-4">
+            ISO 27001 · NIST CSF · SOC 2 · GDPR · PCI DSS · Essential Eight and more
+          </p>
         </FadeInOnLoad>
 
         <FadeInOnLoad delay={0.1}>
           <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 tracking-tight leading-[1.15] mb-6">
-            Audit evidence from
+            Real-time compliance evidence
             <br />
             <span className="relative">
-              your Git history
+              from your GitHub activity
               <svg
                 className="absolute -bottom-2 left-0 w-full h-3 text-accent/30"
                 viewBox="0 0 200 12"
@@ -39,9 +41,9 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
-            Connect your GitHub repositories. We map commits, pull requests, code reviews, and
-            branch protection rules to compliance controls automatically. Stay audit-ready all year
-            — not just when the auditor arrives.
+            Install the GitHub App once. Every commit, PR, code review, Dependabot alert, and
+            deployment approval is automatically mapped to compliance controls across 8 frameworks —
+            in real time, not just at audit time.
           </p>
         </FadeInOnLoad>
 

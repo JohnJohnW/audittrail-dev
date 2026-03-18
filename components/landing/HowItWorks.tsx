@@ -6,9 +6,9 @@ export function HowItWorks() {
   const steps = [
     {
       number: "1",
-      title: "Connect GitHub",
+      title: "Install the GitHub App",
       description:
-        "Authorize read-only access to your repositories. We never modify your code or settings. Takes 30 seconds.",
+        "One-click install. We get read-only access to your repos — no code is ever stored. Webhooks activate immediately.",
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path
@@ -21,9 +21,9 @@ export function HowItWorks() {
     },
     {
       number: "2",
-      title: "We map to controls",
+      title: "Evidence maps in real time",
       description:
-        "Every commit, PR, review, and branch rule is automatically mapped to compliance framework controls.",
+        "Every push, PR, review, Dependabot alert, and deployment approval is mapped to compliance controls the moment it happens.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -37,9 +37,25 @@ export function HowItWorks() {
     },
     {
       number: "3",
-      title: "Export evidence",
+      title: "Gaps get flagged instantly",
       description:
-        "Generate audit-ready PDFs or CSV files. Each report shows control coverage with supporting evidence.",
+        "Security alerts, unreviewed PRs, and weakened branch protection trigger compliance alerts before your auditor sees them.",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+      ),
+    },
+    {
+      number: "4",
+      title: "Export for your auditor",
+      description:
+        "Generate audit-ready PDFs or CSV files with timestamped evidence, control mappings, and source references.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -65,9 +81,9 @@ export function HowItWorks() {
 
         <div className="relative">
           {/* Connecting line - positioned between icons on desktop */}
-          <div className="hidden md:block absolute top-6 left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] h-0.5 bg-gradient-to-r from-accent/40 via-accent/20 to-accent/40" />
+          <div className="hidden md:block absolute top-6 left-[calc(12.5%+24px)] right-[calc(12.5%+24px)] h-0.5 bg-gradient-to-r from-accent/40 via-accent/20 to-accent/40" />
 
-          <StaggerChildren className="grid md:grid-cols-3 gap-8" staggerDelay={0.15}>
+          <StaggerChildren className="grid md:grid-cols-4 gap-8" staggerDelay={0.15}>
             {steps.map((step) => (
               <div key={step.number} className="text-center">
                 {/* Icon with number badge */}
@@ -91,7 +107,7 @@ export function HowItWorks() {
         <FadeIn direction="up" delay={0.5} className="mt-12 text-center">
           <p className="text-sm text-gray-500">
             Average time from signup to first export:{" "}
-            <span className="font-medium text-accent">under 10 minutes</span>
+            <span className="font-medium text-accent">under 5 minutes</span>
           </p>
         </FadeIn>
       </div>

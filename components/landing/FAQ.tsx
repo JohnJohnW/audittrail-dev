@@ -8,7 +8,7 @@ const faqs = [
   {
     question: "What GitHub permissions do you need?",
     answer:
-      "Read-only access to repositories, commits, pull requests, and branch protection settings. We use OAuth with the minimum required scopes. We never write to or modify your repositories. You can revoke access anytime from GitHub Settings.",
+      "Read-only access to repository contents, pull requests, code reviews, deployments, environments, Dependabot alerts, code scanning alerts, and secret scanning alerts. We use a GitHub App with the minimum required scopes. We never write to or modify your repositories. You can uninstall the App anytime from GitHub Settings.",
   },
   {
     question: "Is my source code secure?",
@@ -33,7 +33,12 @@ const faqs = [
   {
     question: "How often do you sync data?",
     answer:
-      "We sync repository data daily via automated jobs. You can also trigger manual syncs from the dashboard anytime. Initial sync typically completes within a few minutes depending on repository size.",
+      "Evidence updates in real time via GitHub App webhooks — the moment a commit is pushed, a PR is merged, or a Dependabot alert is created, it appears in your dashboard. We also run a daily background sync to catch anything missed. Manual syncs are available anytime from the dashboard.",
+  },
+  {
+    question: "What security events do you monitor?",
+    answer:
+      "We receive and process Dependabot vulnerability alerts, code scanning (SAST) findings, secret scanning alerts, and deployment protection rule bypass requests in real time. Critical findings — like exposed credentials — trigger immediate compliance alerts mapped to your framework controls. We also track org membership changes, team access changes, and repository visibility changes (private → public) as access control evidence.",
   },
   {
     question: "Can I use this for my certification audit?",

@@ -50,8 +50,8 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Connect GitHub once. We automatically pull commits, PRs, reviews, and branch
-                  protection settings daily.
+                  Install the GitHub App once. Webhooks stream commits, PRs, reviews, Dependabot
+                  alerts, and deployment approvals in real time — no daily batch lag.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -59,8 +59,8 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Every artifact maps to specific compliance controls. ISO 27001, NIST CSF, NIST SP
-                  800-53, SOC 2, GDPR, SOCI Act, PCI DSS, and Essential Eight - all covered.
+                  Every artifact maps to specific controls across ISO 27001, NIST CSF, NIST SP
+                  800-53, SOC 2, GDPR, SOCI Act, PCI DSS, and Essential Eight — automatically.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -68,8 +68,8 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Export PDF reports or CSV tables that auditors understand. No more manual evidence
-                  gathering.
+                  Critical gaps — secret leaks, unreviewed merges, disabled branch protection —
+                  trigger instant alerts so you fix them before the auditor arrives.
                 </span>
               </li>
             </ul>
