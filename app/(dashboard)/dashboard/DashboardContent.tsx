@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -61,8 +61,51 @@ export function DashboardContent({
   lastSyncedAt,
   remediationVelocity,
 }: DashboardContentProps) {
+  const searchParams = useSearchParams();
+  const appInstalled = searchParams.get("github_app_installed") === "1";
+  const appError = searchParams.get("github_app_error");
+
   return (
     <div>
+      {/* GitHub App install success banner */}
+      {appInstalled && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          <svg
+            className="h-4 w-4 shrink-0 text-green-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>
+            GitHub App installed successfully. Webhooks are now active — your compliance evidence
+            will update in real time.
+          </span>
+        </div>
+      )}
+      {/* GitHub App error banner */}
+      {appError && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <svg
+            className="h-4 w-4 shrink-0 text-amber-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
+          </svg>
+          <span>
+            There was a problem linking the GitHub App to your account. Please try again or contact
+            support.
+          </span>
+        </div>
+      )}
       {/* Header */}
       <FadeIn>
         <div className="mb-6 sm:mb-8 flex items-start justify-between">
@@ -262,16 +305,21 @@ export function DashboardContent({
 
 // Sub-components
 
+const GITHUB_APP_SLUG = "audit-trail-app";
+const GITHUB_APP_INSTALL_URL = `https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`;
+
 function EmptyGitHubState() {
   return (
     <div className="text-center py-8">
       <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
         <GitHubIcon className="w-7 h-7 text-gray-400" />
       </div>
-      <p className="text-sm font-medium text-gray-900 mb-1">GitHub not connected</p>
-      <p className="text-xs text-gray-500 mb-4">Sign out and sign in with GitHub to connect</p>
-      <Button variant="secondary" href="/auth/signout" size="sm">
-        Sign out →
+      <p className="text-sm font-medium text-gray-900 mb-1">Connect GitHub to get started</p>
+      <p className="text-xs text-gray-500 mb-4">
+        Install the Audit Trail GitHub App to start collecting compliance evidence in real time.
+      </p>
+      <Button variant="primary" href={GITHUB_APP_INSTALL_URL} size="sm">
+        Install GitHub App →
       </Button>
     </div>
   );
