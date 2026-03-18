@@ -223,6 +223,74 @@ export interface GitHubEnvironmentsResponse {
   environments: GitHubEnvironment[];
 }
 
+// Dependabot alert event
+export interface DependabotAlertWebhookPayload {
+  action: string; // "created" | "dismissed" | "auto_dismissed" | "fixed" | "reopened" | "auto_reopened" | "reintroduced"
+  alert: {
+    number: number;
+    state: string; // "open" | "dismissed" | "fixed"
+    dependency: {
+      package: { ecosystem: string; name: string };
+      manifest_path: string;
+    };
+    security_advisory: {
+      ghsa_id: string;
+      cve_id: string | null;
+      summary: string;
+      severity: "critical" | "high" | "medium" | "low";
+    };
+    security_vulnerability: {
+      vulnerable_version_range: string;
+      first_patched_version: { identifier: string } | null;
+    };
+    fixed_at: string | null;
+    dismissed_at: string | null;
+    html_url: string;
+  };
+  repository: WebhookRepository;
+  organization?: WebhookOrganization;
+  sender: WebhookUser;
+}
+
+// Code scanning alert event
+export interface CodeScanningAlertWebhookPayload {
+  action: string; // "created" | "reopened" | "closed_by_user" | "fixed" | "appeared_in_branch" | "reintroduced"
+  alert: {
+    number: number;
+    state: string; // "open" | "dismissed" | "fixed"
+    rule: {
+      id: string;
+      severity: string; // "none" | "note" | "warning" | "error"
+      description: string;
+      security_severity_level?: "critical" | "high" | "medium" | "low";
+    };
+    tool: { name: string; version: string | null };
+    html_url: string;
+    dismissed_at: string | null;
+    fixed_at: string | null;
+  };
+  repository: WebhookRepository;
+  organization?: WebhookOrganization;
+  sender: WebhookUser;
+}
+
+// Secret scanning alert event
+export interface SecretScanningAlertWebhookPayload {
+  action: string; // "created" | "resolved" | "reopened" | "publicly_leaked" | "validated"
+  alert: {
+    number: number;
+    state: string; // "open" | "resolved"
+    secret_type: string;
+    secret_type_display_name: string;
+    resolution: string | null; // "false_positive" | "wont_fix" | "revoked" | "used_in_tests" | null
+    resolved_at: string | null;
+    html_url: string;
+  };
+  repository: WebhookRepository;
+  organization?: WebhookOrganization;
+  sender: WebhookUser;
+}
+
 // Union type for all webhook payloads
 export type WebhookPayload =
   | PushWebhookPayload
@@ -233,4 +301,7 @@ export type WebhookPayload =
   | CheckSuiteWebhookPayload
   | WorkflowRunWebhookPayload
   | BranchProtectionRuleWebhookPayload
-  | DeploymentWebhookPayload;
+  | DeploymentWebhookPayload
+  | DependabotAlertWebhookPayload
+  | CodeScanningAlertWebhookPayload
+  | SecretScanningAlertWebhookPayload;

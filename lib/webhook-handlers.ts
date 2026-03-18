@@ -16,6 +16,9 @@ import type {
   MemberWebhookPayload,
   OrganizationWebhookPayload,
   WorkflowRunWebhookPayload,
+  DependabotAlertWebhookPayload,
+  CodeScanningAlertWebhookPayload,
+  SecretScanningAlertWebhookPayload,
 } from "@/types/webhook";
 
 /**
@@ -333,4 +336,221 @@ export async function handleWorkflowRunEvent(
   } catch (error) {
     logger.error(`Webhook: error processing workflow run artifacts for run ${runId}`, error);
   }
+}
+
+// =============================================================================
+// Dependabot Alert Handler (vulnerability management evidence)
+// Maps to: A.12.6.1, A.14.2.8, SOC2-CC7.1
+// =============================================================================
+
+export async function handleDependabotAlertEvent(
+  orgId: string,
+  payload: DependabotAlertWebhookPayload
+): Promise<void> {
+  const { action, alert, repository } = payload;
+  const pkg = alert.dependency?.package;
+  const advisory = alert.security_advisory;
+  const severity = advisory?.severity ?? "medium";
+
+  // Only create alerts for high/critical findings
+  const isHighSeverity = severity === "critical" || severity === "high";
+
+  if (action === "created" && isHighSeverity) {
+    try {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "dependabot_vulnerability",
+          severity,
+          title: `${severity.toUpperCase()} vulnerability in ${pkg?.name ?? "dependency"} (${repository.name})`,
+          description:
+            advisory?.summary ??
+            `A ${severity} severity vulnerability was detected in ${pkg?.name ?? "a dependency"}.`,
+          metadata: {
+            alertNumber: alert.number,
+            repository: repository.full_name,
+            package: pkg?.name,
+            ecosystem: pkg?.ecosystem,
+            ghsaId: advisory?.ghsa_id,
+            cveId: advisory?.cve_id,
+            patchedVersion: alert.security_vulnerability?.first_patched_version?.identifier ?? null,
+            htmlUrl: alert.html_url,
+          },
+        },
+      });
+      logger.info(
+        `Webhook dependabot: created ${severity} alert for ${pkg?.name} in ${repository.name}`
+      );
+    } catch (error) {
+      logger.error(`Webhook: error creating dependabot alert`, error);
+    }
+  } else if (action === "fixed" || action === "auto_dismissed" || action === "dismissed") {
+    // Resolve any open alert for this alert number
+    try {
+      const existing = await db.complianceAlert.findFirst({
+        where: {
+          orgId,
+          type: "dependabot_vulnerability",
+          resolvedAt: null,
+          metadata: { path: ["alertNumber"], equals: alert.number },
+        },
+        select: { id: true },
+      });
+      if (existing) {
+        await db.complianceAlert.update({
+          where: { id: existing.id },
+          data: { resolvedAt: new Date() },
+        });
+        logger.info(`Webhook dependabot: resolved alert #${alert.number} (${action})`);
+      }
+    } catch (error) {
+      logger.error(`Webhook: error resolving dependabot alert`, error);
+    }
+  }
+
+  await invalidateEvidenceCache(orgId);
+}
+
+// =============================================================================
+// Code Scanning Alert Handler (SAST findings evidence)
+// Maps to: A.14.2.1, A.14.2.5, SOC2-CC7.1
+// =============================================================================
+
+export async function handleCodeScanningAlertEvent(
+  orgId: string,
+  payload: CodeScanningAlertWebhookPayload
+): Promise<void> {
+  const { action, alert, repository } = payload;
+  const secSeverity = alert.rule?.security_severity_level;
+  const ruleSeverity = alert.rule?.severity; // "error" | "warning" | "note" | "none"
+
+  // Map to our severity: error/critical/high only
+  const isActionable =
+    secSeverity === "critical" || secSeverity === "high" || ruleSeverity === "error";
+
+  const severity =
+    secSeverity === "critical" ? "critical" : secSeverity === "high" ? "high" : "medium";
+
+  if (
+    (action === "created" || action === "appeared_in_branch" || action === "reopened") &&
+    isActionable
+  ) {
+    try {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "code_scanning",
+          severity,
+          title: `Code scanning: ${alert.rule?.description ?? alert.rule?.id} (${repository.name})`,
+          description: `${alert.tool?.name ?? "SAST tool"} detected a ${severity} severity issue: ${alert.rule?.description ?? alert.rule?.id}.`,
+          metadata: {
+            alertNumber: alert.number,
+            repository: repository.full_name,
+            ruleId: alert.rule?.id,
+            ruleDescription: alert.rule?.description,
+            toolName: alert.tool?.name,
+            htmlUrl: alert.html_url,
+          },
+        },
+      });
+      logger.info(
+        `Webhook code-scanning: created ${severity} alert for rule ${alert.rule?.id} in ${repository.name}`
+      );
+    } catch (error) {
+      logger.error(`Webhook: error creating code scanning alert`, error);
+    }
+  } else if (action === "fixed" || action === "closed_by_user") {
+    try {
+      const existing = await db.complianceAlert.findFirst({
+        where: {
+          orgId,
+          type: "code_scanning",
+          resolvedAt: null,
+          metadata: { path: ["alertNumber"], equals: alert.number },
+        },
+        select: { id: true },
+      });
+      if (existing) {
+        await db.complianceAlert.update({
+          where: { id: existing.id },
+          data: { resolvedAt: new Date() },
+        });
+        logger.info(`Webhook code-scanning: resolved alert #${alert.number} (${action})`);
+      }
+    } catch (error) {
+      logger.error(`Webhook: error resolving code scanning alert`, error);
+    }
+  }
+
+  await invalidateEvidenceCache(orgId);
+}
+
+// =============================================================================
+// Secret Scanning Alert Handler (credential exposure evidence)
+// Maps to: A.9.4.3, A.9.2.1, SOC2-CC6.1
+// Always critical — an exposed secret is a critical finding.
+// =============================================================================
+
+export async function handleSecretScanningAlertEvent(
+  orgId: string,
+  payload: SecretScanningAlertWebhookPayload
+): Promise<void> {
+  const { action, alert, repository } = payload;
+
+  if (action === "created" || action === "publicly_leaked") {
+    const isPublic = action === "publicly_leaked";
+    try {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "secret_scanning",
+          severity: "critical",
+          title: `${isPublic ? "PUBLIC LEAK: " : ""}Secret detected in ${repository.name} (${alert.secret_type_display_name})`,
+          description: `A ${alert.secret_type_display_name} was detected in repository ${repository.full_name}. ${isPublic ? "This secret has been publicly leaked and must be rotated immediately." : "Rotate this credential immediately."}`,
+          metadata: {
+            alertNumber: alert.number,
+            repository: repository.full_name,
+            secretType: alert.secret_type,
+            secretTypeDisplayName: alert.secret_type_display_name,
+            publiclyLeaked: isPublic,
+            htmlUrl: alert.html_url,
+          },
+        },
+      });
+      logger.info(
+        `Webhook secret-scanning: created CRITICAL alert for ${alert.secret_type_display_name} in ${repository.name}`
+      );
+    } catch (error) {
+      logger.error(`Webhook: error creating secret scanning alert`, error);
+    }
+  } else if (action === "resolved") {
+    // Only resolve if legitimately handled (not just dismissed)
+    const validResolutions = ["revoked", "false_positive"];
+    if (alert.resolution && validResolutions.includes(alert.resolution)) {
+      try {
+        const existing = await db.complianceAlert.findFirst({
+          where: {
+            orgId,
+            type: "secret_scanning",
+            resolvedAt: null,
+            metadata: { path: ["alertNumber"], equals: alert.number },
+          },
+          select: { id: true },
+        });
+        if (existing) {
+          await db.complianceAlert.update({
+            where: { id: existing.id },
+            data: { resolvedAt: new Date() },
+          });
+          logger.info(
+            `Webhook secret-scanning: resolved alert #${alert.number} (resolution: ${alert.resolution})`
+          );
+        }
+      } catch (error) {
+        logger.error(`Webhook: error resolving secret scanning alert`, error);
+      }
+    }
+  }
+
+  await invalidateEvidenceCache(orgId);
 }

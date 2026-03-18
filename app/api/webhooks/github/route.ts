@@ -11,6 +11,9 @@ import {
   handleMemberEvent,
   handleOrganizationEvent,
   handleWorkflowRunEvent,
+  handleDependabotAlertEvent,
+  handleCodeScanningAlertEvent,
+  handleSecretScanningAlertEvent,
 } from "@/lib/webhook-handlers";
 import type {
   PushWebhookPayload,
@@ -19,6 +22,9 @@ import type {
   MemberWebhookPayload,
   OrganizationWebhookPayload,
   WorkflowRunWebhookPayload,
+  DependabotAlertWebhookPayload,
+  CodeScanningAlertWebhookPayload,
+  SecretScanningAlertWebhookPayload,
 } from "@/types/webhook";
 
 /**
@@ -180,15 +186,35 @@ export async function POST(request: NextRequest) {
           await handleWorkflowRunEvent(orgId, payload as unknown as WorkflowRunWebhookPayload);
           break;
 
+        case "dependabot_alert":
+          await handleDependabotAlertEvent(
+            orgId,
+            payload as unknown as DependabotAlertWebhookPayload
+          );
+          break;
+
+        case "code_scanning_alert":
+          await handleCodeScanningAlertEvent(
+            orgId,
+            payload as unknown as CodeScanningAlertWebhookPayload
+          );
+          break;
+
+        case "secret_scanning_alert":
+          await handleSecretScanningAlertEvent(
+            orgId,
+            payload as unknown as SecretScanningAlertWebhookPayload
+          );
+          break;
+
         case "branch_protection_rule":
         case "deployment":
         case "release":
         case "check_suite":
         case "check_run":
         case "security_advisory":
-        case "dependabot_alert":
         case "repository":
-          // Log but don't process yet — these will be handled in future phases
+          // Log but don't process yet
           logger.info(`Webhook: received ${eventType} event, logging only`);
           break;
 
