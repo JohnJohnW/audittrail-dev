@@ -10,6 +10,12 @@ import type { GitHubClient } from "@/lib/github";
 import { logger } from "@/lib/logger";
 import { SYNC_CONFIG, DATA_LIMITS, GITHUB_CONFIG } from "@/lib/constants";
 import { chunk } from "@/lib/utils";
+import {
+  safeEmbedAndStore,
+  buildCommitText,
+  buildPullRequestText,
+  buildBranchProtectionText,
+} from "@/lib/embeddings";
 
 // =============================================================================
 // Types
@@ -105,6 +111,7 @@ export function parseRepoFullName(fullName: string): { owner: string; repo: stri
 export async function syncCommits(
   client: GitHubClient,
   repoId: string,
+  orgId: string,
   owner: string,
   repoName: string,
   since: Date,
@@ -150,10 +157,23 @@ export async function syncCommits(
         )
       );
 
-      // Count successes and log failures
+      // Count successes, fire embeddings, and log failures
       for (let i = 0; i < results.length; i++) {
-        if (results[i].status === "fulfilled") {
+        const result = results[i];
+        if (result.status === "fulfilled") {
           count++;
+          // Fire-and-forget: embed commit text for vector similarity search
+          const dbCommit = result.value;
+          safeEmbedAndStore(
+            orgId,
+            "commit",
+            dbCommit.id,
+            buildCommitText({
+              message: dbCommit.message,
+              authorName: dbCommit.authorName,
+              verified: dbCommit.verified,
+            })
+          ).catch(() => {});
         } else {
           errors++;
           if (opts.verbose) {
@@ -187,6 +207,7 @@ export async function syncCommits(
 export async function syncPullRequests(
   client: GitHubClient,
   repoId: string,
+  orgId: string,
   owner: string,
   repoName: string,
   options: SyncOptions = {}
@@ -236,6 +257,19 @@ export async function syncPullRequests(
           },
         });
         count++;
+        // Fire-and-forget: embed PR text for vector similarity search
+        safeEmbedAndStore(
+          orgId,
+          "pr",
+          dbPr.id,
+          buildPullRequestText({
+            title: dbPr.title,
+            body: dbPr.body,
+            state: dbPr.state,
+            baseBranch: dbPr.baseBranch,
+            headBranch: dbPr.headBranch,
+          })
+        ).catch(() => {});
 
         // Sync reviews for merged PRs
         if (pr.merged_at) {
@@ -295,6 +329,7 @@ export async function syncPullRequests(
 export async function syncBranchProtection(
   client: GitHubClient,
   repoId: string,
+  orgId: string,
   owner: string,
   repoName: string,
   branch: string
@@ -307,7 +342,17 @@ export async function syncBranchProtection(
 
     // Use upsert to avoid duplicate key errors on re-sync
     const snapshotAt = new Date();
-    await db.branchProtection.upsert({
+    const bpData = {
+      requirePullRequest: !!protection.required_pull_request_reviews,
+      requiredApprovals:
+        protection.required_pull_request_reviews?.required_approving_review_count || 0,
+      dismissStaleReviews: protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
+      requireCodeOwners:
+        protection.required_pull_request_reviews?.require_code_owner_reviews || false,
+      enforceAdmins: protection.enforce_admins?.enabled || false,
+      requireStatusChecks: !!protection.required_status_checks,
+    };
+    const dbBp = await db.branchProtection.upsert({
       where: {
         repoId_branch_snapshotAt: {
           repoId,
@@ -315,32 +360,22 @@ export async function syncBranchProtection(
           snapshotAt,
         },
       },
-      update: {
-        requirePullRequest: !!protection.required_pull_request_reviews,
-        requiredApprovals:
-          protection.required_pull_request_reviews?.required_approving_review_count || 0,
-        dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
-        requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
-        enforceAdmins: protection.enforce_admins?.enabled || false,
-        requireStatusChecks: !!protection.required_status_checks,
-      },
+      update: bpData,
       create: {
         repoId,
         branch,
-        requirePullRequest: !!protection.required_pull_request_reviews,
-        requiredApprovals:
-          protection.required_pull_request_reviews?.required_approving_review_count || 0,
-        dismissStaleReviews:
-          protection.required_pull_request_reviews?.dismiss_stale_reviews || false,
-        requireCodeOwners:
-          protection.required_pull_request_reviews?.require_code_owner_reviews || false,
-        enforceAdmins: protection.enforce_admins?.enabled || false,
-        requireStatusChecks: !!protection.required_status_checks,
+        ...bpData,
         snapshotAt,
       },
     });
+
+    // Fire-and-forget: embed branch protection for vector similarity search
+    safeEmbedAndStore(
+      orgId,
+      "branch_protection",
+      dbBp.id,
+      buildBranchProtectionText({ branch, ...bpData })
+    ).catch(() => {});
 
     return { synced: true };
   } catch (error) {
@@ -448,16 +483,17 @@ export async function syncRepository(
     repo.lastSyncedAt || new Date(Date.now() - SYNC_CONFIG.DEFAULT_DAYS_BACK * 24 * 60 * 60 * 1000);
 
   try {
-    // Sync commits
-    const commits = await syncCommits(client, repo.id, owner, repoName, since, options);
+    // Sync commits (with embedding generation)
+    const commits = await syncCommits(client, repo.id, repo.orgId, owner, repoName, since, options);
 
-    // Sync pull requests and reviews
-    const prs = await syncPullRequests(client, repo.id, owner, repoName, options);
+    // Sync pull requests and reviews (with embedding generation)
+    const prs = await syncPullRequests(client, repo.id, repo.orgId, owner, repoName, options);
 
-    // Sync branch protection
+    // Sync branch protection (with embedding generation)
     const protection = await syncBranchProtection(
       client,
       repo.id,
+      repo.orgId,
       owner,
       repoName,
       repo.defaultBranch
