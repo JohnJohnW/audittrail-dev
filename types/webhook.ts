@@ -291,6 +291,150 @@ export interface SecretScanningAlertWebhookPayload {
   sender: WebhookUser;
 }
 
+// Deployment status event
+export interface DeploymentStatusWebhookPayload {
+  action: string; // "created"
+  deployment_status: {
+    id: number;
+    state: string; // "error" | "failure" | "inactive" | "in_progress" | "queued" | "pending" | "success"
+    description: string | null;
+    environment: string;
+    log_url: string | null;
+    created_at: string;
+    updated_at: string;
+    creator: WebhookUser | null;
+  };
+  deployment: {
+    id: number;
+    sha: string;
+    ref: string;
+    environment: string;
+    description: string | null;
+    creator: WebhookUser | null;
+    created_at: string;
+  };
+  repository: WebhookRepository;
+  sender: WebhookUser;
+  organization?: WebhookOrganization;
+}
+
+// Release event
+export interface ReleaseWebhookPayload {
+  action: string; // "published" | "unpublished" | "created" | "edited" | "deleted" | "prereleased" | "released"
+  release: {
+    id: number;
+    tag_name: string;
+    name: string | null;
+    body: string | null;
+    draft: boolean;
+    prerelease: boolean;
+    html_url: string;
+    created_at: string;
+    published_at: string | null;
+    author: WebhookUser;
+    target_commitish: string;
+  };
+  repository: WebhookRepository;
+  sender: WebhookUser;
+  organization?: WebhookOrganization;
+}
+
+// Repository event (visibility changes, archiving, etc.)
+export interface RepositoryWebhookPayload {
+  action: string; // "created" | "deleted" | "archived" | "unarchived" | "publicized" | "privatized" | "renamed" | "transferred" | "edited"
+  repository: WebhookRepository & {
+    archived: boolean;
+    disabled: boolean;
+    visibility: string; // "public" | "private" | "internal"
+  };
+  changes?: {
+    repository?: {
+      name?: { from: string };
+      description?: { from: string | null };
+    };
+  };
+  sender: WebhookUser;
+  organization?: WebhookOrganization;
+}
+
+// Public event (repo changed from private to public — simplified payload)
+export interface PublicWebhookPayload {
+  repository: WebhookRepository & { private: false };
+  sender: WebhookUser;
+  organization?: WebhookOrganization;
+}
+
+// Team event (team membership / permission changes)
+export interface TeamWebhookPayload {
+  action: string; // "created" | "deleted" | "edited" | "added_to_repository" | "removed_from_repository"
+  team: {
+    id: number;
+    name: string;
+    slug: string;
+    permission: string; // "pull" | "push" | "admin" | "maintain" | "triage"
+    privacy: string; // "secret" | "closed"
+  };
+  changes?: {
+    permission?: { from: string };
+    name?: { from: string };
+    privacy?: { from: string };
+    description?: { from: string | null };
+  };
+  repository?: WebhookRepository;
+  sender: WebhookUser;
+  organization?: WebhookOrganization;
+}
+
+// Security and analysis event (secret scanning, code scanning, dependabot feature toggled)
+export interface SecurityAndAnalysisWebhookPayload {
+  action: string; // "changed"
+  changes: {
+    security_and_analysis?: {
+      advanced_security?: { from: string; to: string }; // "enabled" | "disabled"
+      secret_scanning?: { from: string; to: string };
+      secret_scanning_push_protection?: { from: string; to: string };
+      dependabot_security_updates?: { from: string; to: string };
+    };
+  };
+  repository: WebhookRepository;
+  sender: WebhookUser;
+  organization?: WebhookOrganization;
+}
+
+// Deploy key event (deploy key added/removed from repository)
+export interface DeployKeyWebhookPayload {
+  action: string; // "created" | "deleted"
+  key: {
+    id: number;
+    key: string;
+    url: string;
+    title: string;
+    verified: boolean;
+    created_at: string;
+    read_only: boolean;
+  };
+  repository: WebhookRepository;
+  sender: WebhookUser;
+  organization?: WebhookOrganization;
+}
+
+// Repository ruleset event
+export interface RepositoryRulesetWebhookPayload {
+  action: string; // "created" | "deleted" | "edited"
+  ruleset: {
+    id: number;
+    name: string;
+    target: string; // "branch" | "tag"
+    enforcement: string; // "disabled" | "active" | "evaluate"
+    source_type: string;
+    source: string;
+  };
+  changes?: Record<string, unknown>;
+  repository?: WebhookRepository;
+  sender: WebhookUser;
+  organization?: WebhookOrganization;
+}
+
 // Union type for all webhook payloads
 export type WebhookPayload =
   | PushWebhookPayload
@@ -302,6 +446,14 @@ export type WebhookPayload =
   | WorkflowRunWebhookPayload
   | BranchProtectionRuleWebhookPayload
   | DeploymentWebhookPayload
+  | DeploymentStatusWebhookPayload
+  | ReleaseWebhookPayload
+  | RepositoryWebhookPayload
+  | PublicWebhookPayload
+  | TeamWebhookPayload
+  | SecurityAndAnalysisWebhookPayload
+  | DeployKeyWebhookPayload
+  | RepositoryRulesetWebhookPayload
   | DependabotAlertWebhookPayload
   | CodeScanningAlertWebhookPayload
   | SecretScanningAlertWebhookPayload;

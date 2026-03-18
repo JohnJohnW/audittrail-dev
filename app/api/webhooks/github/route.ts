@@ -14,6 +14,15 @@ import {
   handleDependabotAlertEvent,
   handleCodeScanningAlertEvent,
   handleSecretScanningAlertEvent,
+  handleBranchProtectionRuleEvent,
+  handleRepositoryEvent,
+  handlePublicEvent,
+  handleDeploymentStatusEvent,
+  handleReleaseEvent,
+  handleTeamEvent,
+  handleSecurityAndAnalysisEvent,
+  handleDeployKeyEvent,
+  handleRepositoryRulesetEvent,
 } from "@/lib/webhook-handlers";
 import type {
   PushWebhookPayload,
@@ -25,6 +34,15 @@ import type {
   DependabotAlertWebhookPayload,
   CodeScanningAlertWebhookPayload,
   SecretScanningAlertWebhookPayload,
+  BranchProtectionRuleWebhookPayload,
+  DeploymentStatusWebhookPayload,
+  ReleaseWebhookPayload,
+  RepositoryWebhookPayload,
+  PublicWebhookPayload,
+  TeamWebhookPayload,
+  SecurityAndAnalysisWebhookPayload,
+  DeployKeyWebhookPayload,
+  RepositoryRulesetWebhookPayload,
 } from "@/types/webhook";
 
 /**
@@ -208,14 +226,65 @@ export async function POST(request: NextRequest) {
           break;
 
         case "branch_protection_rule":
-        case "deployment":
+          await handleBranchProtectionRuleEvent(
+            orgId,
+            payload as unknown as BranchProtectionRuleWebhookPayload
+          );
+          break;
+
+        case "repository":
+          await handleRepositoryEvent(orgId, payload as unknown as RepositoryWebhookPayload);
+          break;
+
+        case "public":
+          await handlePublicEvent(orgId, payload as unknown as PublicWebhookPayload);
+          break;
+
+        case "deployment_status":
+          await handleDeploymentStatusEvent(
+            orgId,
+            payload as unknown as DeploymentStatusWebhookPayload
+          );
+          break;
+
         case "release":
+          await handleReleaseEvent(orgId, payload as unknown as ReleaseWebhookPayload);
+          break;
+
+        case "team":
+          await handleTeamEvent(orgId, payload as unknown as TeamWebhookPayload);
+          break;
+
+        case "security_and_analysis":
+          await handleSecurityAndAnalysisEvent(
+            orgId,
+            payload as unknown as SecurityAndAnalysisWebhookPayload
+          );
+          break;
+
+        case "deploy_key":
+          await handleDeployKeyEvent(orgId, payload as unknown as DeployKeyWebhookPayload);
+          break;
+
+        case "repository_ruleset":
+          await handleRepositoryRulesetEvent(
+            orgId,
+            payload as unknown as RepositoryRulesetWebhookPayload
+          );
+          break;
+
+        case "deployment":
         case "check_suite":
         case "check_run":
         case "security_advisory":
-        case "repository":
-          // Log but don't process yet
-          logger.info(`Webhook: received ${eventType} event, logging only`);
+        case "fork":
+        case "workflow_dispatch":
+        case "meta":
+        case "installation_target":
+        case "deployment_protection_rule":
+        case "branch_protection_configuration":
+          // Logged for audit trail, no specific compliance action required
+          logger.info(`Webhook: received ${eventType} event (logged)`);
           break;
 
         default:

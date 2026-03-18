@@ -19,6 +19,15 @@ import type {
   DependabotAlertWebhookPayload,
   CodeScanningAlertWebhookPayload,
   SecretScanningAlertWebhookPayload,
+  BranchProtectionRuleWebhookPayload,
+  DeploymentStatusWebhookPayload,
+  ReleaseWebhookPayload,
+  RepositoryWebhookPayload,
+  PublicWebhookPayload,
+  TeamWebhookPayload,
+  SecurityAndAnalysisWebhookPayload,
+  DeployKeyWebhookPayload,
+  RepositoryRulesetWebhookPayload,
 } from "@/types/webhook";
 
 /**
@@ -550,6 +559,536 @@ export async function handleSecretScanningAlertEvent(
         logger.error(`Webhook: error resolving secret scanning alert`, error);
       }
     }
+  }
+
+  await invalidateEvidenceCache(orgId);
+}
+
+// =============================================================================
+// Branch Protection Rule Handler
+// Maps to: A.12.1.2, A.8.4, SOC2-CC8.1
+// A deleted or weakened branch protection is a critical compliance gap.
+// =============================================================================
+
+export async function handleBranchProtectionRuleEvent(
+  orgId: string,
+  payload: BranchProtectionRuleWebhookPayload
+): Promise<void> {
+  const { action, rule, repository } = payload;
+
+  // Only alert on deletion — editing can be tightening or loosening, deletion is always bad
+  if (action === "deleted") {
+    try {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "branch_protection_weakened",
+          severity: "high",
+          title: `Branch protection rule deleted on ${repository.name} (${rule.name})`,
+          description: `The branch protection rule "${rule.name}" was deleted from ${repository.full_name}. Unprotected branches allow direct pushes without review — a change management control gap.`,
+          metadata: {
+            repository: repository.full_name,
+            ruleName: rule.name,
+            ruleId: rule.id,
+            action,
+          },
+        },
+      });
+      logger.info(
+        `Webhook branch-protection: created HIGH alert for deleted rule "${rule.name}" on ${repository.name}`
+      );
+    } catch (error) {
+      logger.error(`Webhook: error creating branch protection alert`, error);
+    }
+  } else {
+    // created or edited — log and sync branch protection data
+    logger.info(
+      `Webhook branch-protection: rule ${action} "${rule.name}" on ${repository.name} (org ${orgId})`
+    );
+  }
+
+  await invalidateEvidenceCache(orgId);
+}
+
+// =============================================================================
+// Repository Event Handler (visibility changes, archiving, deletion)
+// Maps to: A.9.1.2, A.8.4, SOC2-CC6.1
+// Going from private to public is a critical access control event.
+// =============================================================================
+
+export async function handleRepositoryEvent(
+  orgId: string,
+  payload: RepositoryWebhookPayload
+): Promise<void> {
+  const { action, repository } = payload;
+
+  if (action === "publicized") {
+    // Private repo went public — critical alert
+    try {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "repository_made_public",
+          severity: "critical",
+          title: `Repository made public: ${repository.full_name}`,
+          description: `${repository.full_name} was changed from private to public. All source code is now publicly visible. Verify this is intentional and that no secrets, PII, or proprietary code are exposed.`,
+          metadata: {
+            repository: repository.full_name,
+            action,
+            htmlUrl: repository.html_url,
+          },
+        },
+      });
+      logger.warn(
+        `Webhook repository: CRITICAL alert — ${repository.full_name} made public by ${payload.sender.login}`
+      );
+    } catch (error) {
+      logger.error(`Webhook: error creating public repository alert`, error);
+    }
+  } else if (action === "deleted" || action === "archived") {
+    // Repository deleted or archived — update our DB record
+    try {
+      await db.repository.updateMany({
+        where: { orgId, fullName: repository.full_name },
+        data: { isActive: false },
+      });
+      logger.info(`Webhook repository: marked ${repository.full_name} as inactive (${action})`);
+    } catch (error) {
+      logger.error(`Webhook: error marking repository as inactive`, error);
+    }
+  } else if (action === "privatized") {
+    // Public repo went private — positive signal, just log
+    logger.info(
+      `Webhook repository: ${repository.full_name} made private by ${payload.sender.login}`
+    );
+  } else {
+    logger.info(`Webhook repository: action "${action}" on ${repository.full_name}`);
+  }
+
+  await invalidateEvidenceCache(orgId);
+}
+
+// =============================================================================
+// Public Event Handler (repository explicitly made public)
+// Simpler payload than repository event — always a critical alert.
+// Maps to: A.9.1.2, SOC2-CC6.1
+// =============================================================================
+
+export async function handlePublicEvent(
+  orgId: string,
+  payload: PublicWebhookPayload
+): Promise<void> {
+  const { repository } = payload;
+
+  try {
+    // Check for existing unresolved alert to avoid duplicates (may also come via `repository` event)
+    const existing = await db.complianceAlert.findFirst({
+      where: {
+        orgId,
+        type: "repository_made_public",
+        resolvedAt: null,
+        metadata: { path: ["repository"], equals: repository.full_name },
+      },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "repository_made_public",
+          severity: "critical",
+          title: `Repository made public: ${repository.full_name}`,
+          description: `${repository.full_name} was changed to public visibility. Verify no sensitive data is exposed.`,
+          metadata: {
+            repository: repository.full_name,
+            htmlUrl: repository.html_url,
+          },
+        },
+      });
+      logger.warn(`Webhook public: CRITICAL — ${repository.full_name} is now public`);
+    }
+  } catch (error) {
+    logger.error(`Webhook: error handling public repository event`, error);
+  }
+
+  await invalidateEvidenceCache(orgId);
+}
+
+// =============================================================================
+// Deployment Status Handler (change management evidence)
+// Maps to: A.12.1.2, A.14.2.9, SOC2-CC8.1
+// =============================================================================
+
+export async function handleDeploymentStatusEvent(
+  orgId: string,
+  payload: DeploymentStatusWebhookPayload
+): Promise<void> {
+  const { deployment_status, deployment, repository } = payload;
+
+  const repo = await resolveRepo(orgId, repository.full_name);
+  if (!repo) return;
+
+  const state = deployment_status.state;
+  const environment = deployment.environment;
+
+  // Alert on failed production deployments
+  if (state === "failure" || state === "error") {
+    const isProduction = /^prod/i.test(environment) || environment.toLowerCase() === "production";
+
+    if (isProduction) {
+      try {
+        await db.complianceAlert.create({
+          data: {
+            orgId,
+            type: "deployment_failure",
+            severity: "medium",
+            title: `Production deployment failed on ${repository.name}`,
+            description: `A deployment to "${environment}" failed for ${repository.full_name} (ref: ${deployment.ref}). Document the failure and rollback steps as change management evidence.`,
+            metadata: {
+              repository: repository.full_name,
+              environment,
+              sha: deployment.sha,
+              ref: deployment.ref,
+              deploymentId: deployment.id,
+              statusId: deployment_status.id,
+              state,
+              logUrl: deployment_status.log_url,
+            },
+          },
+        });
+        logger.info(
+          `Webhook deployment-status: MEDIUM alert for failed production deployment on ${repository.name}`
+        );
+      } catch (error) {
+        logger.error(`Webhook: error creating deployment failure alert`, error);
+      }
+    }
+  }
+
+  await touchRepoWebhook(repo.id);
+  await invalidateEvidenceCache(orgId);
+  logger.info(
+    `Webhook deployment-status: ${state} on "${environment}" for ${repository.full_name}`
+  );
+}
+
+// =============================================================================
+// Release Handler (software release / change management evidence)
+// Maps to: A.12.1.2, A.14.2.9, SOC2-CC8.1
+// =============================================================================
+
+export async function handleReleaseEvent(
+  orgId: string,
+  payload: ReleaseWebhookPayload
+): Promise<void> {
+  const { action, release, repository } = payload;
+
+  if (action !== "published" && action !== "released") return;
+
+  const repo = await resolveRepo(orgId, repository.full_name);
+  if (!repo) return;
+
+  try {
+    await db.cIArtifact.upsert({
+      where: {
+        repoId_runId_artifactType: {
+          repoId: repo.id,
+          runId: `release-${release.id}`,
+          artifactType: "release",
+        },
+      },
+      update: {
+        name: release.tag_name,
+        summary: {
+          tagName: release.tag_name,
+          releaseName: release.name,
+          isDraft: release.draft,
+          isPrerelease: release.prerelease,
+          author: release.author.login,
+          publishedAt: release.published_at,
+          htmlUrl: release.html_url,
+        },
+      },
+      create: {
+        repoId: repo.id,
+        orgId,
+        runId: `release-${release.id}`,
+        name: release.tag_name,
+        artifactType: "release",
+        summary: {
+          tagName: release.tag_name,
+          releaseName: release.name,
+          isDraft: release.draft,
+          isPrerelease: release.prerelease,
+          author: release.author.login,
+          publishedAt: release.published_at,
+          htmlUrl: release.html_url,
+        },
+      },
+    });
+
+    await touchRepoWebhook(repo.id);
+    await invalidateEvidenceCache(orgId);
+    logger.info(`Webhook release: recorded ${release.tag_name} for ${repository.full_name}`);
+  } catch (error) {
+    logger.error(`Webhook: error recording release`, error);
+  }
+}
+
+// =============================================================================
+// Team Event Handler (access management evidence)
+// Maps to: A.9.2.1, A.9.2.2, SOC2-CC6.2, CC6.3
+// =============================================================================
+
+export async function handleTeamEvent(orgId: string, payload: TeamWebhookPayload): Promise<void> {
+  const { action, team, changes } = payload;
+
+  if (action === "added_to_repository" || action === "removed_from_repository") {
+    const repoName = payload.repository?.full_name ?? "unknown";
+    try {
+      await db.orgMembershipEvent.create({
+        data: {
+          orgId,
+          githubLogin: `team:${team.slug}`,
+          githubUserId: team.id,
+          action: action === "added_to_repository" ? "added" : "removed",
+          role: `team_${team.permission ?? "member"}`,
+          occurredAt: new Date(),
+        },
+      });
+      logger.info(`Webhook team: ${action} "${team.name}" (${team.permission}) on ${repoName}`);
+    } catch (error) {
+      logger.error(`Webhook: error recording team access event`, error);
+    }
+  } else if (action === "edited" && changes?.permission) {
+    const from = changes.permission.from;
+    const to = team.permission;
+    const isEscalation =
+      (from === "pull" || from === "triage") &&
+      (to === "push" || to === "maintain" || to === "admin");
+
+    if (isEscalation) {
+      try {
+        await db.complianceAlert.create({
+          data: {
+            orgId,
+            type: "access_escalation",
+            severity: "medium",
+            title: `Team "${team.name}" permission escalated: ${from} → ${to}`,
+            description: `The team "${team.name}" had its repository permission escalated from "${from}" to "${to}". Review this change against least-privilege access principles (A.9.2.2, SOC2-CC6.3).`,
+            metadata: {
+              teamName: team.name,
+              teamSlug: team.slug,
+              teamId: team.id,
+              permissionFrom: from,
+              permissionTo: to,
+            },
+          },
+        });
+        logger.info(
+          `Webhook team: MEDIUM alert — permission escalation on team "${team.name}" (${from} → ${to})`
+        );
+      } catch (error) {
+        logger.error(`Webhook: error creating team permission alert`, error);
+      }
+    } else {
+      logger.info(`Webhook team: permission changed for "${team.name}": ${from} → ${to}`);
+    }
+  } else {
+    logger.info(`Webhook team: action "${action}" on team "${team.name}"`);
+  }
+
+  await invalidateEvidenceCache(orgId);
+}
+
+// =============================================================================
+// Security and Analysis Handler (security feature enable/disable)
+// Maps to: A.12.6.1, A.14.2.1, SOC2-CC7.1
+// =============================================================================
+
+export async function handleSecurityAndAnalysisEvent(
+  orgId: string,
+  payload: SecurityAndAnalysisWebhookPayload
+): Promise<void> {
+  const { changes, repository } = payload;
+  const secAnalysis = changes.security_and_analysis;
+  if (!secAnalysis) return;
+
+  const disabledFeatures: string[] = [];
+  const featureLabels: Record<string, string> = {
+    advanced_security: "GitHub Advanced Security",
+    secret_scanning: "Secret Scanning",
+    secret_scanning_push_protection: "Secret Scanning Push Protection",
+    dependabot_security_updates: "Dependabot Security Updates",
+  };
+
+  for (const [key, label] of Object.entries(featureLabels)) {
+    const change = secAnalysis[key as keyof typeof secAnalysis];
+    if (change && change.to === "disabled") {
+      disabledFeatures.push(label);
+    }
+  }
+
+  if (disabledFeatures.length > 0) {
+    try {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "security_feature_disabled",
+          severity: "high",
+          title: `Security feature disabled on ${repository.name}: ${disabledFeatures.join(", ")}`,
+          description: `The following security feature(s) were disabled on ${repository.full_name}: ${disabledFeatures.join(", ")}. Disabling active security monitoring creates gaps in vulnerability management controls (A.12.6.1, SOC2-CC7.1).`,
+          metadata: {
+            repository: repository.full_name,
+            disabledFeatures,
+            changes: secAnalysis,
+          },
+        },
+      });
+      logger.warn(
+        `Webhook security-analysis: HIGH alert — disabled [${disabledFeatures.join(", ")}] on ${repository.name}`
+      );
+    } catch (error) {
+      logger.error(`Webhook: error creating security feature disabled alert`, error);
+    }
+  } else {
+    logger.info(
+      `Webhook security-analysis: security features updated on ${repository.full_name} (enabled)`
+    );
+  }
+
+  await invalidateEvidenceCache(orgId);
+}
+
+// =============================================================================
+// Deploy Key Handler (access control evidence)
+// Maps to: A.9.2.1, A.9.4.2, SOC2-CC6.1
+// Write-access deploy keys bypass normal access review processes.
+// =============================================================================
+
+export async function handleDeployKeyEvent(
+  orgId: string,
+  payload: DeployKeyWebhookPayload
+): Promise<void> {
+  const { action, key, repository } = payload;
+
+  if (action === "created" && !key.read_only) {
+    try {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "deploy_key_write_access",
+          severity: "medium",
+          title: `Write-access deploy key added to ${repository.name}: "${key.title}"`,
+          description: `A write-access deploy key titled "${key.title}" was added to ${repository.full_name}. Write-access deploy keys bypass normal access control review. Ensure it is necessary, documented, and rotated regularly.`,
+          metadata: {
+            repository: repository.full_name,
+            keyTitle: key.title,
+            keyId: key.id,
+            readOnly: key.read_only,
+            verified: key.verified,
+            createdAt: key.created_at,
+          },
+        },
+      });
+      logger.info(
+        `Webhook deploy-key: MEDIUM alert — write-access key "${key.title}" added to ${repository.name}`
+      );
+    } catch (error) {
+      logger.error(`Webhook: error creating deploy key alert`, error);
+    }
+  } else if (action === "deleted") {
+    try {
+      const existing = await db.complianceAlert.findFirst({
+        where: {
+          orgId,
+          type: "deploy_key_write_access",
+          resolvedAt: null,
+          metadata: { path: ["keyId"], equals: key.id },
+        },
+        select: { id: true },
+      });
+      if (existing) {
+        await db.complianceAlert.update({
+          where: { id: existing.id },
+          data: { resolvedAt: new Date() },
+        });
+        logger.info(`Webhook deploy-key: resolved alert for deleted key "${key.title}"`);
+      }
+    } catch (error) {
+      logger.error(`Webhook: error resolving deploy key alert`, error);
+    }
+  }
+
+  await invalidateEvidenceCache(orgId);
+}
+
+// =============================================================================
+// Repository Ruleset Handler (modern branch/tag protection)
+// Maps to: A.12.1.2, A.8.4, SOC2-CC8.1
+// =============================================================================
+
+export async function handleRepositoryRulesetEvent(
+  orgId: string,
+  payload: RepositoryRulesetWebhookPayload
+): Promise<void> {
+  const { action, ruleset, repository } = payload;
+  const repoName = repository?.full_name ?? payload.organization?.login ?? "organization";
+
+  if (action === "deleted" && ruleset.enforcement === "active") {
+    try {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "branch_protection_weakened",
+          severity: "high",
+          title: `Repository ruleset deleted: "${ruleset.name}" on ${repoName}`,
+          description: `The active repository ruleset "${ruleset.name}" (targeting ${ruleset.target}s) was deleted from ${repoName}. Rulesets enforce branch/tag protection — deletion may allow unreviewed direct pushes.`,
+          metadata: {
+            rulesetId: ruleset.id,
+            rulesetName: ruleset.name,
+            target: ruleset.target,
+            enforcement: ruleset.enforcement,
+            source: ruleset.source,
+            repository: repoName,
+          },
+        },
+      });
+      logger.info(
+        `Webhook ruleset: HIGH alert — active ruleset "${ruleset.name}" deleted on ${repoName}`
+      );
+    } catch (error) {
+      logger.error(`Webhook: error creating ruleset deletion alert`, error);
+    }
+  } else if (action === "edited" && ruleset.enforcement === "disabled") {
+    try {
+      await db.complianceAlert.create({
+        data: {
+          orgId,
+          type: "branch_protection_weakened",
+          severity: "medium",
+          title: `Repository ruleset disabled: "${ruleset.name}" on ${repoName}`,
+          description: `The repository ruleset "${ruleset.name}" was disabled on ${repoName}. Disabled rulesets no longer enforce branch/tag protections.`,
+          metadata: {
+            rulesetId: ruleset.id,
+            rulesetName: ruleset.name,
+            target: ruleset.target,
+            enforcement: ruleset.enforcement,
+            repository: repoName,
+          },
+        },
+      });
+      logger.info(
+        `Webhook ruleset: MEDIUM alert — ruleset "${ruleset.name}" disabled on ${repoName}`
+      );
+    } catch (error) {
+      logger.error(`Webhook: error creating ruleset disabled alert`, error);
+    }
+  } else {
+    logger.info(
+      `Webhook ruleset: action "${action}" on "${ruleset.name}" (${ruleset.enforcement}) for ${repoName}`
+    );
   }
 
   await invalidateEvidenceCache(orgId);
