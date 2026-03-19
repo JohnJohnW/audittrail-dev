@@ -96,6 +96,10 @@ export interface ComplianceControl {
   evidenceCount: number;
   evidence: EvidenceItemSerialized[];
   note?: string;
+  /** Embedding-based mapping confidence (0–1); undefined when vector store unavailable */
+  mappingConfidence?: number;
+  /** Derived confidence tier from embedding similarity score */
+  confidenceTier?: "high" | "medium" | "low";
 }
 
 /**

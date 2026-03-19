@@ -311,9 +311,14 @@ export default function EvidencePage() {
               View how your GitHub activity maps to compliance controls
             </p>
           </div>
-          <Button variant="accent" href="/exports" className="w-full sm:w-auto">
-            Export Report
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" href="/evidence/upload" className="flex-1 sm:flex-none">
+              Upload Evidence
+            </Button>
+            <Button variant="accent" href="/exports" className="flex-1 sm:flex-none">
+              Export Report
+            </Button>
+          </div>
         </div>
       </FadeIn>
 
@@ -670,6 +675,20 @@ function ControlItem({
               <Badge variant={statusBadgeVariant[control.status]}>
                 {statusLabels[control.status]}
               </Badge>
+              {control.confidenceTier && (
+                <span
+                  title={`AI confidence: ${control.mappingConfidence !== undefined ? Math.round(control.mappingConfidence * 100) + "%" : control.confidenceTier}`}
+                  className={`hidden sm:inline-flex items-center text-xs font-medium px-2 py-0.5 rounded border ${
+                    control.confidenceTier === "high"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : control.confidenceTier === "medium"
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : "bg-gray-50 text-gray-500 border-gray-200"
+                  }`}
+                >
+                  AI {control.confidenceTier}
+                </span>
+              )}
               {(control.status === "no_evidence" || control.status === "partial") &&
                 (() => {
                   const p = getGapPriority(
