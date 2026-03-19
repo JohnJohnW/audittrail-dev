@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  * controls that auditors most frequently flag as needing attention.
  *
  * Only returned when the org has at least 1 completed auditor session with
- * at least 1 signoff — ensures the card only shows meaningful data.
+ * at least 1 signoff - ensures the card only shows meaningful data.
  *
  * Response:
  * {
@@ -80,7 +80,7 @@ export async function GET() {
       else if (s.verdict === "rejected") entry.rejected++;
     }
 
-    // Build sorted patterns — highest attention score first
+    // Build sorted patterns - highest attention score first
     const patterns = Array.from(agg.values())
       .map((e) => ({
         ...e,

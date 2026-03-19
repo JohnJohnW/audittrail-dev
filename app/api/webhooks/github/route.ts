@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
   const orgId = await resolveOrgId(payload);
   if (!orgId) {
     logger.warn(`Webhook: could not resolve org for ${eventType} event (delivery: ${deliveryId})`);
-    // Return 200 to prevent GitHub from retrying — we just don't have this org
+    // Return 200 to prevent GitHub from retrying - we just don't have this org
     return NextResponse.json({ received: true, processed: false });
   }
 
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // Dispatch to handler — fire and forget (don't block the response)
+  // Dispatch to handler - fire and forget (don't block the response)
   const processEvent = async () => {
     try {
       switch (eventType) {
@@ -305,7 +305,7 @@ export async function POST(request: NextRequest) {
           data: { error: errorMessage },
         })
         .catch(() => {
-          // Best effort — don't fail the webhook for logging errors
+          // Best effort - don't fail the webhook for logging errors
         });
     }
   };

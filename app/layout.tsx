@@ -12,9 +12,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Vigil — Compliance Infrastructure",
+  title: "Vigil Sec - Compliance Infrastructure for Engineering Teams",
   description:
-    "Compliance that works in the background. Surfaces when it counts. Connects to GitHub once, then silently maps your commits, PRs, branch protections, and deployments across 10 frameworks.",
+    "Vigil Sec connects to GitHub once and silently maps every commit, PR, branch protection, and deployment across 10 frameworks. Built for GRC teams, CISOs, and audit readiness.",
   keywords: [
     "compliance",
     "audit",
@@ -28,21 +28,24 @@ export const metadata: Metadata = {
     "GitHub",
     "security",
     "GRC",
+    "CISO",
     "compliance infrastructure",
-    "vigil",
+    "vigil sec",
+    "audit trail",
+    "risk management",
   ],
   icons: {
     icon: "/icon.svg",
   },
   openGraph: {
-    title: "Vigil — Compliance Infrastructure",
+    title: "Vigil Sec - Compliance Infrastructure for Engineering Teams",
     description:
       "Compliance that works in the background. Surfaces when it counts. Ten frameworks, zero manual work.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vigil — Compliance Infrastructure",
+    title: "Vigil Sec - Compliance Infrastructure for Engineering Teams",
     description:
       "Compliance that works in the background. Surfaces when it counts. Ten frameworks, zero manual work.",
   },

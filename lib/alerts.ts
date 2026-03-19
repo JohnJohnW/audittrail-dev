@@ -25,7 +25,7 @@ const SCORE_DROP_HIGH = 10; // points
 const SCORE_DROP_MEDIUM = 5; // points
 const NO_EVIDENCE_INCREASE_THRESHOLD = 2; // controls
 
-/** Main entry point — called after storeComplianceSnapshot() in cron route */
+/** Main entry point - called after storeComplianceSnapshot() in cron route */
 export async function detectAndCreateAlerts(
   orgId: string,
   repositories: Array<{
@@ -154,7 +154,7 @@ async function detectBranchProtectionChanges(
       const [current, previous] = snapshots;
       if (!current || !previous) continue;
 
-      // Detect PR requirement being removed — critical
+      // Detect PR requirement being removed - critical
       if (previous.requirePullRequest && !current.requirePullRequest) {
         await createAlert(orgId, {
           type: ALERT_TYPE.BRANCH_PROTECTION_WEAKENED,
@@ -347,7 +347,7 @@ async function sendAlertEmail(
         resend.emails.send({
           from: process.env.EMAIL_FROM || "Vigil <noreply@vigil-sec.net>",
           to: m.user.email!,
-          subject: `[${alert.severity.toUpperCase()}] ${alert.title} — ${escapeHtml(org?.name ?? "Your Organization")}`,
+          subject: `[${alert.severity.toUpperCase()}] ${alert.title} - ${escapeHtml(org?.name ?? "Your Organization")}`,
           html: `
             <div style="font-family:sans-serif;max-width:600px;">
               <h2 style="color:${severityColor}">⚠ Compliance Alert</h2>

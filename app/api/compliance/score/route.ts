@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const evidence = await getCached(
       evidenceCacheKey,
       () => getComplianceEvidence(orgId, { repositoryIds }),
-      300 // 5-minute TTL; shared key with evidence route — one warms the other
+      300 // 5-minute TTL; shared key with evidence route - one warms the other
     );
     logger.info("Evidence fetched", {
       frameworkCount: evidence.frameworks.length,
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const summary = getEvidenceSummary(evidence.controls);
     logger.info("Summary calculated", { summary });
 
-    // Per-framework scores (shared helper — O(n) grouping)
+    // Per-framework scores (shared helper - O(n) grouping)
     const byFramework = calculateFrameworkScores(evidence);
 
     // Calculate scores by category

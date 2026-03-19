@@ -1,5 +1,5 @@
 /**
- * Gap Analysis — Actionable recommendations for controls with missing or weak evidence.
+ * Gap Analysis - Actionable recommendations for controls with missing or weak evidence.
  *
  * For each control, provides a plain-language explanation of what Git activity
  * would generate evidence, so users know exactly what to do.
@@ -88,7 +88,7 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
     actions: [
       "Use GitHub team permissions to grant least-privilege access per repository",
       "Configure branch protection to limit who can merge or force-push",
-      "Review and rotate access rights periodically — log the review as a commit in a policy repo",
+      "Review and rotate access rights periodically. Log the review as a commit in a policy repo",
     ],
   },
   "A.8.4": {
@@ -191,7 +191,7 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
     summary: "No change management evidence (pull requests with review)",
     actions: [
       "Enable branch protection requiring at least 1 PR review before merging",
-      "Use PRs for all changes — each merged PR with a reviewer approval is direct evidence",
+      "Use PRs for all changes. Each merged PR with a reviewer approval is direct evidence",
       "Add PR description templates to encourage documenting the reason for change",
     ],
   },
@@ -213,7 +213,7 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
   },
 
   // ─── Essential Eight ───────────────────────────────────────────────────────
-  // Multiple DB codes per maturity level — all point to same recommendation
+  // Multiple DB codes per maturity level - all point to same recommendation
   "E8-1": {
     summary: "No application allowlisting / control evidence",
     actions: [
@@ -234,7 +234,7 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
     summary: "No application patching activity detected",
     actions: [
       "Enable Dependabot alerts and auto-merge for patch-level updates",
-      "Commit regular dependency bumps — each update is evidence of patch management",
+      "Commit regular dependency bumps. Each update is evidence of patch management",
       "Add a scheduled CI job that runs npm audit or pip-audit and fails on high-severity issues",
     ],
   },
@@ -242,7 +242,7 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
     summary: "No application patching activity detected",
     actions: [
       "Enable Dependabot alerts and auto-merge for patch-level updates",
-      "Commit regular dependency bumps — each update is evidence of patch management",
+      "Commit regular dependency bumps. Each update is evidence of patch management",
       "Add a scheduled CI job that runs npm audit or pip-audit and fails on high-severity issues",
     ],
   },
@@ -297,7 +297,7 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
   "E8-MFA": {
     summary: "No multi-factor authentication evidence",
     actions: [
-      "Enable GPG commit signing — signed commits provide direct evidence of authenticated authors",
+      "Enable GPG commit signing. Signed commits provide direct evidence of authenticated authors",
       "Enforce MFA on all GitHub organisation members via Settings → Authentication security",
       "Add branch protection requiring signed commits",
     ],
@@ -332,7 +332,7 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
     summary: "No secure software development evidence",
     actions: [
       "Add SAST tools to your CI pipeline (CodeQL, SonarQube, Semgrep)",
-      "Include security-focused PR reviews — approving reviews on security changes count as evidence",
+      "Include security-focused PR reviews. Approving reviews on security changes count as evidence",
       "Commit security policy files (SECURITY.md, .github/SECURITY.md)",
     ],
   },
@@ -492,7 +492,7 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
     summary: "No logical access security evidence",
     actions: [
       "Enable branch protection requiring PR reviews before any merge",
-      "Restrict direct pushes to the default branch — all changes must go through PRs",
+      "Restrict direct pushes to the default branch. All changes must go through PRs",
       "Configure CODEOWNERS to enforce appropriate access boundaries",
     ],
   },

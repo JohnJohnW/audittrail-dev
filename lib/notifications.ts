@@ -9,7 +9,7 @@ let resendInstance: Resend | null = null;
 
 function getResend(): Resend | null {
   if (!process.env.RESEND_API_KEY) {
-    logger.warn("RESEND_API_KEY is not configured — email notifications are disabled");
+    logger.warn("RESEND_API_KEY is not configured - email notifications are disabled");
     return null;
   }
   if (!resendInstance) {
@@ -100,9 +100,9 @@ export async function sendWeeklyDigest(
   await resend.emails.send({
     from: process.env.EMAIL_FROM || "Vigil <noreply@vigil-sec.net>",
     to: user.email,
-    subject: `Your compliance posture — ${dateStr}`,
+    subject: `Your compliance posture: ${dateStr}`,
     html: `
-      <h2>Compliance posture — ${escapeHtml(org?.name || "Organization")}</h2>
+      <h2>Compliance posture: ${escapeHtml(org?.name || "Organization")}</h2>
       <p>What happened in your repositories this week:</p>
       <ul>
         <li><strong>Repositories Synced:</strong> ${Number(summary.repositoriesSynced)}</li>
@@ -147,9 +147,9 @@ export async function sendWeeklyGRCDigest(
   await resend.emails.send({
     from: "Vigil <notifications@vigil-sec.net>",
     to: user.email,
-    subject: `Your compliance posture — ${grcDateStr}`,
+    subject: `Your compliance posture: ${grcDateStr}`,
     html: `
-      <h2>Compliance posture — ${grcDateStr}</h2>
+      <h2>Compliance posture: ${grcDateStr}</h2>
       <ul>
         <li><strong>Compliance Score:</strong> ${Number(data.currentScore)}%${data.scoreDelta !== 0 ? ` (${data.scoreDelta > 0 ? "+" : ""}${Number(data.scoreDelta)}% this week)` : ""}</li>
         <li><strong>Open Alerts:</strong> ${Number(data.openAlerts)}</li>
@@ -186,7 +186,7 @@ export async function sendMonthlyCISOSummary(
   await resend.emails.send({
     from: "Vigil <notifications@vigil-sec.net>",
     to: user.email,
-    subject: `Vigil — Monthly posture summary`,
+    subject: `Vigil: Monthly posture summary`,
     html: `
       <h2>Monthly posture summary</h2>
       <ul>

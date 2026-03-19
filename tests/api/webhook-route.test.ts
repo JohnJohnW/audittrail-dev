@@ -119,7 +119,7 @@ describe("POST /api/webhooks/github", () => {
     // Default env
     process.env.GITHUB_WEBHOOK_SECRET = TEST_SECRET;
 
-    // Default db mocks — resolvable org via repository
+    // Default db mocks - resolvable org via repository
     mockDb.repository.findFirst.mockResolvedValue({ orgId: "org-1" });
     mockDb.gitHubConnection.findFirst.mockResolvedValue(null);
     mockDb.webhookEvent.findUnique.mockResolvedValue(null); // not duplicate
@@ -269,7 +269,7 @@ describe("POST /api/webhooks/github", () => {
     const req = makeWebhookRequest(basePushPayload, "push");
     await POST(req);
 
-    // processEvent runs fire-and-forget — wait a tick for it to execute
+    // processEvent runs fire-and-forget - wait a tick for it to execute
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(mockHandlePushEvent).toHaveBeenCalledWith("org-1", basePushPayload);

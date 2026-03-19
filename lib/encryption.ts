@@ -2,7 +2,7 @@
  * AES-256-GCM encryption helpers for sensitive values stored in the database
  * (currently: GitHub OAuth access tokens in the GitHubConnection table).
  *
- * Requires ENCRYPTION_KEY env var — a 64-character hex string (32 bytes / 256 bits).
+ * Requires ENCRYPTION_KEY env var - a 64-character hex string (32 bytes / 256 bits).
  * Generate one with: openssl rand -hex 32
  *
  * If ENCRYPTION_KEY is not set the functions are no-ops that return the value
@@ -28,14 +28,14 @@ function getKey(): Buffer | null {
   const raw = process.env.ENCRYPTION_KEY;
 
   if (!raw) {
-    return null; // Key not configured — encryption disabled
+    return null; // Key not configured - encryption disabled
   }
 
   const buf = Buffer.from(raw, "hex");
 
   if (buf.length !== KEY_BYTES) {
     logger.warn(
-      `ENCRYPTION_KEY is ${buf.length} bytes — expected ${KEY_BYTES}. ` +
+      `ENCRYPTION_KEY is ${buf.length} bytes - expected ${KEY_BYTES}. ` +
         `Generate a valid key with: openssl rand -hex ${KEY_BYTES}`,
       { byteLength: buf.length }
     );
@@ -68,7 +68,7 @@ export function encrypt(plaintext: string): string {
  *
  * If the value does not match the encrypted format (i.e. it is a legacy
  * plaintext token stored before encryption was enabled), it is returned
- * unchanged — this ensures backward compatibility during migration.
+ * unchanged - this ensures backward compatibility during migration.
  *
  * Throws if the value looks encrypted but decryption fails (tampered data).
  */

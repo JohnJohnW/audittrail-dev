@@ -121,7 +121,7 @@ export async function recordGrcAnnotation(
   if (!isFlywheelEnabled()) return;
 
   try {
-    // Just increment a counter — we don't store the note content
+    // Just increment a counter - we don't store the note content
     logger.info("Flywheel: GRC annotation recorded", { controlCode, frameworkName });
   } catch (error) {
     logger.warn("Flywheel: failed to record GRC annotation", {

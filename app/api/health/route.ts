@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db, getConnectionPoolMetrics } from "@/lib/db";
 
-// Health check endpoint — intentionally returns minimal information.
+// Health check endpoint - intentionally returns minimal information.
 // Internal details (error messages, pool metrics) are determined server-side
 // but never included in the response to avoid leaking system internals.
 export async function GET() {

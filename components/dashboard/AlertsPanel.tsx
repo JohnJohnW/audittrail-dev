@@ -189,7 +189,7 @@ export function AlertsPanel({ isOpen, onClose, onUnreadCountChange }: AlertsPane
                     </svg>
                   </div>
                   <p className="text-sm text-gray-400">
-                    No alerts — your compliance posture looks stable
+                    No alerts. Your compliance posture looks stable.
                   </p>
                 </div>
               ) : (

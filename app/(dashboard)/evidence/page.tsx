@@ -110,7 +110,7 @@ export default function EvidencePage() {
 
       // Ensure controls is an array (default to empty if missing)
       if (!Array.isArray(evidenceData.controls)) {
-        logger.error("Invalid evidence data structure — controls is not an array", undefined, {
+        logger.error("Invalid evidence data structure - controls is not an array", undefined, {
           evidenceData,
         });
         setData(null);
@@ -882,7 +882,7 @@ function ControlItem({
                   <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-0.5">
-                        Exception — Not Applicable
+                        Exception: Not Applicable
                       </p>
                       <p className="text-sm text-purple-800">{exception.reason}</p>
                       {exception.expiresAt && (

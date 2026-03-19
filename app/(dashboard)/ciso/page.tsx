@@ -406,7 +406,7 @@ export default function CISODashboardPage() {
                               : "text-gray-700"
                           )}
                         >
-                          {risk.reviewDate ? new Date(risk.reviewDate).toLocaleDateString() : "—"}
+                          {risk.reviewDate ? new Date(risk.reviewDate).toLocaleDateString() : "-"}
                         </td>
                       </motion.tr>
                     );
@@ -437,7 +437,7 @@ export default function CISODashboardPage() {
                 </div>
                 {isCached && execSummary.generatedAt && (
                   <p className="mt-2 text-xs text-gray-400">
-                    Cached — refreshes every 24h · Generated{" "}
+                    Cached, refreshes every 24h · Generated{" "}
                     {new Date(execSummary.generatedAt).toLocaleString()}
                   </p>
                 )}

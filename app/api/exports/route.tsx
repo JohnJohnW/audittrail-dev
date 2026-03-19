@@ -38,10 +38,10 @@ export async function POST(request: NextRequest) {
   try {
     const { orgId, userId } = await requireAuth();
 
-    // Rate-limit exports per org (10/hour — enforced after auth so we use orgId as key)
+    // Rate-limit exports per org (10/hour - enforced after auth so we use orgId as key)
     const { success: withinLimit } = await checkRateLimit(orgId, "export");
     if (!withinLimit) {
-      throw new AppError("Export rate limit reached — try again later", 429, "RATE_LIMITED");
+      throw new AppError("Export rate limit reached - try again later", 429, "RATE_LIMITED");
     }
 
     // Check subscription

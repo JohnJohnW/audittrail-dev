@@ -15,8 +15,8 @@ export const dynamic = "force-dynamic";
  * Attempt to enrich evidence controls with embedding-based confidence scores.
  *
  * Optimised: fetches all control embeddings + all org evidence embeddings in
- * 2 queries, then computes cosine similarity locally — avoiding N RPC calls.
- * Degrades gracefully — if the vector store is empty or unavailable, controls
+ * 2 queries, then computes cosine similarity locally - avoiding N RPC calls.
+ * Degrades gracefully - if the vector store is empty or unavailable, controls
  * are returned unchanged.
  */
 async function enrichWithEmbeddingConfidence(
@@ -51,12 +51,12 @@ async function enrichWithEmbeddingConfidence(
     const evidenceEmbeddings = eeResult.data;
 
     if (!controlEmbeddings || controlEmbeddings.length === 0) {
-      // Vector store not seeded yet — degrade gracefully
+      // Vector store not seeded yet - degrade gracefully
       return confidenceMap;
     }
 
     if (!evidenceEmbeddings || evidenceEmbeddings.length === 0) {
-      // No evidence embeddings stored yet — degrade gracefully
+      // No evidence embeddings stored yet - degrade gracefully
       return confidenceMap;
     }
 
@@ -105,7 +105,7 @@ async function enrichWithEmbeddingConfidence(
       }
     }
   } catch (err) {
-    // Non-critical — log and continue without confidence data
+    // Non-critical - log and continue without confidence data
     logger.warn("Embedding confidence enrichment failed", {
       error: err instanceof Error ? err.message : String(err),
     });
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
       controlCount: evidence.controls.length,
     });
 
-    // Enrich controls with embedding confidence scores — cached separately (10 min TTL)
+    // Enrich controls with embedding confidence scores - cached separately (10 min TTL)
     const confCacheKey = getCacheKey("embeddings:conf", orgId);
     const confObject = await getCached<
       Record<string, { mappingConfidence: number; confidenceTier: "high" | "medium" | "low" }>

@@ -13,11 +13,11 @@ export async function POST(request: NextRequest) {
   try {
     const { orgId } = await requireAuth();
 
-    // Rate-limit manual syncs per org (5/minute — same bucket as the sync limiter)
+    // Rate-limit manual syncs per org (5/minute - same bucket as the sync limiter)
     const { success: withinLimit } = await checkRateLimit(orgId, "sync");
     if (!withinLimit) {
       throw new AppError(
-        "Sync rate limit reached — please wait before syncing again",
+        "Sync rate limit reached - please wait before syncing again",
         429,
         "RATE_LIMITED"
       );

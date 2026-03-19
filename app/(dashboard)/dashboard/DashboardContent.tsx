@@ -79,7 +79,7 @@ export function DashboardContent({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
           <span>
-            GitHub App installed successfully. Webhooks are now active — your compliance evidence
+            GitHub App installed successfully. Webhooks are now active. Your compliance evidence
             will update in real time.
           </span>
         </div>
@@ -171,7 +171,7 @@ export function DashboardContent({
         </StatCardGrid>
       </FadeIn>
 
-      {/* Remediation Velocity — only shown once we have 30-day history */}
+      {/* Remediation Velocity - only shown once we have 30-day history */}
       {remediationVelocity && remediationVelocity.controlsFixed > 0 && (
         <FadeIn delay={0.15}>
           <StatCardGrid columns={{ default: 2 }} className="mb-6 sm:mb-8">

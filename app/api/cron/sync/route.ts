@@ -193,7 +193,7 @@ async function storeComplianceSnapshot(orgId: string) {
     const evidence = await getComplianceEvidence(orgId);
     const summary = getEvidenceSummary(evidence.controls);
 
-    // Per-framework scores (shared helper — O(n) grouping)
+    // Per-framework scores (shared helper - O(n) grouping)
     const frameworkScoreArray = calculateFrameworkScores(evidence);
     const frameworkScores: Record<string, { score: number; total: number; withEvidence: number }> =
       {};
@@ -235,7 +235,7 @@ async function storeComplianceSnapshot(orgId: string) {
     });
 
     // Write per-control snapshots so we can track per-control history over time.
-    // evidence.controls is already in scope — no extra DB round-trip needed.
+    // evidence.controls is already in scope - no extra DB round-trip needed.
     const controlSnapshots = evidence.controls.map((c) => ({
       orgId,
       controlCode: c.controlCode,

@@ -5,7 +5,7 @@
  * Gemini Embedding 2, and upserts into the Supabase control_embeddings table.
  *
  * Protected by CRON_SECRET (same token used by the sync cron job).
- * Idempotent — safe to re-run; existing rows are upserted.
+ * Idempotent - safe to re-run; existing rows are upserted.
  *
  * Usage:
  *   curl -X POST https://your-domain/api/admin/seed-embeddings \

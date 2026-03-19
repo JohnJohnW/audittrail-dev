@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { logger } from "./logger";
 
-// Status rank — higher = better
+// Status rank - higher = better
 const STATUS_RANK: Record<string, number> = {
   has_evidence: 3,
   partial: 2,
@@ -104,6 +104,6 @@ export async function detectRemediationEvents(orgId: string): Promise<void> {
     });
   } catch (error) {
     logger.error(`Error detecting remediation events for org ${orgId}`, error);
-    // Non-blocking — caller should not propagate this
+    // Non-blocking - caller should not propagate this
   }
 }

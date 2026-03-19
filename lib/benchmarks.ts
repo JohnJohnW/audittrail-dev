@@ -1,11 +1,11 @@
 /**
- * Industry Benchmark Computation — Data Flywheel
+ * Industry Benchmark Computation - Data Flywheel
  *
  * Aggregates anonymised compliance scores across all organisations and stores
  * per-cohort benchmarks. Called nightly by the cron sync route.
  *
  * Privacy guarantee: only cohorts with ≥ MINIMUM_COHORT_SIZE organisations
- * are written to the database — individual org data is never exposed.
+ * are written to the database - individual org data is never exposed.
  */
 
 import { db } from "./db";
@@ -243,7 +243,7 @@ export async function computeIndustryBenchmarks(): Promise<void> {
     logger.info(`Benchmark computation complete: ${benchmarksWritten} entries written`);
   } catch (error) {
     logger.error("Benchmark computation error", error);
-    // Never throw — benchmark failures must not affect cron sync
+    // Never throw - benchmark failures must not affect cron sync
   }
 }
 

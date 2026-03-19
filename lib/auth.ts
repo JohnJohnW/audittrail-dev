@@ -15,7 +15,7 @@ if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
 }
 
 if (!process.env.NEXTAUTH_SECRET) {
-  logger.warn("NEXTAUTH_SECRET is not set — authentication may not work correctly");
+  logger.warn("NEXTAUTH_SECRET is not set - authentication may not work correctly");
 }
 
 // Validate NEXTAUTH_URL - critical for OAuth to work
@@ -95,7 +95,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           logger.error("Error fetching user organization", error);
         }
       } else if (token.id && !token.orgId) {
-        // Token exists but orgId is absent — this happens with stale tokens issued
+        // Token exists but orgId is absent - this happens with stale tokens issued
         // before orgId was persisted, or if the initial DB write failed. Re-hydrate
         // from the database so the dashboard doesn't incorrectly prompt reconnection.
         try {

@@ -44,7 +44,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
           setUnreadAlerts(data.unreadCount ?? 0);
         }
       } catch {
-        // Silently fail — nav unread count is non-critical
+        // Silently fail - nav unread count is non-critical
       }
     };
     fetchUnread();
@@ -203,7 +203,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
         </div>
       </motion.nav>
 
-      {/* Alerts panel — rendered outside nav so it covers the full viewport */}
+      {/* Alerts panel - rendered outside nav so it covers the full viewport */}
       <AlertsPanel
         isOpen={alertsOpen}
         onClose={() => setAlertsOpen(false)}

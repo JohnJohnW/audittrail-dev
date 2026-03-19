@@ -48,7 +48,7 @@ export async function GET() {
     const evidence = await getComplianceEvidence(orgId);
     const summary = getEvidenceSummary(evidence.controls);
 
-    // Compliance Readiness Score — the single number that surfaces when you need it.
+    // Compliance Readiness Score - the single number that surfaces when you need it.
     // Weighted average of per-framework scores: SOC 2 and ISO 27001 carry weight 1.5, all others 1.0.
     const FRAMEWORK_WEIGHTS: Record<string, number> = {
       "SOC 2": 1.5,

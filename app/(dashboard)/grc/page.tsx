@@ -204,7 +204,7 @@ export default function GRCDashboardPage() {
           />
           <ScoreStatCard
             label="Score Delta (7d)"
-            value={scoreDelta === 0 ? "—" : scoreDelta > 0 ? `+${scoreDelta}%` : `${scoreDelta}%`}
+            value={scoreDelta === 0 ? "-" : scoreDelta > 0 ? `+${scoreDelta}%` : `${scoreDelta}%`}
             subtitle="vs 7 days ago"
             positive={scoreDelta >= 0}
           />
@@ -321,7 +321,7 @@ export default function GRCDashboardPage() {
                         >
                           {assignment.dueDate
                             ? new Date(assignment.dueDate).toLocaleDateString()
-                            : "—"}
+                            : "-"}
                         </td>
                         <td className="px-6 py-3">
                           <Badge variant={gapStatusVariant(assignment.status)} dot>

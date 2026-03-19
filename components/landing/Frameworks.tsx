@@ -98,7 +98,7 @@ const frameworks = [
   {
     name: "NIST SP 800-207",
     controls: 10,
-    description: "Zero Trust Architecture — identity, device, network, visibility pillars",
+    description: "Zero Trust Architecture: identity, device, network, visibility pillars",
     icon: shieldIcon,
   },
   {
@@ -122,7 +122,7 @@ export function Frameworks() {
           </h2>
           <p className="text-sm text-gray-500 max-w-lg mx-auto">
             We&apos;ve done the control mapping for you. Ten frameworks covering global and regional
-            standards — including Zero Trust Architecture and ASD MDA Foundations. Connect once,
+            standards, including Zero Trust Architecture and ASD MDA Foundations. Connect once,
             evidence them all, invisibly.
           </p>
         </FadeIn>

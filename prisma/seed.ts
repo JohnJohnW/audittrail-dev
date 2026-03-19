@@ -181,7 +181,7 @@ async function main() {
       name: "NIST CSF",
       version: "2.0",
       description:
-        "NIST Cybersecurity Framework 2.0 — a globally recognised voluntary framework for managing and reducing cybersecurity risk.",
+        "NIST Cybersecurity Framework 2.0: a globally recognised voluntary framework for managing and reducing cybersecurity risk.",
     },
   });
 

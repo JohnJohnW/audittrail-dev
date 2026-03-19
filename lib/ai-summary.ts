@@ -89,7 +89,7 @@ ${frameworkScores.map((f) => `- ${f.framework}: ${f.score}%`).join("\n")}
 Open Risk Treatments: ${openRisks}
 ${activeAudit ? `Active Audit: ${activeAudit.frameworkName} (${activeAudit.status}), target close: ${activeAudit.targetCloseDate?.toISOString().split("T")[0] || "TBD"}` : "No active audits"}
 
-Write the executive summary now. Do not include a title or headers — just the narrative paragraphs.`;
+Write the executive summary now. Do not include a title or headers - just the narrative paragraphs.`;
 
         const client = new Anthropic({ apiKey });
         const response = await client.messages.create({

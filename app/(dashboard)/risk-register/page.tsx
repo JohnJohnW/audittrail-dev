@@ -485,7 +485,7 @@ export default function RiskRegisterPage() {
                             >
                               {treatment.reviewDate
                                 ? new Date(treatment.reviewDate).toLocaleDateString()
-                                : "—"}
+                                : "-"}
                               {overdue && (
                                 <span className="ml-1 text-xs text-red-500">(overdue)</span>
                               )}

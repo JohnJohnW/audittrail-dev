@@ -55,7 +55,7 @@ export function Problem() {
                 </span>
                 <span className="text-gray-600">
                   Install once. Vigil watches everything. Webhooks stream commits, PRs, reviews,
-                  Dependabot alerts, and deployment approvals in real time — no daily batch lag.
+                  Dependabot alerts, and deployment approvals in real time. No daily batch lag.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -65,7 +65,7 @@ export function Problem() {
                 <span className="text-gray-600">
                   Every artifact maps to specific controls across ISO 27001, NIST CSF, NIST SP
                   800-53, SOC 2, GDPR, SOCI Act, PCI DSS, Essential Eight, NIST 800-207, and ASD MDA
-                  Foundations — automatically.
+                  Foundations, automatically.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -73,8 +73,8 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Only surfaces what matters. Critical gaps — secret leaks, unreviewed merges,
-                  disabled branch protection — trigger alerts so you fix them before the auditor
+                  Only surfaces what matters. Critical gaps like secret leaks, unreviewed merges,
+                  and disabled branch protection trigger alerts so you fix them before the auditor
                   arrives.
                 </span>
               </li>

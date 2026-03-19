@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   const installationId = searchParams.get("installation_id");
   const setupAction = searchParams.get("setup_action") ?? "install";
 
-  // Always redirect to dashboard — never leave user on a blank callback page
+  // Always redirect to dashboard - never leave user on a blank callback page
   const dashboardUrl = new URL("/dashboard", request.url);
   const errorUrl = new URL("/dashboard?github_app_error=1", request.url);
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   // Require the user to be signed in
   const session = await auth();
   if (!session?.user || !session.orgId) {
-    // Not signed in — redirect to sign-in, then back to dashboard
+    // Not signed in - redirect to sign-in, then back to dashboard
     const signInUrl = new URL("/auth/signin", request.url);
     return NextResponse.redirect(signInUrl);
   }
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
   try {
     if (setupAction === "delete") {
-      // App uninstalled — clear installation_id
+      // App uninstalled - clear installation_id
       await db.gitHubConnection.updateMany({
         where: { orgId, installationId: installationIdInt },
         data: { installationId: null },
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(dashboardUrl);
     }
 
-    // install or update — upsert the installation_id
+    // install or update - upsert the installation_id
     const existing = await db.gitHubConnection.findFirst({
       where: { orgId },
       select: { id: true },
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         data: { installationId: installationIdInt },
       });
     } else {
-      // No connection row yet — this shouldn't normally happen since OAuth
+      // No connection row yet - this shouldn't normally happen since OAuth
       // creates it, but handle it gracefully
       logger.warn(
         `GitHub App callback: no github_connection found for org ${orgId}, ` +

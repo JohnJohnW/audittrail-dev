@@ -32,7 +32,7 @@ export function classifyArtifact(name: string): string {
  * Processes artifacts from a completed GitHub Actions workflow run.
  *
  * Fetches the artifact list from the GitHub API, classifies each artifact,
- * and stores a summary record — does NOT download raw artifact content
+ * and stores a summary record - does NOT download raw artifact content
  * (could be large/sensitive).
  */
 export async function processWorkflowRunArtifacts(
@@ -110,7 +110,7 @@ export async function processWorkflowRunArtifacts(
 
 /**
  * Builds a structured summary for a CI artifact.
- * This is the metadata we store — NOT the raw artifact content.
+ * This is the metadata we store - NOT the raw artifact content.
  */
 function buildArtifactSummary(
   artifact: { name: string; size_in_bytes: number; created_at: string },

@@ -153,7 +153,7 @@ async function generateAndStoreEmbedding(
   } else if (mimeType.startsWith("audio/")) {
     embedding = await embedAudio(base64, mimeType);
   } else {
-    // Video — embed as-is (Gemini supports video)
+    // Video - embed as-is (Gemini supports video)
     const { embedMultipart } = await import("@/lib/embeddings");
     embedding = await embedMultipart([{ inlineData: { mimeType, data: base64 } }]);
   }

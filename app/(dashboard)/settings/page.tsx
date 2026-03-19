@@ -363,7 +363,7 @@ function SettingsContent() {
                 <p className="text-sm sm:text-base text-gray-500 mt-1">
                   {subscription?.plan === "pro"
                     ? "Unlimited repositories, all 8 frameworks, and exports"
-                    : "2 repositories, 3 frameworks — no exports or auditor portal"}
+                    : "2 repositories, 3 frameworks. No exports or auditor portal."}
                 </p>
                 {subscription?.currentPeriodEnd && (
                   <p className="text-sm text-gray-500 mt-2">
@@ -636,7 +636,7 @@ function SettingsContent() {
         </Card>
       </FadeIn>
 
-      {/* Org Profile — used for benchmark segmentation */}
+      {/* Org Profile - used for benchmark segmentation */}
       <FadeIn delay={0.45}>
         <Card variant="elevated">
           <CardHeader>
@@ -645,7 +645,7 @@ function SettingsContent() {
           <CardContent>
             <p className="text-sm text-gray-500 mb-5">
               Help us show you how your compliance compares to similar companies. This data is never
-              shared — it&apos;s only used to segment anonymised benchmarks.
+              shared. It&apos;s only used to segment anonymised benchmarks.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
@@ -700,7 +700,7 @@ function SettingsContent() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500 mb-5">
-              Create time-limited, token-gated links for external auditors. No account required —
+              Create time-limited, token-gated links for external auditors. No account required.
               auditors can view evidence, add comments, sign off controls, and download evidence
               packages.
             </p>
@@ -733,7 +733,7 @@ function SettingsContent() {
                   className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg"
                 >
                   <p className="text-sm font-medium text-blue-800 mb-2">
-                    ✓ Auditor link created — share this with your auditor:
+                    ✓ Auditor link created. Share this with your auditor:
                   </p>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 text-xs bg-white border border-blue-200 px-3 py-2 rounded font-mono break-all">
@@ -760,7 +760,7 @@ function SettingsContent() {
               )}
             </AnimatePresence>
 
-            {/* Invite form — Pro only */}
+            {/* Invite form - Pro only */}
             {subscription?.plan === "pro" && (
               <>
                 <div className="flex flex-col sm:flex-row gap-2 mb-5">

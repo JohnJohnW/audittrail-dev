@@ -1,5 +1,5 @@
 /**
- * Embeddings Module — Supabase Vector Store + Gemini Embedding 2
+ * Embeddings Module - Supabase Vector Store + Gemini Embedding 2
  *
  * Provides multimodal embedding generation (text, image, PDF, audio, video)
  * and vector store operations via Supabase's pgvector extension.
@@ -55,7 +55,7 @@ function getGenAI(): GoogleGenAI {
 }
 
 // =============================================================================
-// Embedding Generation — Multimodal
+// Embedding Generation - Multimodal
 // =============================================================================
 
 /**
@@ -110,7 +110,7 @@ export async function embedPdf(base64: string): Promise<number[]> {
 }
 
 /**
- * Generate an audio embedding (MP3, WAV — up to 80s) via Gemini Embedding 2.
+ * Generate an audio embedding (MP3, WAV - up to 80s) via Gemini Embedding 2.
  */
 export async function embedAudio(base64: string, mimeType: string): Promise<number[]> {
   const ai = getGenAI();
@@ -177,7 +177,7 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
 }
 
 // =============================================================================
-// Text Builders — Convert Structured Artifacts to Embeddable Text
+// Text Builders - Convert Structured Artifacts to Embeddable Text
 // =============================================================================
 
 /**
@@ -240,7 +240,7 @@ export function buildBranchProtectionText(bp: {
 }
 
 // =============================================================================
-// Vector Store Operations — Supabase
+// Vector Store Operations - Supabase
 // =============================================================================
 
 /**
@@ -388,12 +388,12 @@ export function getConfidenceTier(similarity: number): "high" | "medium" | "low"
 }
 
 // =============================================================================
-// Safe Wrappers — Graceful Degradation
+// Safe Wrappers - Graceful Degradation
 // =============================================================================
 
 /**
  * Safely generate and store an evidence embedding.
- * On failure, logs the error and returns without throwing —
+ * On failure, logs the error and returns without throwing.
  * the system degrades to pattern-match only.
  */
 export async function safeEmbedAndStore(

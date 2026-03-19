@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest, { params }: { params: { token: string } }) {
   try {
-    // Rate-limit by IP — public endpoint, no auth required
+    // Rate-limit by IP - public endpoint, no auth required
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const { success } = await checkRateLimit(ip, "api");
     if (!success) {
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: { token: s
     const evidence = await getComplianceEvidence(orgId);
     const summary = getEvidenceSummary(evidence.controls);
 
-    // Build per-framework scores (shared helper — O(n) grouping)
+    // Build per-framework scores (shared helper - O(n) grouping)
     const byFramework = calculateFrameworkScores(evidence);
 
     return NextResponse.json({

@@ -42,8 +42,8 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
-            Connect GitHub once, then forget about compliance. Vigil silently maps every commit, PR,
-            branch protection, and deployment to ten frameworks — automatically, continuously,
+            Connect GitHub once, then forget about compliance. Vigil Sec silently maps every commit,
+            PR, branch protection, and deployment to ten frameworks. Automatically, continuously,
             invisibly. When audit day arrives, everything is already there.
           </p>
         </FadeInOnLoad>

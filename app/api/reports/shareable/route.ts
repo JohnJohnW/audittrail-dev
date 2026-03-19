@@ -49,7 +49,7 @@ export async function POST() {
       await db.shareableReport.deleteMany({ where: { id: { in: toDelete } } });
     }
 
-    // Generate a cryptographically random token (not CUID — CUIDs are sequential/predictable)
+    // Generate a cryptographically random token (not CUID - CUIDs are sequential/predictable)
     const token = randomBytes(32).toString("hex");
 
     const report = await db.shareableReport.create({

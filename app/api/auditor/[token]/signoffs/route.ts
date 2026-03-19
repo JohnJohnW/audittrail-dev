@@ -67,7 +67,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       );
     }
 
-    // Upsert — unique on (sessionId, controlCode, frameworkName)
+    // Upsert - unique on (sessionId, controlCode, frameworkName)
     const signoff = await db.controlSignoff.upsert({
       where: {
         sessionId_controlCode_frameworkName: {

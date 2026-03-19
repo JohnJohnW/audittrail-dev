@@ -1,5 +1,5 @@
 /**
- * ZTA Audit Log — structured logging for security-relevant events.
+ * ZTA Audit Log - structured logging for security-relevant events.
  * Implements "assume breach" principle: log everything that matters for forensics.
  */
 import { logger } from "@/lib/logger";

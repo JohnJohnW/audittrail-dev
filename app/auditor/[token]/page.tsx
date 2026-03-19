@@ -295,7 +295,7 @@ export default function AuditorPortalPage() {
       </header>
 
       <div className="max-w-7xl mx-auto flex h-[calc(100vh-73px)]">
-        {/* Left panel — control list */}
+        {/* Left panel - control list */}
         <div className="w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden">
           {/* Verdict filter tabs */}
           <div className="flex gap-1 p-3 border-b border-gray-100 overflow-x-auto">
@@ -397,7 +397,7 @@ export default function AuditorPortalPage() {
           </div>
         </div>
 
-        {/* Right panel — control detail */}
+        {/* Right panel - control detail */}
         <div className="flex-1 overflow-y-auto p-6">
           {!selectedControl ? (
             <div className="h-full flex items-center justify-center text-gray-400">

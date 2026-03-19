@@ -362,7 +362,7 @@ export default function EvidenceUploadPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-yellow-800">
-                      Pro feature — multimodal evidence upload requires an upgrade
+                      Pro feature: multimodal evidence upload requires an upgrade
                     </p>
                     <p className="text-sm text-yellow-700 mt-1">
                       Uploading PDFs, images, audio, and video evidence is a Pro feature. Pro also
@@ -520,7 +520,7 @@ export default function EvidenceUploadPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   disabled={!isPro}
                   rows={3}
-                  placeholder="Describe the evidence — what it covers, when it was captured, relevant context..."
+                  placeholder="Describe the evidence: what it covers, when it was captured, relevant context..."
                   className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
@@ -592,7 +592,7 @@ export default function EvidenceUploadPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-green-800">
-                    Evidence uploaded — embedding in progress
+                    Evidence uploaded. Embedding in progress
                   </p>
                   <p className="text-sm text-green-700 mt-1">
                     Your file is being embedded via Gemini and stored in the vector store. This may

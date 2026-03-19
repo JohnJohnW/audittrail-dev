@@ -174,7 +174,7 @@ export default function ExportsPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-yellow-800">
-                      Pro feature — exports require an upgrade
+                      Pro feature: exports require an upgrade
                     </p>
                     <p className="text-sm text-yellow-700 mt-1">
                       PDF and CSV exports are a Pro feature. Pro also unlocks all 8 compliance

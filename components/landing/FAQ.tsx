@@ -33,12 +33,12 @@ const faqs = [
   {
     question: "How often do you sync data?",
     answer:
-      "Evidence updates in real time via GitHub App webhooks — the moment a commit is pushed, a PR is merged, or a Dependabot alert is created, it appears in your dashboard. We also run a daily background sync to catch anything missed. Manual syncs are available anytime from the dashboard.",
+      "Evidence updates in real time via GitHub App webhooks. The moment a commit is pushed, a PR is merged, or a Dependabot alert is created, it appears in your dashboard. We also run a daily background sync to catch anything missed. Manual syncs are available anytime from the dashboard.",
   },
   {
     question: "What security events do you monitor?",
     answer:
-      "We receive and process Dependabot vulnerability alerts, code scanning (SAST) findings, secret scanning alerts, and deployment protection rule bypass requests in real time. Critical findings — like exposed credentials — trigger immediate compliance alerts mapped to your framework controls. We also track org membership changes, team access changes, and repository visibility changes (private → public) as access control evidence.",
+      "We receive and process Dependabot vulnerability alerts, code scanning (SAST) findings, secret scanning alerts, and deployment protection rule bypass requests in real time. Critical findings like exposed credentials trigger immediate compliance alerts mapped to your framework controls. We also track org membership changes, team access changes, and repository visibility changes (private → public) as access control evidence.",
   },
   {
     question: "Can I use this for my certification audit?",

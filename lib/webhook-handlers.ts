@@ -58,7 +58,7 @@ async function invalidateEvidenceCache(orgId: string) {
     await invalidateCache(getCacheKey("evidence", orgId));
     await invalidateCache(getCacheKey("compliance", orgId, "score"));
   } catch {
-    // Non-critical — cache will expire naturally
+    // Non-critical - cache will expire naturally
   }
 }
 
@@ -497,7 +497,7 @@ export async function handleCodeScanningAlertEvent(
 // =============================================================================
 // Secret Scanning Alert Handler (credential exposure evidence)
 // Maps to: A.9.4.3, A.9.2.1, SOC2-CC6.1
-// Always critical — an exposed secret is a critical finding.
+// Always critical - an exposed secret is a critical finding.
 // =============================================================================
 
 export async function handleSecretScanningAlertEvent(
@@ -576,7 +576,7 @@ export async function handleBranchProtectionRuleEvent(
 ): Promise<void> {
   const { action, rule, repository } = payload;
 
-  // Only alert on deletion — editing can be tightening or loosening, deletion is always bad
+  // Only alert on deletion - editing can be tightening or loosening, deletion is always bad
   if (action === "deleted") {
     try {
       await db.complianceAlert.create({
@@ -585,7 +585,7 @@ export async function handleBranchProtectionRuleEvent(
           type: "branch_protection_weakened",
           severity: "high",
           title: `Branch protection rule deleted on ${repository.name} (${rule.name})`,
-          description: `The branch protection rule "${rule.name}" was deleted from ${repository.full_name}. Unprotected branches allow direct pushes without review — a change management control gap.`,
+          description: `The branch protection rule "${rule.name}" was deleted from ${repository.full_name}. Unprotected branches allow direct pushes without review. This is a change management control gap.`,
           metadata: {
             repository: repository.full_name,
             ruleName: rule.name,
@@ -601,7 +601,7 @@ export async function handleBranchProtectionRuleEvent(
       logger.error(`Webhook: error creating branch protection alert`, error);
     }
   } else {
-    // created or edited — log and sync branch protection data
+    // created or edited - log and sync branch protection data
     logger.info(
       `Webhook branch-protection: rule ${action} "${rule.name}" on ${repository.name} (org ${orgId})`
     );
@@ -623,7 +623,7 @@ export async function handleRepositoryEvent(
   const { action, repository } = payload;
 
   if (action === "publicized") {
-    // Private repo went public — critical alert
+    // Private repo went public - critical alert
     try {
       await db.complianceAlert.create({
         data: {
@@ -640,13 +640,13 @@ export async function handleRepositoryEvent(
         },
       });
       logger.warn(
-        `Webhook repository: CRITICAL alert — ${repository.full_name} made public by ${payload.sender.login}`
+        `Webhook repository: CRITICAL alert - ${repository.full_name} made public by ${payload.sender.login}`
       );
     } catch (error) {
       logger.error(`Webhook: error creating public repository alert`, error);
     }
   } else if (action === "deleted" || action === "archived") {
-    // Repository deleted or archived — update our DB record
+    // Repository deleted or archived - update our DB record
     try {
       await db.repository.updateMany({
         where: { orgId, fullName: repository.full_name },
@@ -657,7 +657,7 @@ export async function handleRepositoryEvent(
       logger.error(`Webhook: error marking repository as inactive`, error);
     }
   } else if (action === "privatized") {
-    // Public repo went private — positive signal, just log
+    // Public repo went private - positive signal, just log
     logger.info(
       `Webhook repository: ${repository.full_name} made private by ${payload.sender.login}`
     );
@@ -670,7 +670,7 @@ export async function handleRepositoryEvent(
 
 // =============================================================================
 // Public Event Handler (repository explicitly made public)
-// Simpler payload than repository event — always a critical alert.
+// Simpler payload than repository event - always a critical alert.
 // Maps to: A.9.1.2, SOC2-CC6.1
 // =============================================================================
 
@@ -706,7 +706,7 @@ export async function handlePublicEvent(
           },
         },
       });
-      logger.warn(`Webhook public: CRITICAL — ${repository.full_name} is now public`);
+      logger.warn(`Webhook public: CRITICAL - ${repository.full_name} is now public`);
     }
   } catch (error) {
     logger.error(`Webhook: error handling public repository event`, error);
@@ -887,7 +887,7 @@ export async function handleTeamEvent(orgId: string, payload: TeamWebhookPayload
           },
         });
         logger.info(
-          `Webhook team: MEDIUM alert — permission escalation on team "${team.name}" (${from} → ${to})`
+          `Webhook team: MEDIUM alert - permission escalation on team "${team.name}" (${from} → ${to})`
         );
       } catch (error) {
         logger.error(`Webhook: error creating team permission alert`, error);
@@ -947,7 +947,7 @@ export async function handleSecurityAndAnalysisEvent(
         },
       });
       logger.warn(
-        `Webhook security-analysis: HIGH alert — disabled [${disabledFeatures.join(", ")}] on ${repository.name}`
+        `Webhook security-analysis: HIGH alert - disabled [${disabledFeatures.join(", ")}] on ${repository.name}`
       );
     } catch (error) {
       logger.error(`Webhook: error creating security feature disabled alert`, error);
@@ -993,7 +993,7 @@ export async function handleDeployKeyEvent(
         },
       });
       logger.info(
-        `Webhook deploy-key: MEDIUM alert — write-access key "${key.title}" added to ${repository.name}`
+        `Webhook deploy-key: MEDIUM alert - write-access key "${key.title}" added to ${repository.name}`
       );
     } catch (error) {
       logger.error(`Webhook: error creating deploy key alert`, error);
@@ -1044,7 +1044,7 @@ export async function handleRepositoryRulesetEvent(
           type: "branch_protection_weakened",
           severity: "high",
           title: `Repository ruleset deleted: "${ruleset.name}" on ${repoName}`,
-          description: `The active repository ruleset "${ruleset.name}" (targeting ${ruleset.target}s) was deleted from ${repoName}. Rulesets enforce branch/tag protection — deletion may allow unreviewed direct pushes.`,
+          description: `The active repository ruleset "${ruleset.name}" (targeting ${ruleset.target}s) was deleted from ${repoName}. Rulesets enforce branch/tag protection. Deletion may allow unreviewed direct pushes.`,
           metadata: {
             rulesetId: ruleset.id,
             rulesetName: ruleset.name,
@@ -1056,7 +1056,7 @@ export async function handleRepositoryRulesetEvent(
         },
       });
       logger.info(
-        `Webhook ruleset: HIGH alert — active ruleset "${ruleset.name}" deleted on ${repoName}`
+        `Webhook ruleset: HIGH alert - active ruleset "${ruleset.name}" deleted on ${repoName}`
       );
     } catch (error) {
       logger.error(`Webhook: error creating ruleset deletion alert`, error);
@@ -1080,7 +1080,7 @@ export async function handleRepositoryRulesetEvent(
         },
       });
       logger.info(
-        `Webhook ruleset: MEDIUM alert — ruleset "${ruleset.name}" disabled on ${repoName}`
+        `Webhook ruleset: MEDIUM alert - ruleset "${ruleset.name}" disabled on ${repoName}`
       );
     } catch (error) {
       logger.error(`Webhook: error creating ruleset disabled alert`, error);

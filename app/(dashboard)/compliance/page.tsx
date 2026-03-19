@@ -433,14 +433,14 @@ export default function CompliancePage() {
                     <div>
                       <h3 className="font-semibold text-gray-900">No evidence data yet</h3>
                       <p className="text-sm text-gray-500 mt-0.5">
-                        Vigil maps GitHub activity to compliance controls — it needs to import your
+                        Vigil maps GitHub activity to compliance controls. It needs to import your
                         repository data first.
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-3 mb-6 pl-1">
-                    {/* Step 1 — frameworks */}
+                    {/* Step 1 - frameworks */}
                     <div className="flex items-start gap-3">
                       <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
                         <svg
@@ -465,7 +465,7 @@ export default function CompliancePage() {
                       </p>
                     </div>
 
-                    {/* Step 2 — repositories */}
+                    {/* Step 2 - repositories */}
                     <div className="flex items-start gap-3">
                       {repositories.length > 0 ? (
                         <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
@@ -503,7 +503,7 @@ export default function CompliancePage() {
                       </p>
                     </div>
 
-                    {/* Step 3 — sync */}
+                    {/* Step 3 - sync */}
                     <div className="flex items-start gap-3">
                       <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
                         <span className="text-xs text-amber-600 font-bold">
@@ -512,7 +512,7 @@ export default function CompliancePage() {
                       </div>
                       <p className="text-sm text-gray-700">
                         <span className="font-medium">Sync your repositories</span> to import
-                        commits, pull requests, and branch protection rules — evidence scores will
+                        commits, pull requests, and branch protection rules. Evidence scores will
                         appear once the sync completes
                       </p>
                     </div>
@@ -537,7 +537,7 @@ export default function CompliancePage() {
             </Card>
           </FadeIn>
 
-          {/* Framework list — still shown so user can see what will be measured */}
+          {/* Framework list - still shown so user can see what will be measured */}
           <FadeIn delay={0.35}>
             <Card variant="elevated">
               <CardHeader>
@@ -689,7 +689,7 @@ export default function CompliancePage() {
         </>
       )}
 
-      {/* Auditor Patterns — controls flagged by auditors */}
+      {/* Auditor Patterns - controls flagged by auditors */}
       {auditorPatterns && auditorPatterns.patterns.length > 0 && (
         <FadeIn delay={0.55}>
           <Card variant="elevated" className="mb-6 sm:mb-8">
@@ -736,7 +736,7 @@ export default function CompliancePage() {
         </FadeIn>
       )}
 
-      {/* Industry Benchmarks — "How you compare" */}
+      {/* Industry Benchmarks - "How you compare" */}
       {benchmarks.some((b) => b.percentile !== null) && (
         <FadeIn delay={0.6}>
           <Card variant="elevated">

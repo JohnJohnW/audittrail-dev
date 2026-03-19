@@ -15,7 +15,7 @@ export function CTA() {
         </h2>
         <p className="text-sm text-gray-500 mb-8 max-w-lg mx-auto">
           Connect your repositories and see your compliance score in under 10 minutes. Free to start
-          — no credit card required.
+          No credit card required.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link

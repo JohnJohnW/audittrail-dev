@@ -30,7 +30,7 @@ export interface DashboardData {
 
 /**
  * Fetch and derive all data needed for the main dashboard page.
- * All individual queries fail gracefully — a partial load is better than a
+ * All individual queries fail gracefully - a partial load is better than a
  * full-page error.
  */
 export async function getDashboardData(orgId: string): Promise<DashboardData> {
@@ -124,7 +124,7 @@ export async function getDashboardData(orgId: string): Promise<DashboardData> {
     null as Date | null
   );
 
-  // Remediation velocity — only populated once we have at least one event
+  // Remediation velocity - only populated once we have at least one event
   let remediationVelocity: DashboardData["remediationVelocity"] = null;
   if (remediationEvents.length > 0) {
     // Count distinct controls fixed (de-duplicate same control fixed multiple times in window)

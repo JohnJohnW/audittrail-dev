@@ -418,7 +418,7 @@ export default function CustomFrameworkPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-yellow-800">
-                      Pro feature — custom framework mapping requires an upgrade
+                      Pro feature: custom framework mapping requires an upgrade
                     </p>
                     <p className="text-sm text-yellow-700 mt-1">
                       AI-powered evidence mapping for custom frameworks is a Pro feature. Pro also
@@ -638,7 +638,7 @@ export default function CustomFrameworkPage() {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">
-                    Mapping Results — {result.frameworkName}
+                    Mapping Results: {result.frameworkName}
                   </h2>
                   <button
                     onClick={handleReset}

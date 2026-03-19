@@ -6,5 +6,5 @@ Sentry.init({
   enabled: process.env.NODE_ENV === "production",
 
   // Cron job monitoring is handled via captureCheckIn() calls in the cron route.
-  // See: app/api/cron/sync/route.ts — wraps the daily-github-sync monitor slug.
+  // See: app/api/cron/sync/route.ts - wraps the daily-github-sync monitor slug.
 });

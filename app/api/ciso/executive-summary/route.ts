@@ -2,7 +2,7 @@
  * CISO Executive Summary API
  *
  * POST: generate/regenerate AI-drafted board narrative via Claude API.
- * Cached 24h. Never blocks — returns cached or "generating..." state.
+ * Cached 24h. Never blocks - returns cached or "generating..." state.
  */
 
 import { NextResponse } from "next/server";
@@ -22,7 +22,7 @@ export async function POST() {
       throw new AppError("Executive summary requires a Pro subscription", 403, "PRO_REQUIRED");
     }
 
-    // Fire and forget — return immediately
+    // Fire and forget - return immediately
     const result = await generateExecutiveSummary(orgId);
 
     if (!result) {

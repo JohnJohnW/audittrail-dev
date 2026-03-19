@@ -10,9 +10,9 @@ export const dynamic = "force-dynamic";
  * GET /api/alerts
  * Returns unread count + recent alerts for the authenticated org.
  * Query params:
- *   resolved=false  — exclude resolved alerts (default: include all)
- *   type=score_drop — filter by alert type
- *   limit=50        — max results (capped at 100)
+ *   resolved=false  - exclude resolved alerts (default: include all)
+ *   type=score_drop - filter by alert type
+ *   limit=50        - max results (capped at 100)
  */
 export async function GET(request: NextRequest) {
   try {

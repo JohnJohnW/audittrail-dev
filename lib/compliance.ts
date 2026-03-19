@@ -305,7 +305,7 @@ export async function getComplianceEvidence(
 
     logger.info("Repositories fetched", { count: repositories.length });
 
-    // Fetch org membership events (separate query — not tied to repos)
+    // Fetch org membership events (separate query - not tied to repos)
     const membershipEvents = await db.orgMembershipEvent.findMany({
       where: { orgId },
       orderBy: { occurredAt: "desc" },

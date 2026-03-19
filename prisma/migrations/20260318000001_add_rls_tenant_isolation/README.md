@@ -20,7 +20,7 @@ The application already filters all queries by `orgId` at the API layer. However
 
 ## Prisma / service role note
 
-Prisma connects to Supabase using the **service role** (set via `DATABASE_URL` / `DIRECT_URL` with the service key). The PostgreSQL service role bypasses RLS by design — this is **correct and intentional**. Prisma's server-side queries already enforce `orgId` filtering and the service role must remain unrestricted to function properly.
+Prisma connects to Supabase using the **service role** (set via `DATABASE_URL` / `DIRECT_URL` with the service key). The PostgreSQL service role bypasses RLS by design. This is **correct and intentional**. Prisma's server-side queries already enforce `orgId` filtering and the service role must remain unrestricted to function properly.
 
 The RLS policies protect against **non-service-role** connections: direct psql access with the anon key, compromised row-level API keys, or any future integration that uses a lower-privilege connection string.
 

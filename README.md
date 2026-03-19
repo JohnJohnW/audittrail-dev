@@ -2,7 +2,7 @@
 
 > Compliance that works in the background. Surfaces when it counts.
 
-Vigil is compliance infrastructure, not compliance overhead. It connects to your GitHub repositories via a GitHub App and silently maps commits, pull requests, code reviews, branch protection rules, Dependabot alerts, code scanning findings, secret scanning alerts, and deployment approvals to the controls inside 10 major compliance frameworks — continuously, invisibly, in real time. When audit day arrives, everything is already there.
+Vigil is compliance infrastructure, not compliance overhead. It connects to your GitHub repositories via a GitHub App and silently maps commits, pull requests, code reviews, branch protection rules, Dependabot alerts, code scanning findings, secret scanning alerts, and deployment approvals to the controls inside 10 major compliance frameworks - continuously, invisibly, in real time. When audit day arrives, everything is already there.
 
 ---
 
@@ -48,100 +48,100 @@ flowchart LR
     H --> K[External Auditor]
 ```
 
-1. **Install GitHub App** — one click, read-only access. Webhooks activate immediately.
-2. **Events stream in real time** — every push, PR, review, alert, and deployment is captured the moment it happens.
-3. **Compliance engine maps evidence** — pattern matching + Gemini vector embeddings map each artifact to framework controls.
-4. **Gaps are flagged instantly** — security alerts, unreviewed merges, and weakened branch protection trigger compliance alerts before your auditor sees them.
-5. **Export when ready** — PDF reports and CSV tables with timestamped evidence, control mappings, and source references.
+1. **Install GitHub App**: one click, read-only access. Webhooks activate immediately.
+2. **Events stream in real time**: every push, PR, review, alert, and deployment is captured the moment it happens.
+3. **Compliance engine maps evidence**: pattern matching + Gemini vector embeddings map each artifact to framework controls.
+4. **Gaps are flagged instantly**: security alerts, unreviewed merges, and weakened branch protection trigger compliance alerts before your auditor sees them.
+5. **Export when ready**: PDF reports and CSV tables with timestamped evidence, control mappings, and source references.
 
 ---
 
 ## Features
 
-### Phase 1 — GitHub Signal Expansion
+### Phase 1: GitHub Signal Expansion
 
 **Real-time webhooks** (`app/api/webhooks/github/route.ts`)
 
 - GitHub App installation: users install once, webhooks activate across all repos
 - HMAC-SHA256 signature verification with `timingSafeEqual` on every request
-- Delivery ID deduplication — replayed webhooks are silently ignored
+- Delivery ID deduplication: replayed webhooks are silently ignored
 - Fire-and-forget dispatch with error logging; returns `{ received: true }` immediately
 - Processes: `push`, `pull_request`, `pull_request_review`, `member`, `organization`, `workflow_run`, `dependabot_alert`, `code_scanning_alert`, `secret_scanning_alert`, `branch_protection_rule`, `branch_protection_configuration`, `repository_ruleset`, `security_and_analysis`, `deployment`, `deployment_review`, `deployment_status`, `deployment_protection_rule`, `release`, `fork`, `team`, `membership`, `deploy_key`, `workflow_dispatch`, `security_advisory`, `repository`, `public`, `meta`, `installation_target`
 
 **Security alert handlers** (`lib/webhook-handlers.ts`)
 
-- `handleDependabotAlertEvent` — critical/high CVEs → `ComplianceAlert`; maps to A.12.6.1, A.14.2.8, SOC2-CC7.1
-- `handleCodeScanningAlertEvent` — SAST error-severity findings → `ComplianceAlert`; maps to A.14.2.1, CC7.1
-- `handleSecretScanningAlertEvent` — always CRITICAL alert; maps to A.9.4.3, CC6.1
+- `handleDependabotAlertEvent`: critical/high CVEs → `ComplianceAlert`; maps to A.12.6.1, A.14.2.8, SOC2-CC7.1
+- `handleCodeScanningAlertEvent`: SAST error-severity findings → `ComplianceAlert`; maps to A.14.2.1, CC7.1
+- `handleSecretScanningAlertEvent`: always CRITICAL alert; maps to A.9.4.3, CC6.1
 
-**Org membership events** — access management evidence for A.9.2.1, A.9.2.6, CC6.2, CC6.3
+**Org membership events**: access management evidence for A.9.2.1, A.9.2.6, CC6.2, CC6.3
 
-**CI artifacts** (`lib/ci-artifacts.ts`) — classifies workflow run artifacts (SARIF, SBOM, test reports, coverage) and upserts into `ci_artifacts` table
+**CI artifacts** (`lib/ci-artifacts.ts`): classifies workflow run artifacts (SARIF, SBOM, test reports, coverage) and upserts into `ci_artifacts` table
 
-**Deployment environments** — syncs GitHub environment protection rules (required reviewers, prevent self-review) for change management evidence
+**Deployment environments**: syncs GitHub environment protection rules (required reviewers, prevent self-review) for change management evidence
 
-### Phase 2 — Vector Embeddings (Supabase pgvector + Gemini Embedding 2)
+### Phase 2: Vector Embeddings (Supabase pgvector + Gemini Embedding 2)
 
 **Embedding model**: `gemini-embedding-2-preview` at 768 dimensions via `@google/genai`
 
 **Multimodal support** (`lib/embeddings.ts`)
 
-- `embedText()` — commits, PRs, control descriptions
-- `embedImage()` — architecture diagrams, MFA screenshots (PNG/JPEG)
-- `embedPdf()` — policy documents, procedures (Gemini OCR, up to 6 pages)
-- `embedAudio()` — security review meeting recordings (MP3/WAV, up to 80s)
-- `embedMultipart()` — combined text + image → single aggregated vector
+- `embedText()`: commits, PRs, control descriptions
+- `embedImage()`: architecture diagrams, MFA screenshots (PNG/JPEG)
+- `embedPdf()`: policy documents, procedures (Gemini OCR, up to 6 pages)
+- `embedAudio()`: security review meeting recordings (MP3/WAV, up to 80s)
+- `embedMultipart()`: combined text + image → single aggregated vector
 
-**Supabase vector store** — HNSW indexes on `evidence_embeddings` and `control_embeddings` tables; cosine similarity via Postgres RPC functions `match_evidence` and `match_controls`
+**Supabase vector store**: HNSW indexes on `evidence_embeddings` and `control_embeddings` tables; cosine similarity via Postgres RPC functions `match_evidence` and `match_controls`
 
-**Confidence scoring** — blends pattern-match score (40%) with embedding cosine similarity (60%); tiers: `high` ≥0.85, `medium` ≥0.60, `low` <0.60
+**Confidence scoring**: blends pattern-match score (40%) with embedding cosine similarity (60%); tiers: `high` ≥0.85, `medium` ≥0.60, `low` <0.60
 
-**Control embeddings** — all 63 control descriptions pre-seeded via `prisma/seed-embeddings.ts`
+**Control embeddings**: all 63 control descriptions pre-seeded via `prisma/seed-embeddings.ts`
 
-**Zero-shot framework mapping** — paste any custom framework; evidence corpus is searched via embeddings to show coverage with confidence scores
+**Zero-shot framework mapping**: paste any custom framework; evidence corpus is searched via embeddings to show coverage with confidence scores
 
-### Phase 3 — GRC Operational Layer
+### Phase 3: GRC Operational Layer
 
-**Risk register** (`app/api/risk-treatments/`) — treatment types: `remediate | accept | transfer | avoid`; auto-closes when evidence appears after sync
+**Risk register** (`app/api/risk-treatments/`): treatment types: `remediate | accept | transfer | avoid`; auto-closes when evidence appears after sync
 
-**Gap ownership** (`app/api/gaps/[controlCode]/assign/`) — assign compliance gaps to team members with due dates
+**Gap ownership** (`app/api/gaps/[controlCode]/assign/`): assign compliance gaps to team members with due dates
 
-**Audit cycles** (`app/api/audit-cycles/`) — track engagement from planning → fieldwork → reporting → closed; findings, auditor requests, evidence snapshots
+**Audit cycles** (`app/api/audit-cycles/`): track engagement from planning → fieldwork → reporting → closed; findings, auditor requests, evidence snapshots
 
-### Phase 4 — GRC + CISO Dashboards
+### Phase 4: GRC + CISO Dashboards
 
-**GRC dashboard** (`app/api/dashboards/grc/`) — framework scorecards with delta, gap ownership table, risk treatment summary; 5-minute cache
+**GRC dashboard** (`app/api/dashboards/grc/`): framework scorecards with delta, gap ownership table, risk treatment summary; 5-minute cache
 
-**CISO dashboard** (`app/api/dashboards/ciso/`) — 12-month posture trend, benchmark percentile, predicted audit outcome
+**CISO dashboard** (`app/api/dashboards/ciso/`): 12-month posture trend, benchmark percentile, predicted audit outcome
 
-**Executive summary** (`app/api/ciso/executive-summary/`) — AI-drafted board narrative via Claude API; 24-hour cache
+**Executive summary** (`app/api/ciso/executive-summary/`): AI-drafted board narrative via Claude API; 24-hour cache
 
-### Phase 5 — Data Portability
+### Phase 5: Data Portability
 
-**Full export** (`app/api/org/export/`) — JSON/CSV ZIP of all org data: evidence artifacts, snapshots, audit cycles + findings, risk treatments, control notes, gap assignments, auditor sign-offs; stored in Supabase storage, download link via Resend
+**Full export** (`app/api/org/export/`): JSON/CSV ZIP of all org data: evidence artifacts, snapshots, audit cycles + findings, risk treatments, control notes, gap assignments, auditor sign-offs; stored in Supabase storage, download link via Resend
 
-### Phase 6 — Flywheel Instrumentation
+### Phase 6: Flywheel Instrumentation
 
 Anonymized signal capture (`lib/flywheel.ts`) gated by `FLYWHEEL_ENABLED=true`:
 
 - Auditor signoffs (control code, verdict, embedding similarity, industry/size)
 - Audit outcomes (framework, finding counts, evidence state vector)
 - GRC annotations (control note embeddings)
-- PII stripped via `sanitizePayload()` — no `orgId`, `userId`, `email`, `name` ever stored
+- PII stripped via `sanitizePayload()`: no `orgId`, `userId`, `email`, `name` ever stored
 
-### Phase 7 — Scheduled Reports
+### Phase 7: Scheduled Reports
 
-**Weekly GRC digest** — Monday mornings: AI-drafted via Claude, score delta, new alerts, open gaps
-**Monthly CISO summary** — 1st of month: posture trend, benchmark, critical risk delta
+**Weekly GRC digest**: Monday mornings: AI-drafted via Claude, score delta, new alerts, open gaps
+**Monthly CISO summary**: 1st of month: posture trend, benchmark, critical risk delta
 Opt-out via `NotificationPreferences.grcWeeklyDigest` and `cisoMonthlySummary`
 
 ### Observability & Security Infrastructure
 
-**PostHog analytics** (`lib/posthog.ts`) — conservative B2B config: identify by `orgId` only (no email/PII), respect DNT, mask all inputs in session replay, manual pageview control, allowlist-only autocapture
+**PostHog analytics** (`lib/posthog.ts`): conservative B2B config: identify by `orgId` only (no email/PII), respect DNT, mask all inputs in session replay, manual pageview control, allowlist-only autocapture
 
-**Sentry error tracking** — server-side error capture with cron job monitoring for `/api/cron/sync`
+**Sentry error tracking**: server-side error capture with cron job monitoring for `/api/cron/sync`
 
-**Zero Trust Architecture support** — two layers:
+**Zero Trust Architecture support**: two layers:
 
 - _Product feature_: ZTA dashboard (`app/api/dashboards/zta/`) maps GitHub evidence to NIST SP 800-207 and ASD MDA Foundations controls across six ZTA pillars (identity, device, application, data, network, visibility)
 - _App security_: structured ZTA audit log (`lib/zta-audit-log.ts`) records security-relevant events (session start/end, org mismatch, webhook signature failures, exports) with the `[ZTA]` prefix for forensic analysis
@@ -250,19 +250,19 @@ If no org is found, we return `200 { received: true, processed: false }` to prev
 
 Evidence is collected from four source types:
 
-**Commits** — analysed by message pattern matching against 5 pattern families:
+**Commits**: analysed by message pattern matching against 5 pattern families:
 
-- `DEPENDENCY_PATTERNS` — dependency updates, CVE patches
-- `INFRASTRUCTURE_PATTERNS` — Docker, Terraform, Kubernetes, CI configs
-- `SECURITY_PATTERNS` — auth, encryption, XSS/SQLi/CSRF fixes
-- `TEST_PATTERNS` — unit, integration, e2e test additions
-- `CICD_SECURITY_PATTERNS` — Snyk, SonarQube, CodeQL, SAST/DAST tool references
+- `DEPENDENCY_PATTERNS`: dependency updates, CVE patches
+- `INFRASTRUCTURE_PATTERNS`: Docker, Terraform, Kubernetes, CI configs
+- `SECURITY_PATTERNS`: auth, encryption, XSS/SQLi/CSRF fixes
+- `TEST_PATTERNS`: unit, integration, e2e test additions
+- `CICD_SECURITY_PATTERNS`: Snyk, SonarQube, CodeQL, SAST/DAST tool references
 
-**Pull requests** — state (merged/open/closed), review count, base branch, author
+**Pull requests**: state (merged/open/closed), review count, base branch, author
 
-**Branch protection** — required reviews, CODEOWNERS enforcement, status checks, admin bypass
+**Branch protection**: required reviews, CODEOWNERS enforcement, status checks, admin bypass
 
-**Security alerts** — Dependabot CVE severity, code scanning rule severity, secret type
+**Security alerts**: Dependabot CVE severity, code scanning rule severity, secret type
 
 Scoring:
 
@@ -332,9 +332,9 @@ GEMINI_API_KEY=... NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
 | Variable                | Default | Purpose                          |
 | ----------------------- | ------- | -------------------------------- |
 | `FLYWHEEL_ENABLED`      | `false` | Enable anonymized signal capture |
-| `STRIPE_SECRET_KEY`     | —       | Stripe billing                   |
-| `STRIPE_WEBHOOK_SECRET` | —       | Stripe webhook verification      |
-| `RESEND_API_KEY`        | —       | Email notifications and reports  |
+| `STRIPE_SECRET_KEY`     | -       | Stripe billing                   |
+| `STRIPE_WEBHOOK_SECRET` | -       | Stripe webhook verification      |
+| `RESEND_API_KEY`        | -       | Email notifications and reports  |
 
 ---
 
@@ -379,9 +379,9 @@ Deployed on Vercel. Production database on Supabase.
 
 **Important**: `DATABASE_URL` must use Supabase's Transaction mode (port 6543, `?pgbouncer=true`) to prevent connection pool exhaustion under concurrent requests. `DIRECT_URL` uses port 5432 for Prisma migrations.
 
-**Cron jobs** — configured in `vercel.json`:
+**Cron jobs**: configured in `vercel.json`:
 
-- `/api/cron/sync` — runs daily for sync + alerts + weekly/monthly reports
+- `/api/cron/sync`: runs daily for sync + alerts + weekly/monthly reports
 
 **Applying migrations to production**:
 

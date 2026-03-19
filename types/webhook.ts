@@ -357,7 +357,7 @@ export interface RepositoryWebhookPayload {
   organization?: WebhookOrganization;
 }
 
-// Public event (repo changed from private to public — simplified payload)
+// Public event (repo changed from private to public - simplified payload)
 export interface PublicWebhookPayload {
   repository: WebhookRepository & { private: false };
   sender: WebhookUser;

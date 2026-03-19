@@ -21,7 +21,7 @@ const changelog: ChangelogEntry[] = [
     type: "feature",
     title: "Expanded Compliance Framework Coverage",
     description:
-      "Added six new compliance frameworks: NIST CSF 2.0, NIST SP 800-53 Rev 5, SOC 2, GDPR, SOCI Act, and PCI DSS 4.0. Added NIST SP 800-207 (Zero Trust Architecture) and ASD MDA Foundations — Vigil now maps GitHub activity to 63 controls across 10 frameworks. Rebranded to Vigil.",
+      "Added six new compliance frameworks: NIST CSF 2.0, NIST SP 800-53 Rev 5, SOC 2, GDPR, SOCI Act, and PCI DSS 4.0. Added NIST SP 800-207 (Zero Trust Architecture) and ASD MDA Foundations. Vigil now maps GitHub activity to 63 controls across 10 frameworks. Rebranded to Vigil.",
   },
   {
     date: "2026-01-20",

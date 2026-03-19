@@ -42,8 +42,8 @@ function toCsvRow(values: (string | number | null | undefined)[]) {
  * GET /api/auditor/[token]/export
  * Streams a ZIP containing:
  *   - README.txt
- *   - summary.csv  — all controls with status + sign-off verdict
- *   - evidence.csv — detailed evidence items
+ *   - summary.csv  - all controls with status + sign-off verdict
+ *   - evidence.csv - detailed evidence items
  */
 export async function GET(_request: NextRequest, { params }: { params: { token: string } }) {
   try {
@@ -66,7 +66,7 @@ export async function GET(_request: NextRequest, { params }: { params: { token: 
     const auditorName = session.auditorName ?? session.auditorEmail;
     const now = new Date().toISOString().split("T")[0];
     const readme = [
-      `Vigil — Evidence Export`,
+      `Vigil - Evidence Export`,
       `============================`,
       ``,
       `Organisation : ${orgName}`,
@@ -76,8 +76,8 @@ export async function GET(_request: NextRequest, { params }: { params: { token: 
       ``,
       `Contents`,
       `--------`,
-      `summary.csv  — One row per control with compliance status and auditor verdict`,
-      `evidence.csv — Detailed evidence items (commits, PRs, branch settings, etc.)`,
+      `summary.csv  - One row per control with compliance status and auditor verdict`,
+      `evidence.csv - Detailed evidence items (commits, PRs, branch settings, etc.)`,
     ].join("\n");
 
     // ---- summary.csv ----

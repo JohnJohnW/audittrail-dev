@@ -1,5 +1,5 @@
 /**
- * PostHog analytics client — configured conservatively for B2B compliance SaaS.
+ * PostHog analytics client - configured conservatively for B2B compliance SaaS.
  * Privacy principles:
  * - Identify by orgId only, never by email or personal name
  * - Mask all text inputs (session replay safe)
