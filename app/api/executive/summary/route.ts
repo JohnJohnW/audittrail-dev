@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
-import { getComplianceEvidence, getEvidenceSummary, enrichWithAgentEvidence } from "@/lib/compliance";
+import { getComplianceEvidence, getEvidenceSummary, type ControlEvidence } from "@/lib/compliance";
 import { handleApiError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
 import { db } from "@/lib/db";
@@ -47,7 +47,7 @@ function calculateBusinessImpact(score: number, total: number, withEvidence: num
   };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { orgId } = await requireAuth();
     logger.info("Executive summary API", { orgId });
@@ -63,13 +63,13 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    const enrichedControls = await enrichWithAgentEvidence(orgId, evidence.controls);
-    const summary = getEvidenceSummary(enrichedControls);
+    const controls = evidence.controls;
+    const summary = getEvidenceSummary(controls);
 
     // Per-framework breakdown
     const frameworkBreakdown = evidence.frameworks.map((fw) => {
-      const controls = enrichedControls.filter((c) => c.frameworkName === fw.name);
-      const fs = getEvidenceSummary(controls);
+      const fwControls = controls.filter((c: ControlEvidence) => c.frameworkName === fw.name);
+      const fs = getEvidenceSummary(fwControls);
       return {
         name: fw.name,
         score: fs.score,
@@ -80,10 +80,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Top gaps (controls with no or limited evidence)
-    const topGaps = enrichedControls
-      .filter((c) => c.status === "no_evidence" || c.status === "partial" || c.status === "limited")
+    const topGaps = controls
+      .filter((c: ControlEvidence) => c.status === "no_evidence" || c.status === "partial" || c.status === "limited")
       .slice(0, 10)
-      .map((c) => ({
+      .map((c: ControlEvidence) => ({
         code: c.controlCode,
         name: c.controlTitle,
         framework: c.frameworkName,
