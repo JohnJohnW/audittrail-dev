@@ -213,16 +213,17 @@ describe("buildPullRequestText", () => {
 });
 
 describe("getConfidenceTier", () => {
-  it("returns 'high' for score >= 0.85", () => {
+  it("returns 'high' for score >= 0.80", () => {
+    expect(getConfidenceTier(0.8)).toBe("high");
     expect(getConfidenceTier(0.85)).toBe("high");
     expect(getConfidenceTier(0.9)).toBe("high");
     expect(getConfidenceTier(1.0)).toBe("high");
   });
 
-  it("returns 'medium' for score >= 0.6 but < 0.85", () => {
+  it("returns 'medium' for score >= 0.6 but < 0.80", () => {
     expect(getConfidenceTier(0.6)).toBe("medium");
     expect(getConfidenceTier(0.7)).toBe("medium");
-    expect(getConfidenceTier(0.84)).toBe("medium");
+    expect(getConfidenceTier(0.79)).toBe("medium");
   });
 
   it("returns 'low' for score < 0.6", () => {
