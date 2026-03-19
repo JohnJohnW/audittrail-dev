@@ -285,7 +285,10 @@ export default function CISODashboardPage() {
                         boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
                         fontSize: 12,
                       }}
-                      formatter={(value: number) => [`${value}%`, "Score"]}
+                      formatter={(value: number | undefined) => [
+                        value !== undefined ? `${value}%` : "",
+                        "Score",
+                      ]}
                     />
                     <Line
                       type="monotone"
