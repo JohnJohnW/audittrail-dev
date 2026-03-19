@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
  */
 async function enrichWithEmbeddingConfidence(
   orgId: string,
-  controls: Array<{ controlCode: string; frameworkName: string; [key: string]: unknown }>
+  controls: Array<{ controlCode: string; frameworkName: string }>
 ): Promise<Map<string, { mappingConfidence: number; confidenceTier: "high" | "medium" | "low" }>> {
   const confidenceMap = new Map<
     string,

@@ -312,7 +312,7 @@ export default function EvidencePage() {
             </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            <Button variant="outline" href="/evidence/upload" className="flex-1 sm:flex-none">
+            <Button variant="secondary" href="/evidence/upload" className="flex-1 sm:flex-none">
               Upload Evidence
             </Button>
             <Button variant="accent" href="/exports" className="flex-1 sm:flex-none">
