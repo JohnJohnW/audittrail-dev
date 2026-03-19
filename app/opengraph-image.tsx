@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Vigil: Compliance Infrastructure";
+export const alt = "Vigil Sec: Compliance Infrastructure";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -48,7 +48,7 @@ export default async function Image() {
             letterSpacing: "-1px",
           }}
         >
-          Vigil
+          Vigil Sec
         </span>
       </div>
 

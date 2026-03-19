@@ -54,7 +54,7 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Install once. Vigil watches everything. Webhooks stream commits, PRs, reviews,
+                  Install once. Vigil Sec watches everything. Webhooks stream commits, PRs, reviews,
                   Dependabot alerts, and deployment approvals in real time. No daily batch lag.
                 </span>
               </li>

@@ -43,7 +43,7 @@ const faqs = [
   {
     question: "Can I use this for my certification audit?",
     answer:
-      "Yes. Vigil generates evidence that supports certification and compliance audits across ISO 27001, NIST, SOC 2, GDPR, and other frameworks. However, we're one part of your compliance program. You'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
+      "Yes. Vigil Sec generates evidence that supports certification and compliance audits across ISO 27001, NIST, SOC 2, GDPR, and other frameworks. However, we're one part of your compliance program. You'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
   },
   {
     question: "What's included in the free plan?",

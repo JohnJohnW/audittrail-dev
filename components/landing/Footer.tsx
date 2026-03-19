@@ -14,7 +14,7 @@ export function Footer() {
               <Image src="/icon.svg" alt="" width={20} height={20} />
             </div>
             <span className="text-sm font-medium text-gray-900">
-              <span className="text-accent">Vigil</span>
+              Vigil<span className="text-accent"> Sec</span>
             </span>
           </Link>
 
@@ -35,7 +35,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Vigil</p>
+          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Vigil Sec</p>
           <div className="flex items-center gap-6 text-xs text-gray-400">
             <Link href="/terms" className="hover:text-gray-600 transition-colors">
               Terms
@@ -43,14 +43,9 @@ export function Footer() {
             <Link href="/privacy" className="hover:text-gray-600 transition-colors">
               Privacy
             </Link>
-            <a
-              href="https://github.com/JohnJohnW/audittrail-dev/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-accent transition-colors"
-            >
+            <Link href="/contact" className="hover:text-accent transition-colors">
               Contact
-            </a>
+            </Link>
           </div>
         </div>
       </FadeIn>
