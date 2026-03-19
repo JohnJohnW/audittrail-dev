@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { logger } from "@/lib/logger";
 
@@ -64,6 +65,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     logger.error("Contact form error", error);
-    return NextResponse.json({ error: "Failed to send message. Please try again." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to send message. Please try again." },
+      { status: 500 }
+    );
   }
 }
