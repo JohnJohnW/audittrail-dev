@@ -12,6 +12,8 @@ import {
   ShieldIcon,
   CheckIcon,
   ExportIcon,
+  GrcIcon,
+  CisoIcon,
   MenuIcon,
   CloseIcon,
 } from "./nav/NavIcons";
@@ -57,6 +59,8 @@ export function DashboardNav({ user }: DashboardNavProps) {
       { name: "Repositories", href: "/repositories", icon: RepoIcon },
       { name: "Evidence", href: "/evidence", icon: ShieldIcon },
       { name: "Compliance", href: "/compliance", icon: CheckIcon },
+      { name: "GRC", href: "/grc", icon: GrcIcon },
+      { name: "CISO", href: "/ciso", icon: CisoIcon },
       { name: "Exports", href: "/exports", icon: ExportIcon },
     ],
     []
