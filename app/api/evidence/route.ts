@@ -7,6 +7,7 @@ import { isValidCuid } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { getConfidenceTier } from "@/lib/embeddings";
 import { getSupabaseClient } from "@/lib/supabase";
+import { getCached, getCacheKey } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -134,14 +135,34 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info("Fetching compliance evidence", { orgId, repositoryIds });
-    const evidence = await getComplianceEvidence(orgId, { repositoryIds });
+    const evidenceCacheKey = getCacheKey(
+      "evidence",
+      orgId,
+      ...(repositoryIds?.slice().sort() ?? [])
+    );
+    const evidence = await getCached(
+      evidenceCacheKey,
+      () => getComplianceEvidence(orgId, { repositoryIds }),
+      300 // 5-minute TTL; invalidated by sync via invalidateCache()
+    );
     logger.info("Evidence fetched", {
       frameworkCount: evidence.frameworks.length,
       controlCount: evidence.controls.length,
     });
 
-    // Enrich controls with embedding confidence scores (non-blocking, degrades gracefully)
-    const confidenceMap = await enrichWithEmbeddingConfidence(orgId, evidence.controls);
+    // Enrich controls with embedding confidence scores — cached separately (10 min TTL)
+    const confCacheKey = getCacheKey("embeddings:conf", orgId);
+    const confObject = await getCached<
+      Record<string, { mappingConfidence: number; confidenceTier: "high" | "medium" | "low" }>
+    >(
+      confCacheKey,
+      async () => {
+        const map = await enrichWithEmbeddingConfidence(orgId, evidence.controls);
+        return Object.fromEntries(map);
+      },
+      600 // 10-minute TTL; embeddings change less frequently than evidence
+    );
+    const confidenceMap = new Map(Object.entries(confObject));
 
     // Merge confidence data into controls
     const enrichedControls = evidence.controls.map((control) => {

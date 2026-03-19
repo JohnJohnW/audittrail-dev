@@ -8,6 +8,7 @@ import {
 } from "@/lib/compliance";
 import { handleApiError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
+import { getCached, getCacheKey } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,16 @@ export async function GET(request: NextRequest) {
       : undefined;
 
     logger.info("Fetching compliance evidence", { orgId, repositoryIds });
-    const evidence = await getComplianceEvidence(orgId, { repositoryIds });
+    const evidenceCacheKey = getCacheKey(
+      "evidence",
+      orgId,
+      ...(repositoryIds?.slice().sort() ?? [])
+    );
+    const evidence = await getCached(
+      evidenceCacheKey,
+      () => getComplianceEvidence(orgId, { repositoryIds }),
+      300 // 5-minute TTL; shared key with evidence route — one warms the other
+    );
     logger.info("Evidence fetched", {
       frameworkCount: evidence.frameworks.length,
       controlCount: evidence.controls.length,
