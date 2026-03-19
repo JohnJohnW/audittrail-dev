@@ -128,7 +128,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   />
                 </div>
                 <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                  Audit <span className="text-accent">Trail</span>
+                  Vigil<span className="text-accent"> Sec</span>
                 </span>
               </Link>
 

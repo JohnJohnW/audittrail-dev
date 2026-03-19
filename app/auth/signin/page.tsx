@@ -18,7 +18,7 @@ export default function SignInPage() {
               <Image src="/icon.svg" alt="" width={32} height={32} />
             </div>
             <span className="text-lg font-semibold text-gray-900">
-              Audit <span className="text-accent">Trail</span>
+              Vigil<span className="text-accent"> Sec</span>
             </span>
           </Link>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Sign in to your account</h1>
