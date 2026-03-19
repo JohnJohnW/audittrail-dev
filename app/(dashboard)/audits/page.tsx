@@ -71,6 +71,7 @@ function formatDateRange(start: string, end: string): string {
 export default function AuditCyclesPage() {
   const [cycles, setCycles] = useState<AuditCycle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPro, setIsPro] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -90,6 +91,13 @@ export default function AuditCyclesPage() {
   const fetchData = async () => {
     try {
       const res = await fetch("/api/audit-cycles");
+      if (res.status === 403) {
+        const json = await res.json().catch(() => ({}));
+        if (json.code === "PRO_REQUIRED") {
+          setIsPro(false);
+          return;
+        }
+      }
       if (!res.ok) throw new Error("Failed to fetch audit cycles");
       const json: AuditCyclesResponse = await res.json();
       setCycles(json.cycles);
@@ -147,6 +155,46 @@ export default function AuditCyclesPage() {
   const _closedCount = cycles.filter((c) => c.status === "closed").length;
   const planningCount = cycles.filter((c) => c.status === "planning").length;
   const fieldworkCount = cycles.filter((c) => c.status === "fieldwork").length;
+
+  if (!isPro) {
+    return (
+      <div className="max-w-2xl mx-auto mt-16">
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-yellow-200 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center shrink-0">
+              <svg
+                className="w-5 h-5 text-yellow-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-yellow-800">
+                Audit Cycles requires a Pro subscription
+              </p>
+              <p className="text-sm text-yellow-700 mt-1">
+                Audit cycle management and finding tracking is a Pro feature.
+              </p>
+              <a
+                href="/settings"
+                className="inline-block mt-3 text-sm font-medium text-yellow-800 hover:text-yellow-900 transition-colors"
+              >
+                Upgrade to Pro →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

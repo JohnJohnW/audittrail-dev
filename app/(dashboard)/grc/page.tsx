@@ -89,6 +89,7 @@ function auditStatusVariant(status: string): "default" | "success" | "warning" |
 export default function GRCDashboardPage() {
   const [data, setData] = useState<GRCData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPro, setIsPro] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -97,6 +98,13 @@ export default function GRCDashboardPage() {
   const fetchData = async () => {
     try {
       const res = await fetch("/api/dashboards/grc");
+      if (res.status === 403) {
+        const json = await res.json().catch(() => ({}));
+        if (json.code === "PRO_REQUIRED") {
+          setIsPro(false);
+          return;
+        }
+      }
       if (!res.ok) throw new Error("Failed to fetch GRC dashboard");
       const json = await res.json();
       setData(json);
@@ -113,6 +121,47 @@ export default function GRCDashboardPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
           <p className="text-gray-500">Loading GRC dashboard…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isPro) {
+    return (
+      <div className="max-w-2xl mx-auto mt-16">
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-yellow-200 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center shrink-0">
+              <svg
+                className="w-5 h-5 text-yellow-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-yellow-800">
+                GRC Dashboard requires a Pro subscription
+              </p>
+              <p className="text-sm text-yellow-700 mt-1">
+                The GRC dashboard with framework scorecards, gap ownership, and risk treatment
+                tracking is a Pro feature.
+              </p>
+              <a
+                href="/settings"
+                className="inline-block mt-3 text-sm font-medium text-yellow-800 hover:text-yellow-900 transition-colors"
+              >
+                Upgrade to Pro →
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     );
