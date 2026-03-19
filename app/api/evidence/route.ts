@@ -12,9 +12,11 @@ export const dynamic = "force-dynamic";
 
 /**
  * Attempt to enrich evidence controls with embedding-based confidence scores.
- * Queries the control_embeddings table, then for each control calls match_evidence
- * via Supabase RPC. Degrades gracefully — if the vector store is empty or
- * unavailable, controls are returned unchanged.
+ *
+ * Optimised: fetches all control embeddings + all org evidence embeddings in
+ * 2 queries, then computes cosine similarity locally — avoiding N RPC calls.
+ * Degrades gracefully — if the vector store is empty or unavailable, controls
+ * are returned unchanged.
  */
 async function enrichWithEmbeddingConfidence(
   orgId: string,
@@ -28,48 +30,77 @@ async function enrichWithEmbeddingConfidence(
   try {
     const supabase = getSupabaseClient();
 
-    // Fetch stored control embeddings from the vector store
-    const { data: controlEmbeddings, error } = await supabase
-      .from("control_embeddings")
-      .select("control_code, framework_name, embedding")
-      .in(
-        "control_code",
-        controls.map((c) => c.controlCode)
-      );
+    // 1. Fetch control embeddings + org evidence embeddings in parallel (2 queries total)
+    const [ceResult, eeResult] = await Promise.all([
+      supabase
+        .from("control_embeddings")
+        .select("control_code, embedding")
+        .in(
+          "control_code",
+          controls.map((c) => c.controlCode)
+        ),
+      supabase
+        .from("evidence_embeddings")
+        .select("source_id, embedding")
+        .eq("org_id", orgId)
+        .limit(500), // cap to avoid very large payloads
+    ]);
 
-    if (error || !controlEmbeddings || controlEmbeddings.length === 0) {
+    const controlEmbeddings = ceResult.data;
+    const evidenceEmbeddings = eeResult.data;
+
+    if (!controlEmbeddings || controlEmbeddings.length === 0) {
       // Vector store not seeded yet — degrade gracefully
       return confidenceMap;
     }
 
-    // For each control embedding, call match_evidence to find best similarity
-    const enrichmentResults = await Promise.allSettled(
-      controlEmbeddings.map(async (ce) => {
-        const { data: matches } = await supabase.rpc("match_evidence", {
-          query_embedding: ce.embedding,
-          match_org_id: orgId,
-          match_threshold: 0.4,
-          match_count: 5,
-        });
+    if (!evidenceEmbeddings || evidenceEmbeddings.length === 0) {
+      // No evidence embeddings stored yet — degrade gracefully
+      return confidenceMap;
+    }
 
-        const maxSim =
-          matches && matches.length > 0
-            ? Math.max(...matches.map((m: { similarity: number }) => m.similarity))
-            : 0;
+    // Parse evidence embedding vectors once (they arrive as arrays or strings)
+    const parsedEvidence = evidenceEmbeddings.map((ee) => ({
+      vec:
+        typeof ee.embedding === "string"
+          ? (JSON.parse(ee.embedding) as number[])
+          : (ee.embedding as number[]),
+    }));
 
-        return { controlCode: ce.control_code, similarity: maxSim };
-      })
-    );
+    // 2. For each control, compute local cosine similarity against all evidence
+    for (const ce of controlEmbeddings) {
+      const controlVec: number[] =
+        typeof ce.embedding === "string"
+          ? (JSON.parse(ce.embedding) as number[])
+          : (ce.embedding as number[]);
 
-    for (const result of enrichmentResults) {
-      if (result.status === "fulfilled") {
-        const { controlCode, similarity } = result.value;
-        if (similarity > 0) {
-          confidenceMap.set(controlCode, {
-            mappingConfidence: Math.round(similarity * 100) / 100,
-            confidenceTier: getConfidenceTier(similarity),
-          });
+      // Precompute norm for control vector
+      let controlNorm = 0;
+      for (const v of controlVec) controlNorm += v * v;
+      controlNorm = Math.sqrt(controlNorm);
+
+      if (controlNorm === 0) continue;
+
+      let maxSim = 0;
+      for (const { vec } of parsedEvidence) {
+        if (vec.length !== controlVec.length) continue;
+        let dot = 0;
+        let evNorm = 0;
+        for (let i = 0; i < controlVec.length; i++) {
+          dot += controlVec[i] * vec[i];
+          evNorm += vec[i] * vec[i];
         }
+        evNorm = Math.sqrt(evNorm);
+        if (evNorm === 0) continue;
+        const sim = dot / (controlNorm * evNorm);
+        if (sim > maxSim) maxSim = sim;
+      }
+
+      if (maxSim > 0) {
+        confidenceMap.set(ce.control_code, {
+          mappingConfidence: Math.round(maxSim * 100) / 100,
+          confidenceTier: getConfidenceTier(maxSim),
+        });
       }
     }
   } catch (err) {

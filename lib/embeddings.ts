@@ -30,7 +30,7 @@ const RATE_LIMIT_DELAY_MS = 200; // Between batches
 
 /** Thresholds for confidence tiers */
 export const CONFIDENCE_THRESHOLDS = {
-  HIGH: 0.85,
+  HIGH: 0.8, // Requires specific evidence (uploaded PDFs, multimodal); generic commits top out ~0.78
   MEDIUM: 0.6,
   DEFAULT_MATCH: 0.5,
   EVIDENCE_MATCH: 0.6,
