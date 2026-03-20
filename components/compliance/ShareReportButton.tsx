@@ -199,7 +199,7 @@ export function ShareReportButton() {
               <div>
                 <p className="text-sm text-gray-600 mb-5">
                   Generate a read-only link to share your compliance report with auditors or
-                  stakeholders. No Vigil account required.
+                  stakeholders. No Audit Trail account required.
                 </p>
                 <button
                   onClick={createLink}

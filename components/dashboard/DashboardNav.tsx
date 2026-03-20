@@ -120,7 +120,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                 <div className="relative w-8 h-8 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-200 shrink-0">
                   <Image
                     src="/icon.svg"
-                    alt="Vigil"
+                    alt="Audit Trail"
                     width={32}
                     height={32}
                     className="rounded-lg w-full h-full"
@@ -128,7 +128,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   />
                 </div>
                 <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                  Vigil<span className="text-accent"> Sec</span>
+                  Audit Trail
                 </span>
               </Link>
 

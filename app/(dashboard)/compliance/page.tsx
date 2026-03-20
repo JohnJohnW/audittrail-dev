@@ -433,8 +433,8 @@ export default function CompliancePage() {
                     <div>
                       <h3 className="font-semibold text-gray-900">No evidence data yet</h3>
                       <p className="text-sm text-gray-500 mt-0.5">
-                        Vigil maps GitHub activity to compliance controls. It needs to import your
-                        repository data first.
+                        Audit Trail maps GitHub activity to compliance controls. It needs to import
+                        your repository data first.
                       </p>
                     </div>
                   </div>

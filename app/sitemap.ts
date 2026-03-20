@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://vigil-sec.net";
+  const baseUrl = process.env.NEXTAUTH_URL || "https://audit-trail.net";
 
   return [
     {

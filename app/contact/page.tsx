@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { ContactForm } from "@/components/contact/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contact - Vigil Sec",
+  title: "Contact - Audit Trail",
   description:
-    "Get in touch with the Vigil Sec team for enterprise plans, questions, or partnership inquiries.",
+    "Get in touch with the Audit Trail team for enterprise plans, questions, or partnership inquiries.",
 };
 
 export default function ContactPage() {

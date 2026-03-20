@@ -66,7 +66,7 @@ export async function GET(_request: NextRequest, { params }: { params: { token: 
     const auditorName = session.auditorName ?? session.auditorEmail;
     const now = new Date().toISOString().split("T")[0];
     const readme = [
-      `Vigil - Evidence Export`,
+      `Audit Trail - Evidence Export`,
       `============================`,
       ``,
       `Organisation : ${orgName}`,

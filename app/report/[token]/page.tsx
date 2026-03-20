@@ -90,10 +90,10 @@ export default async function PublicReportPage({ params }: { params: { token: st
       <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="relative w-7 h-7 rounded-md overflow-hidden">
-            <Image src="/icon.svg" alt="Vigil" width={28} height={28} priority />
+            <Image src="/icon.svg" alt="Audit Trail" width={28} height={28} priority />
           </div>
           <span className="text-sm font-semibold text-gray-900">
-            <span className="text-accent">Vigil</span>
+            <span className="text-accent">Audit Trail</span>
           </span>
         </div>
         <span className="text-xs text-gray-400">Read-only report</span>
@@ -158,7 +158,7 @@ export default async function PublicReportPage({ params }: { params: { token: st
               href="/"
               className="text-accent hover:text-accent-hover underline underline-offset-2"
             >
-              Vigil
+              Audit Trail
             </Link>
             . Content is read-only and reflects the state at the time of generation.
           </p>

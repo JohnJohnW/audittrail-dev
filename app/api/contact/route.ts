@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
     }
 
-    const subjectLine = subject || `[Vigil Sec] Contact: ${inquiryType || "General"} from ${name}`;
+    const subjectLine =
+      subject || `[Audit Trail] Contact: ${inquiryType || "General"} from ${name}`;
 
     const htmlBody = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
@@ -33,13 +34,13 @@ export async function POST(request: NextRequest) {
           <p style="color: #666; margin: 0 0 8px 0; font-size: 13px;">Message:</p>
           <p style="margin: 0; white-space: pre-wrap;">${message}</p>
         </div>
-        <p style="color: #999; font-size: 12px; margin-top: 24px;">Sent from vigil-sec.net contact form</p>
+        <p style="color: #999; font-size: 12px; margin-top: 24px;">Sent from audit-trail.net contact form</p>
       </div>
     `;
 
     await resend.emails.send({
-      from: process.env.EMAIL_FROM || "Vigil Sec <noreply@vigil-sec.net>",
-      to: ["hello@vigil-sec.net"],
+      from: process.env.EMAIL_FROM || "Audit Trail <noreply@audit-trail.net>",
+      to: ["hello@audit-trail.net"],
       replyTo: email,
       subject: subjectLine,
       html: htmlBody,
@@ -47,16 +48,16 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation to the user
     await resend.emails.send({
-      from: process.env.EMAIL_FROM || "Vigil Sec <noreply@vigil-sec.net>",
+      from: process.env.EMAIL_FROM || "Audit Trail <noreply@audit-trail.net>",
       to: [email],
-      subject: "We received your message - Vigil Sec",
+      subject: "We received your message - Audit Trail",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1a1a1a;">Thanks for reaching out, ${name}.</h2>
           <p>We received your message and will get back to you at <strong>${email}</strong> within 1-2 business days.</p>
           <p style="color: #666; font-size: 14px;">What you sent:</p>
           <div style="padding: 16px; background: #f9f9f9; border-radius: 6px; color: #555; font-size: 14px; white-space: pre-wrap;">${message}</div>
-          <p style="margin-top: 24px;">Vigil Sec<br/><a href="https://vigil-sec.net">vigil-sec.net</a></p>
+          <p style="margin-top: 24px;">Audit Trail<br/><a href="https://audit-trail.net">audit-trail.net</a></p>
         </div>
       `,
     });

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Status - Vigil",
-  description: "Service status and uptime information for Vigil",
+  title: "Status - Audit Trail",
+  description: "Service status and uptime information for Audit Trail",
 };
 
 export default async function StatusPage() {
@@ -24,7 +24,7 @@ export default async function StatusPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Service Status</h1>
-          <p className="text-gray-600">Real-time status of Vigil services</p>
+          <p className="text-gray-600">Real-time status of Audit Trail services</p>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">

@@ -1,8 +1,8 @@
-# Vigil
+# Audit Trail
 
 > Compliance that works in the background. Surfaces when it counts.
 
-Vigil is compliance infrastructure, not compliance overhead. It connects to your GitHub repositories via a GitHub App and silently maps commits, pull requests, code reviews, branch protection rules, Dependabot alerts, code scanning findings, secret scanning alerts, and deployment approvals to the controls inside 10 major compliance frameworks - continuously, invisibly, in real time. When audit day arrives, everything is already there.
+Audit Trail is compliance infrastructure, not compliance overhead. It connects to your GitHub repositories via a GitHub App and silently maps commits, pull requests, code reviews, branch protection rules, Dependabot alerts, code scanning findings, secret scanning alerts, and deployment approvals to the controls inside 10 major compliance frameworks - continuously, invisibly, in real time. When audit day arrives, everything is already there.
 
 ---
 
@@ -36,7 +36,7 @@ Vigil is compliance infrastructure, not compliance overhead. It connects to your
 ```mermaid
 flowchart LR
     A[Developer pushes code] --> B[GitHub]
-    B -->|Webhook event| C[Vigil]
+    B -->|Webhook event| C[Audit Trail]
     B -->|Daily cron sync| C
     C --> D[(Supabase DB + pgvector)]
     D --> E[Compliance Engine]

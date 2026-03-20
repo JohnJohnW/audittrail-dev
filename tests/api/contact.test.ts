@@ -9,7 +9,7 @@ const mockSendFn = vi.hoisted(() =>
 vi.mock("resend", () => {
   class Resend {
     emails = { send: mockSendFn };
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     constructor(_apiKey?: string) {}
   }
   return { Resend };
@@ -146,7 +146,7 @@ describe("POST /api/contact", () => {
       expect(mockSendFn).toHaveBeenCalledTimes(2);
     });
 
-    it("sends to hello@vigil-sec.net as the primary recipient", async () => {
+    it("sends to hello@audit-trail.net as the primary recipient", async () => {
       const req = makeRequest({
         name: "Carol",
         email: "carol@example.com",
@@ -155,7 +155,7 @@ describe("POST /api/contact", () => {
       await POST(req);
 
       const firstCall = mockSendFn.mock.calls[0][0];
-      expect(firstCall.to).toContain("hello@vigil-sec.net");
+      expect(firstCall.to).toContain("hello@audit-trail.net");
     });
 
     it("sends a confirmation to the submitter's email", async () => {
@@ -192,7 +192,7 @@ describe("POST /api/contact", () => {
 
       const firstCall = mockSendFn.mock.calls[0][0];
       // Falls back to the default when EMAIL_FROM env is not set in test
-      expect(firstCall.from).toMatch(/vigil.sec/i);
+      expect(firstCall.from).toMatch(/audit-trail/i);
     });
 
     it("accepts optional fields (company, subject, inquiryType) without error", async () => {

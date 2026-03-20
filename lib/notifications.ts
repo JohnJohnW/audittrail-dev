@@ -98,7 +98,7 @@ export async function sendWeeklyDigest(
     year: "numeric",
   });
   await resend.emails.send({
-    from: process.env.EMAIL_FROM || "Vigil <noreply@vigil-sec.net>",
+    from: process.env.EMAIL_FROM || "Audit Trail <noreply@audit-trail.net>",
     to: user.email,
     subject: `Your compliance posture: ${dateStr}`,
     html: `
@@ -145,7 +145,7 @@ export async function sendWeeklyGRCDigest(
     year: "numeric",
   });
   await resend.emails.send({
-    from: "Vigil <notifications@vigil-sec.net>",
+    from: "Audit Trail <notifications@audit-trail.net>",
     to: user.email,
     subject: `Your compliance posture: ${grcDateStr}`,
     html: `
@@ -184,9 +184,9 @@ export async function sendMonthlyCISOSummary(
   if (!user?.email) return;
 
   await resend.emails.send({
-    from: "Vigil <notifications@vigil-sec.net>",
+    from: "Audit Trail <notifications@audit-trail.net>",
     to: user.email,
-    subject: `Vigil: Monthly posture summary`,
+    subject: `Audit Trail: Monthly posture summary`,
     html: `
       <h2>Monthly posture summary</h2>
       <ul>

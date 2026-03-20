@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/dashboard/", "/auth/", "/settings/"],
       },
     ],
-    sitemap: `${process.env.NEXTAUTH_URL || "https://vigil-sec.net"}/sitemap.xml`,
+    sitemap: `${process.env.NEXTAUTH_URL || "https://audit-trail.net"}/sitemap.xml`,
   };
 }

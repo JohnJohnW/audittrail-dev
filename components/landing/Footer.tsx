@@ -13,9 +13,7 @@ export function Footer() {
             <div className="relative w-5 h-5 rounded overflow-hidden flex-shrink-0">
               <Image src="/icon.svg" alt="" width={20} height={20} />
             </div>
-            <span className="text-sm font-medium text-gray-900">
-              Vigil<span className="text-accent"> Sec</span>
-            </span>
+            <span className="text-sm font-medium text-gray-900">Audit Trail</span>
           </Link>
 
           <div className="flex items-center gap-6 text-xs text-gray-500">
@@ -35,7 +33,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Vigil Sec</p>
+          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Audit Trail</p>
           <div className="flex items-center gap-6 text-xs text-gray-400">
             <Link href="/terms" className="hover:text-gray-600 transition-colors">
               Terms

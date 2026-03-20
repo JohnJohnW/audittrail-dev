@@ -338,14 +338,14 @@ async function sendAlertEmail(
 
   const severityColor =
     alert.severity === "critical" ? "#dc2626" : alert.severity === "high" ? "#ea580c" : "#d97706";
-  const dashboardUrl = `${process.env.NEXTAUTH_URL || "https://app.vigil-sec.net"}/dashboard`;
+  const dashboardUrl = `${process.env.NEXTAUTH_URL || "https://app.audit-trail.net"}/dashboard`;
 
   await Promise.allSettled(
     members
       .filter((m) => m.user.email)
       .map((m) =>
         resend.emails.send({
-          from: process.env.EMAIL_FROM || "Vigil <noreply@vigil-sec.net>",
+          from: process.env.EMAIL_FROM || "Audit Trail <noreply@audit-trail.net>",
           to: m.user.email!,
           subject: `[${alert.severity.toUpperCase()}] ${alert.title} - ${escapeHtml(org?.name ?? "Your Organization")}`,
           html: `

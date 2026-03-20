@@ -1,5 +1,5 @@
 /**
- * Application constants for Vigil
+ * Application constants for Audit Trail
  */
 
 // API and sync configuration

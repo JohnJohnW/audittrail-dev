@@ -8,7 +8,7 @@ export function HowItWorks() {
       number: "1",
       title: "Connects once. Watches everything.",
       description:
-        "One-click install. Vigil Sec gets read-only access to your repos. No code ever stored. Webhooks activate immediately and never need touching again.",
+        "One-click install. Audit Trail gets read-only access to your repos. No code ever stored. Webhooks activate immediately and never need touching again.",
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path

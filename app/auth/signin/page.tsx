@@ -17,9 +17,7 @@ export default function SignInPage() {
             <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
               <Image src="/icon.svg" alt="" width={32} height={32} />
             </div>
-            <span className="text-lg font-semibold text-gray-900">
-              Vigil<span className="text-accent"> Sec</span>
-            </span>
+            <span className="text-lg font-semibold text-gray-900">Audit Trail</span>
           </Link>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Sign in to your account</h1>
           <p className="text-sm text-gray-500">Connect your GitHub to access compliance evidence</p>

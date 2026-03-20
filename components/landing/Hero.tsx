@@ -19,7 +19,7 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.1}>
           <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 tracking-tight leading-[1.15] mb-6">
-            You won&apos;t notice Vigil working.
+            You won&apos;t notice Audit Trail working.
             <br />
             <span className="relative">
               Your auditor will.
@@ -42,9 +42,9 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
-            Connect GitHub once, then forget about compliance. Vigil Sec silently maps every commit,
-            PR, branch protection, and deployment to ten frameworks. Automatically, continuously,
-            invisibly. When audit day arrives, everything is already there.
+            Connect GitHub once, then forget about compliance. Audit Trail silently maps every
+            commit, PR, branch protection, and deployment to ten frameworks. Automatically,
+            continuously, invisibly. When audit day arrives, everything is already there.
           </p>
         </FadeInOnLoad>
 
