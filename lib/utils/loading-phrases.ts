@@ -65,7 +65,9 @@ const LOADING_PHRASES = [
  * @returns A random funny loading phrase
  */
 export function getLoadingPhrase(): string {
-  // Use a combination of time and a small random factor
+  // Guard: return a fixed phrase during SSR to avoid hydration mismatch.
+  // Math.random() differs between server and client, causing React error #425.
+  if (typeof window === "undefined") return LOADING_PHRASES[0];
   const index = Math.floor((Date.now() / 1000 + Math.random() * 10) % LOADING_PHRASES.length);
   return LOADING_PHRASES[index];
 }
@@ -117,6 +119,8 @@ export function getContextualLoadingPhrase(context?: string): string {
 
   if (context && contextualPhrases[context.toLowerCase()]) {
     const phrases = contextualPhrases[context.toLowerCase()];
+    // Guard: return first phrase during SSR to avoid hydration mismatch (React error #425)
+    if (typeof window === "undefined") return phrases[0];
     const index = Math.floor(Math.random() * phrases.length);
     return phrases[index];
   }

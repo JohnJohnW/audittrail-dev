@@ -56,6 +56,8 @@ export default function EvidencePage() {
   const [data, setData] = useState<EvidenceData | null>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
+  // Loading phrase set client-side only to avoid SSR/hydration mismatch from Math.random()
+  const [loadingPhrase, setLoadingPhrase] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("all");
@@ -65,6 +67,7 @@ export default function EvidencePage() {
   const [sortByPriority, setSortByPriority] = useState(false);
 
   useEffect(() => {
+    setLoadingPhrase(getContextualLoadingPhrase("evidence"));
     fetchData();
   }, []);
 
@@ -236,7 +239,7 @@ export default function EvidencePage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
-          <p className="text-gray-500">{getContextualLoadingPhrase("evidence")}</p>
+          <p className="text-gray-500">{loadingPhrase || "Loading evidence…"}</p>
         </div>
       </div>
     );
