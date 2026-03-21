@@ -355,7 +355,7 @@ cp .env.example .env.local
 # 3. Run migrations
 npx prisma migrate dev
 
-# 4. Seed frameworks and controls (12 frameworks, 81 controls)
+# 4. Seed frameworks and controls (12 frameworks, 97 controls)
 npx tsx prisma/seed.ts
 
 # 5. Seed control embeddings (requires GEMINI_API_KEY)

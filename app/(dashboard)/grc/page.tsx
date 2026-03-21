@@ -177,7 +177,8 @@ export default function GRCDashboardPage() {
 
   const { summary, scoreDelta, frameworkScores, gaps, treatments, activeAudits } = data;
 
-  const scorePercent = summary.total > 0 ? Math.round((summary.score / summary.total) * 100) : 0;
+  // summary.score is already a 0-100 percentage from getEvidenceSummary
+  const scorePercent = summary.score;
 
   return (
     <div>
@@ -199,7 +200,7 @@ export default function GRCDashboardPage() {
           <ScoreStatCard
             label="Overall Score"
             value={`${scorePercent}%`}
-            subtitle={`${summary.score} / ${summary.total} controls`}
+            subtitle={`${summary.withEvidence} / ${summary.total} controls`}
             highlight
           />
           <ScoreStatCard
@@ -235,7 +236,8 @@ export default function GRCDashboardPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {frameworkScores.map((fw) => {
-                  const pct = fw.total > 0 ? Math.round((fw.score / fw.total) * 100) : 0;
+                  // fw.score is already a 0-100 percentage from calculateFrameworkScores
+                  const pct = Math.min(fw.score, 100);
                   return (
                     <div
                       key={fw.framework}

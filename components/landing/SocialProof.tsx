@@ -4,7 +4,7 @@ import { FadeIn, StaggerChildren } from "@/components/ui/Motion";
 
 const stats = [
   {
-    value: "81",
+    value: "97",
     label: "Compliance controls",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

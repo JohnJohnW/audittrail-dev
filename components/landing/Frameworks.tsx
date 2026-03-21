@@ -49,13 +49,13 @@ const globeIcon = (
 const frameworks = [
   {
     name: "ISO 27001:2022",
-    controls: 10,
+    controls: 19,
     description: "Annex A secure development & access controls",
     icon: shieldIcon,
   },
   {
     name: "Essential Eight",
-    controls: 5,
+    controls: 13,
     description: "ACSC maturity model (November 2023)",
     icon: dbIcon,
   },
