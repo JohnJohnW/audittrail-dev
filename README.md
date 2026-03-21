@@ -2,30 +2,7 @@
 
 > Compliance that works in the background. Surfaces when it counts.
 
-Audit Trail is compliance infrastructure, not compliance overhead. Connect your GitHub repositories once via a GitHub App and Audit Trail silently maps every commit, pull request, code review, branch protection rule, Dependabot alert, code scanning finding, secret scanning alert, and deployment approval to the controls inside twelve major compliance frameworks - continuously, in real time, invisibly. Daily GRC operations, CISO reporting, and due diligence packages are already there when you need them.
-
----
-
-## Table of Contents
-
-- [How It Works](#how-it-works)
-- [GitHub Integration](#github-integration)
-- [Evidence Collection](#evidence-collection)
-- [Compliance Frameworks](#compliance-frameworks)
-- [AI Governance](#ai-governance)
-- [Vector Embeddings](#vector-embeddings)
-- [GRC Operations](#grc-operations)
-- [CISO Dashboard](#ciso-dashboard)
-- [Auditor Portal](#auditor-portal)
-- [Reports and Exports](#reports-and-exports)
-- [Scheduled Reports](#scheduled-reports)
-- [Observability and Security](#observability-and-security)
-- [Architecture](#architecture)
-- [Environment Variables](#environment-variables)
-- [Local Development](#local-development)
-- [Deployment](#deployment)
-- [Testing](#testing)
-- [Project Structure](#project-structure)
+Connect your GitHub repositories once. Audit Trail maps every commit, pull request, code review, branch protection rule, and security alert to the controls inside twelve compliance frameworks - continuously, in real time, without any manual tagging. When your auditor asks, your CISO needs a board report, or a partner requests a due diligence package, everything is already there.
 
 ---
 
@@ -33,459 +10,325 @@ Audit Trail is compliance infrastructure, not compliance overhead. Connect your 
 
 ```mermaid
 flowchart LR
-    A[Developer pushes code] --> B[GitHub]
-    B -->|Webhook event| C[Audit Trail]
-    B -->|Daily cron sync| C
-    C --> D[(Supabase DB + pgvector)]
-    D --> E[Compliance Engine]
-    E --> F[Evidence Dashboard]
-    E --> G[GRC Dashboard]
-    E --> H[CISO Dashboard]
-    E --> I[Auditor Portal]
-    E --> J[PDF / CSV Export]
+    GH[GitHub Repositories]
+    WH[Webhook Events\nreal-time]
+    CR[Daily Cron Sync\nbackup]
+    CE[Compliance Engine\npattern matching + AI embeddings]
+    DB[(Supabase\nPostgres + pgvector)]
+
+    GH -->|push, PR, review\nalert, deployment| WH
+    GH --> CR
+    WH --> CE
+    CR --> CE
+    CE --> DB
+
+    DB --> ED[Evidence Dashboard]
+    DB --> GRC[GRC Dashboard\ngap ownership + risk register]
+    DB --> CISO[CISO Dashboard\nposture + business impact]
+    DB --> AP[Auditor Portal\nread-only, token-gated]
+    DB --> EX[PDF / CSV Export]
 ```
 
-1. **Install the GitHub App** - one click, read-only access across selected repos. Webhooks activate immediately.
-2. **Events stream in real time** - every push, PR, review, security alert, and deployment is captured the moment it happens.
-3. **Compliance engine maps evidence** - pattern matching combined with Gemini vector embeddings maps each artifact to specific controls across twelve frameworks.
-4. **Gaps are flagged instantly** - security alerts, unreviewed merges, and weakened branch protection trigger compliance alerts before your auditor sees them.
-5. **GRC and CISO views stay current** - risk register, gap ownership, posture trend, and business impact figures update with every sync.
-6. **Export when ready** - PDF reports, CSV tables, and auditor packages with timestamped evidence, control mappings, and source references.
-
----
-
-## GitHub Integration
-
-### App installation
-
-1. User clicks **Install GitHub App** on the dashboard
-2. GitHub redirects to `github.com/apps/audit-trail-app/installations/new`
-3. User selects which repositories to grant access to
-4. GitHub redirects back to `/api/github/app-callback?installation_id=xxx`
-5. The installation ID is stored on the `github_connections` row
-6. Webhooks start flowing immediately for all selected repos
-
-### Webhook security
-
-Every incoming webhook is verified with HMAC-SHA256 before any processing:
-
-```typescript
-const expected = `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
-timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
-```
-
-Delivery IDs from `x-github-delivery` are stored for deduplication - replayed webhooks are silently ignored. The endpoint returns `{ received: true }` immediately; processing is fire-and-forget with error logging.
-
-### Webhook events processed
-
-| Event                     | Handler                                         | Evidence produced                                       |
-| ------------------------- | ----------------------------------------------- | ------------------------------------------------------- |
-| `push`                    | `handlePushEvent`                               | Commits mapped to change management, secure development |
-| `pull_request`            | `handlePullRequestEvent`                        | PRs mapped to change management, peer review            |
-| `pull_request_review`     | `handlePullRequestReviewEvent`                  | Code review evidence                                    |
-| `member` / `organization` | `handleMemberEvent` / `handleOrganizationEvent` | Access control evidence                                 |
-| `workflow_run`            | `handleWorkflowRunEvent`                        | CI artifact processing (SARIF, SBOM, test reports)      |
-| `dependabot_alert`        | `handleDependabotAlertEvent`                    | Critical/high CVEs trigger ComplianceAlert              |
-| `code_scanning_alert`     | `handleCodeScanningAlertEvent`                  | SAST findings trigger ComplianceAlert                   |
-| `secret_scanning_alert`   | `handleSecretScanningAlertEvent`                | Credential exposure triggers CRITICAL alert             |
-
-### Org resolution
-
-The webhook handler resolves which org an event belongs to by checking (in order):
-
-1. `repository.full_name` matched against the `repositories` table
-2. `organization.login` matched against `github_connections`
-3. `installation.id` matched against `github_connections.installation_id`
-
-If no org is found, returns `200 { received: true, processed: false }` to prevent GitHub retrying.
+1. **Install the GitHub App** - one click, read-only. Webhooks activate across all selected repos immediately.
+2. **Evidence streams in** - every push, PR, review, Dependabot alert, code scanning finding, secret exposure, and deployment approval is captured the moment it happens.
+3. **The compliance engine maps it** - pattern matching combined with Gemini vector embeddings maps each artifact to specific controls. Evidence is scored, confidence-tiered, and stored.
+4. **Gaps are flagged** - security alerts, unreviewed merges, and weakened branch protection trigger compliance alerts before your auditor sees them.
+5. **Deliver anything, instantly** - audit packages, CISO board summaries, or partner due diligence reports are generated from the same live evidence base.
 
 ---
 
 ## Evidence Collection
 
-Evidence is collected from four source types and enriched with supplementary signals.
+Everything flows from GitHub. No agents to run, no code to instrument.
 
-### Commits
+```mermaid
+flowchart TD
+    GH[GitHub App\nread-only install]
 
-Commit messages are analysed against five pattern families:
+    GH --> C[Commits]
+    GH --> PR[Pull Requests\n& Reviews]
+    GH --> BP[Branch Protection\nRules]
+    GH --> SA[Security Alerts\nDependabot, SAST, Secrets]
+    GH --> CI[CI Artifacts\nSARIF, SBOM, test reports]
+    GH --> DE[Deployment\nEnvironments]
+    GH --> MA[Membership\nEvents]
 
-- `DEPENDENCY_PATTERNS` - dependency updates, CVE patches, Dependabot/Renovate references
-- `INFRASTRUCTURE_PATTERNS` - Docker, Terraform, Kubernetes, Helm, CI config changes
-- `SECURITY_PATTERNS` - auth, encryption, XSS/SQLi/CSRF fixes, sanitization
-- `TEST_PATTERNS` - unit, integration, e2e test additions
-- `CICD_SECURITY_PATTERNS` - Snyk, SonarQube, CodeQL, SAST/DAST tool references
+    C --> PM[Pattern Matching\n5 pattern families]
+    PR --> PM
+    BP --> PS[Protection Strength\nScoring]
+    SA --> AL[Compliance Alerts\nCritical / High / Medium]
+    CI --> CL[Artifact Classification\nsarif, sbom, test_report, coverage]
+    DE --> SG[Segregation of Duties\nEvidence]
+    MA --> AC[Access Control\nEvidence]
 
-Commit signing (`git commit -S`) is tracked separately: verified commits map to developer authentication controls (A.5.17, E8-MFA) at `high` relevance.
+    PM --> EDB[(Evidence Store)]
+    PS --> EDB
+    AL --> EDB
+    CL --> EDB
+    SG --> EDB
+    AC --> EDB
+```
 
-### Pull requests
+### What gets captured
 
-State (merged/open/closed), review count, base branch, author, merge timestamp.
-
-### Branch protection
-
-Required reviews, CODEOWNERS enforcement, dismiss-stale-reviews, require-status-checks, admin-bypass setting, protection strength scoring.
-
-### Security alerts
-
-Dependabot CVE severity, code scanning rule severity and tool name, secret scanning secret type.
-
-### CI artifacts
-
-Workflow run artifacts are classified by name pattern (SARIF, SBOM, test reports, coverage) and summarised - vulnerability counts, test pass/fail, coverage percentage. Raw artifact content is never stored.
-
-### Deployment environments
-
-GitHub environment protection rules are synced: required reviewers, prevent-self-review, and required branch policies provide change management and segregation-of-duties evidence.
+| Source                      | What's extracted                                          | Controls evidenced                                     |
+| --------------------------- | --------------------------------------------------------- | ------------------------------------------------------ |
+| **Commits**                 | Message patterns, signing status, author, timestamp       | Change management, secure coding, MFA (signed commits) |
+| **Pull requests**           | State, review count, base branch, merge timestamp         | Peer review, change management                         |
+| **Code reviews**            | Reviewer, verdict, dismissal                              | Code review evidence                                   |
+| **Branch protection**       | Required reviews, CODEOWNERS, status checks, admin bypass | Access control, change gating                          |
+| **Dependabot alerts**       | CVE severity, package, fix status                         | Vulnerability management, patching                     |
+| **Code scanning**           | Rule severity, tool (CodeQL, Semgrep), finding            | SAST evidence                                          |
+| **Secret scanning**         | Secret type, exposure status                              | Credential management                                  |
+| **CI artifacts**            | SARIF counts, SBOM contents, test pass/fail, coverage %   | Security testing, supply chain                         |
+| **Deployment environments** | Required reviewers, prevent-self-review                   | Segregation of duties                                  |
+| **Membership events**       | Member added/removed, role changes                        | Access review evidence                                 |
 
 ### Evidence scoring
 
-| Status         | Score | Condition                           |
-| -------------- | ----- | ----------------------------------- |
-| `has_evidence` | 3     | Strong, direct evidence present     |
-| `partial`      | 2     | Some evidence, below threshold      |
-| `limited`      | 1     | Exists but insufficient for control |
-| `no_evidence`  | 0     | Nothing found                       |
+```mermaid
+flowchart LR
+    E[Evidence items\nfor a control]
 
-Overall framework score = sum of control scores / max possible score x 100.
+    E --> S{Count + Quality}
 
-### Confidence scoring
+    S -->|strong direct evidence| HE[has_evidence\nscore: 3]
+    S -->|some evidence| PA[partial\nscore: 2]
+    S -->|exists, insufficient| LI[limited\nscore: 1]
+    S -->|nothing found| NE[no_evidence\nscore: 0]
 
-Evidence mapping blends two signals:
+    HE --> FS[Framework Score\nsum / max x 100]
+    PA --> FS
+    LI --> FS
+    NE --> FS
+```
 
-- Pattern-match score: 40% weight
-- Gemini embedding cosine similarity: 60% weight
+### AI confidence scoring
 
-| Tier                | Similarity  | Meaning                      |
-| ------------------- | ----------- | ---------------------------- |
-| `high`              | >= 0.85     | Strong semantic match        |
-| `medium`            | 0.60 - 0.84 | Probable match               |
-| `low`               | < 0.60      | Weak signal, flag for review |
-| `auditor_confirmed` | -           | Manually verified by auditor |
+Evidence mapping blends two signals into a single confidence score:
+
+```mermaid
+flowchart LR
+    A[Artifact text / content] --> GE[Gemini Embedding\n768-dim vector]
+    CD[Control description] --> CE[Control Embedding\npre-seeded]
+
+    GE --> CS[Cosine Similarity\n0 to 1]
+    CE --> CS
+
+    PM2[Pattern Match\nscore] --> BL[Blended Score\n40% pattern + 60% embedding]
+    CS --> BL
+
+    BL -->|>= 0.85| HI[high confidence]
+    BL -->|0.60 - 0.84| ME[medium confidence]
+    BL -->|< 0.60| LO[low confidence]
+```
 
 ---
 
 ## Compliance Frameworks
 
-Twelve frameworks are supported out of the box. Free plans include 3 frameworks; Pro unlocks all twelve.
+Twelve frameworks mapped out of the box. Free plans include 3; Pro unlocks all twelve.
 
-| Framework            | Controls | Evidence types                                                |
-| -------------------- | -------- | ------------------------------------------------------------- |
-| ISO 27001:2022       | 10       | Commits, PRs, reviews, branch protection, alerts              |
-| Essential Eight      | 5        | Patching, MFA, application control, CI                        |
-| NIST CSF 2.0         | 7        | Configuration management, software dev, monitoring            |
-| NIST SP 800-53 Rev 5 | 7        | Account management, change control, flaw remediation          |
-| SOC 2                | 5        | Access control, change management, monitoring                 |
-| GDPR                 | 3        | Privacy by design, security of processing, records            |
-| SOCI Act             | 4        | Access control, system security                               |
-| PCI DSS 4.0          | 5        | Vulnerability management, web app security, access            |
-| NIST SP 800-207      | 10       | Zero Trust: identity, device, network, visibility             |
-| ASD MDA Foundations  | 10       | Modern Defensible Architecture: identity, endpoints, networks |
-| NIST AI RMF 1.0      | 8        | AI governance, model risk, agentic AI, supply chain           |
-| EU AI Act (2024)     | 6        | Risk management, data governance, logging, robustness         |
+| Framework            | Controls | Key areas                                               |
+| -------------------- | -------- | ------------------------------------------------------- |
+| ISO 27001:2022       | 10       | Secure development, access control, change management   |
+| Essential Eight      | 5        | Patching, MFA, application control                      |
+| NIST CSF 2.0         | 7        | Configuration management, software dev, monitoring      |
+| NIST SP 800-53 Rev 5 | 7        | Account management, change control, flaw remediation    |
+| SOC 2                | 5        | Access control, change management, monitoring           |
+| GDPR                 | 3        | Privacy by design, security of processing               |
+| SOCI Act             | 4        | Critical infrastructure access and system security      |
+| PCI DSS 4.0          | 5        | Vulnerability management, web app security              |
+| NIST SP 800-207      | 10       | Zero Trust: identity, device, network, visibility       |
+| ASD MDA Foundations  | 10       | Modern Defensible Architecture                          |
+| **NIST AI RMF 1.0**  | **8**    | **AI governance, model risk, agentic AI, supply chain** |
+| **EU AI Act (2024)** | **6**    | **Risk management, data governance, robustness**        |
 
-Custom framework mapping is available via the zero-shot mapper: paste any set of controls and the evidence corpus is searched via embeddings to show coverage with confidence scores.
+### AI governance frameworks
 
----
+For teams building AI products, Audit Trail maps developer activity to controls covering the specific risks of AI systems:
 
-## AI Governance
+```mermaid
+flowchart TD
+    AIC[AI-Related Activity\nin GitHub]
 
-Audit Trail maps developer activity to AI-specific compliance controls covering the risks that come with building and shipping AI systems.
+    AIC --> MC[Model code commits\nllm, embedding, inference, agent]
+    AIC --> AT[Adversarial test runs\nCI SARIF from safety suites]
+    AIC --> SB[SBOMs\nmodel weights + inference deps]
+    AIC --> GP[Governance policies\nuploaded PDFs]
 
-### NIST AI RMF 1.0 (8 controls)
+    MC --> RMF[NIST AI RMF\nAI-GOV, AI-MAP, AI-MEAS, AI-MANAGE]
+    AT --> RMF
+    SB --> RMF
+    GP --> RMF
 
-Covers the four core functions - Govern, Map, Measure, Manage:
+    MC --> EUA[EU AI Act\nArt. 9-15]
+    AT --> EUA
+    SB --> EUA
+    GP --> EUA
 
-- **AI-GOV-1/2**: AI governance policy and accountability roles
-- **AI-MAP-1/2**: AI risk identification, model inventory and classification (including agentic systems)
-- **AI-MEAS-1/2**: Adversarial testing (prompt injection, jailbreak), model drift monitoring
-- **AI-MANAGE-1/2**: AI incident response, secure AI supply chain and SBOMs
-
-### EU AI Act 2024 (6 controls)
-
-Covers high-risk AI system obligations:
-
-- **Art. 9**: Risk management system throughout the AI lifecycle
-- **Art. 10**: Data governance for training, validation, and testing datasets
-- **Art. 11**: Technical documentation requirements
-- **Art. 12**: Automatic logging and traceability for high-risk AI
-- **Art. 13**: Transparency and human oversight
-- **Art. 15**: Accuracy, robustness, and resilience against adversarial attacks (data poisoning, model poisoning, prompt injection)
-
-### Evidence mapping for AI controls
-
-AI governance evidence is collected from:
-
-- Commits matching AI-related patterns (`model`, `llm`, `embedding`, `prompt injection`, `data poisoning`, `model drift`, `guardrail`, `agentic`)
-- CI SARIF artifacts from AI safety test suites
-- SBOMs that include model weights and inference dependencies
-- Uploaded policy documents (AI governance policies embedded via Gemini PDF embeddings)
-
----
-
-## Vector Embeddings
-
-Control descriptions and evidence artifacts are embedded using Google Gemini Embedding 2 (`gemini-embedding-2-preview`) at 768 dimensions. Stored in Supabase with HNSW indexes for fast cosine similarity search.
-
-### Multimodal support
-
-All modalities embed into the same vector space, enabling cross-modal matching:
-
-| Function           | Input                                          | Use case                                               |
-| ------------------ | ---------------------------------------------- | ------------------------------------------------------ |
-| `embedText()`      | Commit messages, PR descriptions, control text | Standard evidence mapping                              |
-| `embedImage()`     | PNG/JPEG (up to 6)                             | Architecture diagrams, MFA screenshots, config panels  |
-| `embedPdf()`       | PDF (up to 6 pages, Gemini OCR)                | Security policies, access control procedures, IRP      |
-| `embedAudio()`     | MP3/WAV (up to 80s)                            | Security review meeting recordings                     |
-| `embedMultipart()` | Text + image combined                          | Description + screenshot as a single aggregated vector |
-| `embedBatch()`     | Up to 20 texts                                 | Bulk evidence embedding with rate limiting             |
-
-### Multimodal evidence uploads
-
-Users can upload policy documents, architecture diagrams, training completion screenshots, and meeting recordings as direct compliance evidence. Uploaded files are stored in Supabase Storage (`evidence-uploads` bucket). Each upload:
-
-1. Generates a Gemini embedding via the appropriate modality function
-2. Stores the vector in `evidence_embeddings` with `source_type: uploaded`
-3. Matches against control embeddings via cosine similarity
-4. Surfaces in the evidence dashboard with a confidence tier and source badge
-
-### Seeding control embeddings
-
-```bash
-GEMINI_API_KEY=... NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
-  npx tsx prisma/seed-embeddings.ts
+    RMF --> COV[AI Governance\nCoverage Score]
+    EUA --> COV
 ```
 
-This embeds all 81 control descriptions and stores them in the `control_embeddings` table.
+Risks covered: model drift, prompt injection, data poisoning, training data bias, agentic AI tool-calling risks, adversarial robustness, AI supply chain integrity.
 
 ---
 
 ## GRC Operations
 
-Pro plan. All GRC data lives in the same evidence base as the compliance dashboard.
+A full operational layer for GRC teams, running from the same evidence base as the compliance dashboard.
+
+```mermaid
+flowchart TD
+    GAP[Compliance Gap\nno_evidence control]
+
+    GAP --> AS[Assign to owner\ndue date + notes]
+    GAP --> RT[Create risk treatment\nremediate / accept / transfer / avoid]
+
+    RT --> OP[Open treatment\ntracked in risk register]
+    OP --> EV{New evidence\nafter sync?}
+    EV -->|Yes - remediate type| AC[Auto-close treatment\nnotify owner via email]
+    EV -->|No| OD{Review date\napproaching?}
+    OD -->|Within 30 days| AL2[risk_acceptance_review_due\nalert]
+    OD -->|Not yet| OP
+
+    AS --> AU[Audit Cycle\nplanning -> fieldwork -> reporting -> closed]
+    AU --> SN[Evidence Snapshot\ntaken at fieldwork start]
+    SN --> AP2[Auditor reviews\nsnapshot, not live data]
+    AP2 --> FI[Findings logged\nper control, per severity]
+    FI --> CL[Cycle closed\nautit outcome recorded]
+```
 
 ### Risk register
 
-Track treatment decisions for every gap:
+Track every gap with a treatment decision:
 
-- Treatment types: `remediate | accept | transfer | avoid`
-- Statuses: `open | in_progress | closed | overdue`
-- Auto-closure: when a remediate treatment has open status and a sync finds new evidence covering that control, the treatment is auto-closed and the owner notified via email
-- Stale acceptance alerts: accepted treatments with a review date within 30 days trigger a `risk_acceptance_review_due` alert
+- **Remediate** - work is being done; auto-closes when evidence appears
+- **Accept** - documented acceptance with review date; alerts when stale
+- **Transfer** - risk transferred to third party
+- **Avoid** - capability or feature removed
 
 ### Gap ownership
 
-Assign compliance gaps to team members with due dates and notes. The `/gaps/mine` endpoint lets any team member see their own assignments. Gap owners receive email notifications on assignment.
+Assign gaps to named team members with due dates. Each assignee sees their open gaps via `/gaps/mine`. Email notifications on assignment.
 
 ### Audit cycles
 
-Manage a full audit engagement lifecycle:
-
-- Statuses: `planning | fieldwork | reporting | closed`
-- Moving to `fieldwork` snapshots the current compliance state as `evidenceSnapshotId` - this is what auditors review, not live data
-- Findings tracked per control: severity (`critical | major | minor | observation`), remediation commitment, due date
-- Auditor requests tracked with assignee and due date
-- Closing with `outcome: passed` records an anonymized outcome signal (if flywheel enabled)
+Full lifecycle tracking from planning through to close. Moving a cycle to `fieldwork` freezes a compliance snapshot - auditors review that fixed state, not live data. Findings, auditor requests, and remediation commitments are tracked per control.
 
 ---
 
 ## CISO Dashboard
 
-Pro plan. Designed for board-level reporting and executive decision-making.
+Executive-level view of security posture for board reporting, risk decisions, and deal due diligence.
 
-### Posture trend
+```mermaid
+flowchart LR
+    DATA[Compliance Engine\noutput]
 
-12-month compliance score history across all frameworks. SOC 2 and ISO 27001 carry 1.5x weight in the weighted readiness score.
+    DATA --> PT[12-month\nPosture Trend]
+    DATA --> RS[Readiness Score\nweighted avg, SOC2+ISO 1.5x]
+    DATA --> PO[Predicted Outcome\nlikely_pass / findings / at_risk]
+    DATA --> CR[Critical Risks\nopen treatments]
 
-### Business impact
+    DATA --> BI[Business Impact]
+    BI --> BC[Breach Cost Exposure\nIBM 2024 baseline x size x industry x gaps]
+    BI --> RF[Regulatory Fine Risk\nper-framework breakdown]
+    BI --> DB[Deal-Blocker Risk\nhigh / medium / low]
+    BI --> DR[Days to Audit-Ready\nrange estimate]
 
-Every figure ships with an expandable methodology so the inputs are always visible:
+    DATA --> BS[AI Board Summary\nClaude, cached 24h]
+```
 
-| Metric                   | Basis                                                                                                                      |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| **Breach cost exposure** | IBM Cost of a Data Breach 2024 ($4.88M baseline) x company size multiplier x industry multiplier x gap severity multiplier |
-| **Regulatory fine risk** | Per-framework: GDPR (4% global turnover est.), PCI DSS ($100K/month max), SOCI Act (AUD $50M+)                             |
-| **Deal-blocker risk**    | high/medium/low based on readiness score and number of controls with no evidence                                           |
-| **Days to audit-ready**  | Range estimate from readiness score; method shown inline                                                                   |
+Every business impact figure ships with an expandable methodology panel - the exact inputs, multipliers, and thresholds used are always visible. Nothing is a black box.
 
-### Predicted audit outcome
-
-Weighted gap score: `likely_pass` (0 gaps with no evidence), `pass_with_findings` (1-3 gaps), `at_risk` (>3 gaps).
-
-### AI board summary
-
-On demand, Claude drafts a board-ready narrative summarising posture, key risks, and recommended actions. Cached 24 hours. Never blocks - returns cached or generating state.
+| Figure              | Basis                                                                             |
+| ------------------- | --------------------------------------------------------------------------------- |
+| Breach cost         | IBM Cost of a Data Breach 2024 ($4.88M) x company size x industry x gap severity  |
+| Regulatory fines    | GDPR: 4% global turnover est. / PCI DSS: $100K/month max / SOCI: AUD $50M+        |
+| Deal-blocker risk   | Readiness score and count of controls with no evidence against defined thresholds |
+| Days to audit-ready | Readiness score bracket with empirical time estimate per gap                      |
 
 ---
 
 ## Auditor Portal
 
-A token-gated read-only portal for external auditors. No login required.
+A read-only, token-gated portal for external auditors. No login or account required.
 
-- Auditors access via a unique link containing a signed session token
-- Can view evidence per control, leave comments, and sign off controls
-- Sign-offs are recorded with timestamp, auditor name, and optional notes
-- A ZIP of all evidence for the audit period is available for download
-- Auditor activity is logged to the ZTA audit log
+```mermaid
+sequenceDiagram
+    participant GRC as GRC Team
+    participant AT as Audit Trail
+    participant AUD as Auditor
+
+    GRC->>AT: Create audit cycle (fieldwork)
+    AT->>AT: Snapshot compliance state
+    GRC->>AUD: Share auditor portal link (signed token)
+    AUD->>AT: Access evidence via token
+    AT->>AUD: Show control evidence from snapshot period
+    AUD->>AT: Leave comments on controls
+    AUD->>AT: Sign off controls (with notes)
+    AT->>AT: Record signoff + timestamp
+    AUD->>AT: Download evidence ZIP
+    GRC->>AT: Close cycle, record outcome
+```
+
+Auditor activity is logged with timestamps. Sign-offs include auditor name, date, and optional notes.
+
+---
+
+## Multimodal Evidence Uploads
+
+Beyond Git activity, teams can upload direct compliance evidence - policy documents, architecture diagrams, training records - which are embedded and matched to controls via the same vector store.
+
+```mermaid
+flowchart LR
+    UP[Uploaded file]
+
+    UP -->|PDF| PE[Gemini PDF embedding\nOCR + semantic, up to 6 pages]
+    UP -->|PNG / JPEG| IE[Gemini image embedding\narchitecture diagrams, screenshots]
+    UP -->|MP3 / WAV| AE[Gemini audio embedding\nmeeting recordings, up to 80s]
+    UP -->|Text + Image| ME[Multimodal aggregated\nsingle combined vector]
+
+    PE --> VS[(Vector Store\nSupabase pgvector)]
+    IE --> VS
+    AE --> VS
+    ME --> VS
+
+    VS --> CM[Cosine similarity\nvs control embeddings]
+    CM --> EV2[Evidence item\nwith confidence tier + source badge]
+```
+
+Example use cases: security policy PDFs mapped to ISO 27001 A.5.1, MFA setup screenshots mapped to CC6.1, architecture diagrams mapped to NIST CSF network controls, security training completion records mapped to A.6.3.
 
 ---
 
 ## Reports and Exports
 
-### PDF export
+```mermaid
+flowchart LR
+    EB[(Evidence Base)]
 
-Board-ready PDF reports include: executive summary, framework scorecard, control-by-control evidence breakdown with source references and timestamps, gap summary, and auditor sign-off table. Generated server-side via `lib/pdf.tsx`.
-
-### CSV export
-
-Tabular export of evidence items per control, including artifact type, timestamp, repository, author, and relevance tier.
-
-### Full data export
-
-A complete JSON/CSV ZIP of all org data - evidence artifacts, compliance snapshots, audit cycles and findings, risk treatments, control notes, gap assignments, auditor sign-offs. Stored in Supabase Storage; download link sent via Resend email.
-
-Excludes: model weights, benchmark percentiles, confidence thresholds.
-
-### Shareable reports
-
-Read-only report links can be shared with partners or enterprise prospects for due diligence purposes without requiring them to create an account.
-
----
-
-## Scheduled Reports
-
-Driven by the daily cron job at `/api/cron/sync`:
-
-- **Weekly GRC digest** (Monday mornings): AI-drafted via Claude - compliance score delta, new alerts, open gaps, overdue treatments. Opt-out via `NotificationPreferences.grcWeeklyDigest`
-- **Monthly CISO summary** (1st of month): posture trend, benchmark comparison, critical risk delta. Opt-out via `NotificationPreferences.cisoMonthlySummary`
-
-Both reports are generated by Claude and delivered via Resend.
-
----
-
-## Observability and Security
-
-### PostHog analytics
-
-Conservative B2B configuration: identify by `orgId` only (no email or PII), respect Do Not Track, mask all inputs in session replay, manual pageview control, allowlist-only autocapture.
-
-### Sentry
-
-Server-side error capture with cron job monitoring for `/api/cron/sync`. All unhandled errors are captured with request context.
-
-### ZTA audit log
-
-A structured audit log (`lib/zta-audit-log.ts`) records security-relevant events with the `[ZTA]` prefix: session start/end, org mismatch attempts, webhook signature failures, export initiations. Designed for forensic analysis.
-
-### Zero Trust Architecture dashboard
-
-A dedicated ZTA view maps GitHub evidence to NIST SP 800-207 and ASD MDA Foundations controls across six ZTA pillars: identity, device, application, data, network, and visibility.
-
-### Flywheel instrumentation
-
-Anonymized signal capture (`lib/flywheel.ts`), gated by `FLYWHEEL_ENABLED=true`:
-
-- Auditor signoffs: control code, verdict, embedding similarity, org industry and size (no orgId, no userId)
-- Audit outcomes: framework, finding counts, evidence state vector
-- GRC annotations: control note embeddings
-
-PII is stripped via `sanitizePayload()`. No `orgId`, `userId`, `email`, or `name` is ever stored in signal records.
-
----
-
-## Architecture
-
-```
-Next.js 14 App Router
-app/
-  (dashboard)/          # Auth-required app pages
-    dashboard/          # Main overview
-    compliance/         # Framework compliance view
-    evidence/           # Evidence explorer + multimodal uploads
-    grc/                # GRC dashboard
-    ciso/               # CISO dashboard
-    risk-register/      # Risk treatments
-    audits/             # Audit cycle management
-    repositories/       # Repo management
-    exports/            # Report exports
-    settings/           # Org and notification settings
-  api/
-    webhooks/github/    # GitHub App webhook receiver
-    github/             # GitHub sync + app-callback
-    evidence/           # Evidence + confidence + uploads
-    gaps/               # Gap analysis + assignments
-    alerts/             # Compliance alerts
-    audit-cycles/       # Audit cycle management
-    risk-treatments/    # Risk register
-    dashboards/         # GRC + CISO + ZTA dashboards
-    ciso/               # Executive summary
-    cron/sync/          # Daily sync + scheduled reports
-    org/export/         # Full data export
-  auditor/[token]/      # Token-gated auditor portal
-lib/
-  webhook-handlers.ts   # GitHub event handlers
-  embeddings.ts         # Gemini multimodal embeddings
-  compliance.ts         # Evidence mapping engine
-  gap-analysis.ts       # Gap detection + recommendations
-  alerts.ts             # Compliance alert detection
-  github-sync.ts        # Batch repository sync
-  github.ts             # GitHub API client
-  ai-summary.ts         # Claude executive summaries
-  flywheel.ts           # Anonymized signal capture
-  zta-audit-log.ts      # Security event logging
-prisma/
-  schema.prisma         # Database models
-  seed.ts               # Framework + control data (12 frameworks, 81 controls)
-  seed-embeddings.ts    # Control embedding generation
+    EB --> PDF[PDF Report\nexec summary + control breakdown\n+ auditor sign-offs]
+    EB --> CSV[CSV Export\nevidence per control\ntimestamped + sourced]
+    EB --> SH[Shareable Link\nread-only, no account needed\nfor due diligence]
+    EB --> FE[Full Data Export\nJSON + CSV ZIP\nall org data via Resend]
 ```
 
----
-
-## Environment Variables
-
-### Required
-
-| Variable                | Purpose                                                      |
-| ----------------------- | ------------------------------------------------------------ |
-| `DATABASE_URL`          | PostgreSQL connection (Supabase, Transaction mode port 6543) |
-| `DIRECT_URL`            | Direct PostgreSQL for migrations (port 5432)                 |
-| `NEXTAUTH_URL`          | App base URL                                                 |
-| `NEXTAUTH_SECRET`       | NextAuth session secret                                      |
-| `GITHUB_CLIENT_ID`      | GitHub OAuth for user sign-in                                |
-| `GITHUB_CLIENT_SECRET`  | GitHub OAuth secret                                          |
-| `GITHUB_WEBHOOK_SECRET` | HMAC secret for webhook signature verification               |
-
-### GitHub App
-
-| Variable                   | Purpose                                      |
-| -------------------------- | -------------------------------------------- |
-| `GITHUB_APP_ID`            | Numeric App ID from github.com/settings/apps |
-| `GITHUB_APP_CLIENT_ID`     | App Client ID                                |
-| `GITHUB_APP_CLIENT_SECRET` | App Client Secret                            |
-| `GITHUB_APP_PRIVATE_KEY`   | RSA private key (full PEM contents)          |
-
-### Embeddings and AI
-
-| Variable                    | Purpose                                                  |
-| --------------------------- | -------------------------------------------------------- |
-| `GEMINI_API_KEY`            | Google Gemini Embedding 2 API key                        |
-| `NEXT_PUBLIC_SUPABASE_URL`  | Supabase project URL                                     |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only)             |
-| `ANTHROPIC_API_KEY`         | Claude API for executive summaries and scheduled reports |
-
-### Optional
-
-| Variable                | Default | Purpose                                        |
-| ----------------------- | ------- | ---------------------------------------------- |
-| `FLYWHEEL_ENABLED`      | `false` | Enable anonymized signal capture               |
-| `STRIPE_SECRET_KEY`     | -       | Stripe billing                                 |
-| `STRIPE_WEBHOOK_SECRET` | -       | Stripe webhook verification                    |
-| `RESEND_API_KEY`        | -       | Email notifications, reports, and contact form |
-| `POSTHOG_KEY`           | -       | Product analytics                              |
-| `SENTRY_DSN`            | -       | Error tracking                                 |
+Full data export includes: evidence artifacts, compliance snapshots, audit cycles and findings, risk treatments, control notes, gap assignments, auditor sign-offs. Excludes: benchmark percentiles, confidence model weights.
 
 ---
 
-## Local Development
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL (Supabase recommended)
+- GitHub App (for webhook events)
+
+### Local setup
 
 ```bash
 # 1. Clone and install
@@ -495,12 +338,12 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env.local
-# Fill in DATABASE_URL, NEXTAUTH_SECRET, GITHUB_CLIENT_ID/SECRET at minimum
+# Required at minimum: DATABASE_URL, NEXTAUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET
 
 # 3. Run migrations
 npx prisma migrate dev
 
-# 4. Seed compliance frameworks and controls
+# 4. Seed frameworks and controls (12 frameworks, 81 controls)
 npx tsx prisma/seed.ts
 
 # 5. Seed control embeddings (requires GEMINI_API_KEY)
@@ -512,53 +355,76 @@ npm run dev
 
 ### Webhook testing locally
 
-Use [smee.io](https://smee.io) or [ngrok](https://ngrok.com) to forward GitHub webhooks to localhost:
-
 ```bash
 npx smee -u https://smee.io/YOUR_CHANNEL -t http://localhost:3000/api/webhooks/github
 ```
 
 ---
 
+## Environment Variables
+
+### Required
+
+| Variable                | Purpose                                           |
+| ----------------------- | ------------------------------------------------- |
+| `DATABASE_URL`          | PostgreSQL (Supabase Transaction mode, port 6543) |
+| `DIRECT_URL`            | Direct PostgreSQL for migrations (port 5432)      |
+| `NEXTAUTH_URL`          | App base URL                                      |
+| `NEXTAUTH_SECRET`       | NextAuth session secret                           |
+| `GITHUB_CLIENT_ID`      | GitHub OAuth for user sign-in                     |
+| `GITHUB_CLIENT_SECRET`  | GitHub OAuth secret                               |
+| `GITHUB_WEBHOOK_SECRET` | HMAC secret for webhook signature verification    |
+
+### GitHub App
+
+| Variable                   | Purpose                    |
+| -------------------------- | -------------------------- |
+| `GITHUB_APP_ID`            | Numeric App ID             |
+| `GITHUB_APP_CLIENT_ID`     | App Client ID              |
+| `GITHUB_APP_CLIENT_SECRET` | App Client Secret          |
+| `GITHUB_APP_PRIVATE_KEY`   | RSA private key (full PEM) |
+
+### AI and embeddings
+
+| Variable                    | Purpose                                          |
+| --------------------------- | ------------------------------------------------ |
+| `GEMINI_API_KEY`            | Gemini Embedding 2 for vector embeddings         |
+| `NEXT_PUBLIC_SUPABASE_URL`  | Supabase project URL                             |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side only)         |
+| `ANTHROPIC_API_KEY`         | Claude for board summaries and scheduled reports |
+
+### Optional
+
+| Variable                                      | Purpose                                       |
+| --------------------------------------------- | --------------------------------------------- |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Billing                                       |
+| `RESEND_API_KEY`                              | Email: alerts, reports, exports, contact form |
+| `POSTHOG_KEY`                                 | Product analytics                             |
+| `SENTRY_DSN`                                  | Error tracking                                |
+| `FLYWHEEL_ENABLED`                            | Anonymized signal capture (default: false)    |
+
+---
+
 ## Deployment
 
-Deployed on Vercel. Production database on Supabase.
+Deployed on Vercel with Supabase as the database.
 
-`DATABASE_URL` must use Supabase's Transaction mode (port 6543, `?pgbouncer=true`) to prevent connection pool exhaustion under concurrent requests. `DIRECT_URL` uses port 5432 for Prisma migrations.
+`DATABASE_URL` must use Supabase Transaction mode (port 6543, `?pgbouncer=true`). `DIRECT_URL` uses port 5432 for migrations.
 
-Cron jobs are configured in `vercel.json`:
+The daily cron job at `/api/cron/sync` handles: repository sync, alert detection, weekly GRC digest (Mondays), and monthly CISO summary (1st of month).
 
-- `/api/cron/sync` - runs daily for sync, alerts, and scheduled reports
-
-Applying migrations to production:
-
-```sql
--- Run migration SQL directly in Supabase SQL editor
--- prisma/migrations/NNN_name/migration.sql
-```
+Migrations are applied by running the migration SQL directly in the Supabase SQL editor.
 
 ---
 
 ## Testing
 
 ```bash
-npm run test          # Watch mode
-npm run test:run      # Single run (CI)
+npm run test:run      # Single run
 npm run test:coverage # Coverage report (80% threshold)
 ```
 
-Test files in `tests/lib/` and `tests/api/`. Mocking pattern:
-
-```typescript
-const mockDb = vi.hoisted(() => ({
-  repository: { findFirst: vi.fn(), update: vi.fn() },
-  commit: { upsert: vi.fn() },
-}));
-
-vi.mock("@/lib/db", () => ({ db: mockDb }));
-
-beforeEach(() => vi.clearAllMocks());
-```
+Tests live in `tests/lib/` and `tests/api/`. All external dependencies (database, GitHub API, Gemini, Anthropic) are mocked via `vi.mock`.
 
 ---
 
