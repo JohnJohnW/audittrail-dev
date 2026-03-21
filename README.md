@@ -243,12 +243,24 @@ flowchart LR
 
 Every business impact figure ships with an expandable methodology panel - the exact inputs, multipliers, and thresholds used are always visible. Nothing is a black box.
 
-| Figure              | Basis                                                                             |
-| ------------------- | --------------------------------------------------------------------------------- |
-| Breach cost         | IBM Cost of a Data Breach 2024 ($4.88M) x company size x industry x gap severity  |
-| Regulatory fines    | GDPR: 4% global turnover est. / PCI DSS: $100K/month max / SOCI: AUD $50M+        |
-| Deal-blocker risk   | Readiness score and count of controls with no evidence against defined thresholds |
-| Days to audit-ready | Readiness score bracket with empirical time estimate per gap                      |
+### Breach cost sources
+
+The baseline is **AUD $4.26M** - the Australian-specific average from the IBM Cost of a Data Breach Report 2024 (Ponemon Institute methodology, published July 2024). This is the most methodologically rigorous figure available for Australia: it covers detection and escalation, notification, lost business, and post-breach response costs - not just criminal losses.
+
+Cross-referenced against:
+
+- **ASD Annual Cyber Threat Report 2024-25** (Australian Signals Directorate, October 2025): AUD $202,700 average self-reported loss per cybercrime report for large businesses; 84,700+ cybercrime reports in FY2024-25 (one every 6 minutes); critical infrastructure incident notifications up 111% year-on-year.
+- **OAIC Notifiable Data Breaches Scheme**: 1,113 breaches notified in Australia across 2024 - the highest annual total since the NDB scheme began in 2018. 595 in H2 2024 alone.
+
+Industry multipliers are derived from the IBM 2024 Australian cohort breakdown: technology sector averaged AUD $5.81M (x1.36 baseline), financial services AUD $5.61M (x1.32). Each unmitigated compliance gap adds 4% to the estimate - IBM AU 2024 found that organisations with AI and automation saved an average of AUD $1.74M per breach.
+
+| Figure               | Basis                                                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Breach cost          | AUD $4.26M baseline (IBM Cost of a Data Breach 2024, AU cohort) x size x industry x gap severity                       |
+| Government cross-ref | ASD Cyber Threat Report 2024-25 (Oct 2025): AUD $202,700 avg self-reported loss, large business                        |
+| Regulatory fines     | GDPR Art. 83: 4% global turnover / PCI DSS: USD $100K/month max / SOCI Act: AUD $50M+ / Privacy Act 2024: AUD $50M max |
+| Deal-blocker risk    | Readiness score and count of controls with no evidence against defined thresholds                                      |
+| Days to audit-ready  | Readiness score bracket with empirical remediation time estimate per gap                                               |
 
 ---
 

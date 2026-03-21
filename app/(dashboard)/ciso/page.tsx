@@ -51,11 +51,14 @@ interface BusinessImpact {
   breachCostEstimate: number;
   breachCostBasis: {
     baseline: string;
+    secondarySource?: string;
+    notificationVolume?: string;
     sizeMultiplier: number;
     industryMultiplier: number;
     gapMultiplier: number;
     sizeUsed: string;
     industryUsed: string;
+    note?: string;
   };
   regulatoryFineBreakdown: FineBreakdownItem[];
   maxFineEstimate: number;
@@ -486,8 +489,21 @@ export default function CISODashboardPage() {
                   <summary className="text-xs text-accent cursor-pointer hover:underline">
                     Methodology
                   </summary>
-                  <div className="mt-2 text-xs text-gray-500 space-y-1 bg-gray-50 rounded-lg p-3">
-                    <p>Baseline: {businessImpact.breachCostBasis.baseline}</p>
+                  <div className="mt-2 text-xs text-gray-500 space-y-1.5 bg-gray-50 rounded-lg p-3">
+                    <p className="font-medium text-gray-700">Primary source</p>
+                    <p>{businessImpact.breachCostBasis.baseline}</p>
+                    {businessImpact.breachCostBasis.secondarySource && (
+                      <>
+                        <p className="font-medium text-gray-700 pt-1">Government source</p>
+                        <p>{businessImpact.breachCostBasis.secondarySource}</p>
+                      </>
+                    )}
+                    {businessImpact.breachCostBasis.notificationVolume && (
+                      <p className="text-gray-400 italic">
+                        {businessImpact.breachCostBasis.notificationVolume}
+                      </p>
+                    )}
+                    <p className="font-medium text-gray-700 pt-1">Calculation</p>
                     <p>
                       Size ({businessImpact.breachCostBasis.sizeUsed}): x
                       {businessImpact.breachCostBasis.sizeMultiplier}
@@ -497,6 +513,11 @@ export default function CISODashboardPage() {
                       {businessImpact.breachCostBasis.industryMultiplier}
                     </p>
                     <p>Gap severity: x{businessImpact.breachCostBasis.gapMultiplier.toFixed(2)}</p>
+                    {businessImpact.breachCostBasis.note && (
+                      <p className="text-gray-400 italic pt-1">
+                        {businessImpact.breachCostBasis.note}
+                      </p>
+                    )}
                   </div>
                 </details>
               </div>
