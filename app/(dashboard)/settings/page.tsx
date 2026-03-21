@@ -288,7 +288,7 @@ function SettingsContent() {
                 <CheckIcon className="w-5 h-5 text-green-600" />
               </div>
               <p className="text-green-700 font-medium">
-                Successfully upgraded to Pro! Unlimited repositories, all 8 frameworks, and exports
+                Successfully upgraded to Pro! Unlimited repositories, all 12 frameworks, and exports
                 are now unlocked.
               </p>
             </div>
@@ -362,7 +362,7 @@ function SettingsContent() {
                 </div>
                 <p className="text-sm sm:text-base text-gray-500 mt-1">
                   {subscription?.plan === "pro"
-                    ? "Unlimited repositories, all 8 frameworks, and exports"
+                    ? "Unlimited repositories, all 12 frameworks, and exports"
                     : "2 repositories, 3 frameworks. No exports or auditor portal."}
                 </p>
                 {subscription?.currentPeriodEnd && (
@@ -427,7 +427,15 @@ function SettingsContent() {
                   </div>
                   <ul className="space-y-3 text-sm">
                     <FeatureItem included>Unlimited repositories</FeatureItem>
-                    <FeatureItem included>All 8 compliance frameworks</FeatureItem>
+                    <FeatureItem included>
+                      All 12 compliance frameworks incl. NIST AI RMF &amp; EU AI Act
+                    </FeatureItem>
+                    <FeatureItem included>
+                      GRC dashboard: gap ownership, risk register, audit cycles
+                    </FeatureItem>
+                    <FeatureItem included>
+                      CISO dashboard: posture trend, business impact, board summary
+                    </FeatureItem>
                     <FeatureItem included>PDF & CSV exports</FeatureItem>
                     <FeatureItem included>Auditor portal (comments, sign-offs)</FeatureItem>
                     <FeatureItem included>Shareable read-only reports</FeatureItem>
