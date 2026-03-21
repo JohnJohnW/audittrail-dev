@@ -24,13 +24,8 @@ export function CTA() {
           >
             Get started free
           </Link>
-          <a
-            href="https://github.com/JohnJohnW/audittrail-dev/issues"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-gray-500 hover:text-accent transition-colors"
-          >
-            Questions? Open an issue
+          <a href="/contact" className="text-sm text-gray-500 hover:text-accent transition-colors">
+            Questions? Get in touch
           </a>
         </div>
       </FadeIn>

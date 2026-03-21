@@ -107,6 +107,18 @@ const frameworks = [
     description: "Modern Defensible Architecture (October 2025)",
     icon: dbIcon,
   },
+  {
+    name: "NIST AI RMF",
+    controls: 8,
+    description: "AI Risk Management Framework: Govern, Map, Measure, Manage",
+    icon: shieldIcon,
+  },
+  {
+    name: "EU AI Act",
+    controls: 6,
+    description: "EU AI Act (2024): risk management, data governance, transparency",
+    icon: globeIcon,
+  },
 ];
 
 export function Frameworks() {
@@ -118,12 +130,12 @@ export function Frameworks() {
             Compliance Frameworks
           </p>
           <h2 className="text-2xl font-semibold text-gray-900 mb-3">
-            Ten frameworks. Zero manual work.
+            Twelve frameworks. Zero manual work.
           </h2>
           <p className="text-sm text-gray-500 max-w-lg mx-auto">
-            We&apos;ve done the control mapping for you. Ten frameworks covering global and regional
-            standards, including Zero Trust Architecture and ASD MDA Foundations. Connect once,
-            evidence them all, invisibly.
+            We&apos;ve done the control mapping for you. Twelve frameworks covering global and
+            regional standards - including AI governance (NIST AI RMF, EU AI Act), Zero Trust
+            Architecture, and ASD MDA Foundations. Connect once, evidence them all, invisibly.
           </p>
         </FadeIn>
 
@@ -171,7 +183,11 @@ export function Frameworks() {
 
         <FadeIn direction="up" delay={0.4}>
           <p className="text-center text-xs text-gray-400 mt-6">
-            Need IRAP, HIPAA, or a custom framework? Contact us for Enterprise
+            Need IRAP, HIPAA, or a custom framework?{" "}
+            <a href="/contact" className="text-accent hover:underline">
+              Contact us
+            </a>{" "}
+            for Enterprise
           </p>
         </FadeIn>
       </div>

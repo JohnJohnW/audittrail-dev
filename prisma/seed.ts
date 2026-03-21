@@ -722,6 +722,154 @@ async function main() {
     });
   }
 
+  // ============================================================
+  // NIST AI RMF Framework
+  // ============================================================
+  const nistAiRmf = await prisma.complianceFramework.upsert({
+    where: { name: "NIST AI RMF" },
+    update: {},
+    create: {
+      name: "NIST AI RMF",
+      version: "1.0",
+      description:
+        "NIST Artificial Intelligence Risk Management Framework 1.0: a voluntary framework to help organisations design, develop, deploy, and use AI systems in a trustworthy manner. Maps to the four core functions: Govern, Map, Measure, Manage.",
+    },
+  });
+
+  const nistAiRmfControls = [
+    {
+      code: "AI-GOV-1",
+      title: "AI Governance Policy",
+      description:
+        "Policies, processes, procedures, and practices across the organisation related to the mapping, measuring, and managing of AI risks are in place, transparent, and implemented effectively. Evidence: policies committed to version control, access controls on AI code repositories.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "AI-GOV-2",
+      title: "AI Risk Roles and Accountability",
+      description:
+        "Roles and responsibilities for AI governance are clearly defined, documented, and communicated. Accountability is assigned for AI model development, deployment, and monitoring.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "AI-MAP-1",
+      title: "AI System Context and Risk Identification",
+      description:
+        "The context of AI system use is understood, including the people and organisations who may be affected. AI risks (model drift, prompt injection, data poisoning, hallucination, training data bias) are identified and documented.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "AI-MAP-2",
+      title: "Model Inventory and Classification",
+      description:
+        "AI models in development and production are inventoried. Each model is classified by risk level, modality, training data source, and intended use. Agentic AI systems with tool-calling capability are separately classified for elevated oversight.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "AI-MEAS-1",
+      title: "AI Risk Measurement and Testing",
+      description:
+        "AI risks are measured using qualitative and quantitative methods. Evaluation includes adversarial testing for prompt injection, jailbreak resistance, and output toxicity. CI pipelines include AI-specific test suites.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "AI-MEAS-2",
+      title: "Model Drift and Performance Monitoring",
+      description:
+        "AI system performance is continuously monitored post-deployment. Drift detection alerts are in place. Incidents of unexpected model behaviour are logged, triaged, and remediated using a documented process.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "AI-MANAGE-1",
+      title: "AI Incident Response",
+      description:
+        "Identified AI risks are prioritised and addressed according to documented risk treatment plans. AI-specific incidents (data poisoning, model inversion, adversarial manipulation) trigger a defined incident response process.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "AI-MANAGE-2",
+      title: "Secure AI Supply Chain",
+      description:
+        "Third-party AI models, APIs, and datasets are evaluated for provenance, licensing, and security. SBOMs for AI systems include model weights, training datasets, and inference dependencies.",
+      evidenceType: "ai_governance",
+    },
+  ];
+
+  for (const control of nistAiRmfControls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: nistAiRmf.id, code: control.code } },
+      update: {},
+      create: { frameworkId: nistAiRmf.id, ...control },
+    });
+  }
+
+  // ============================================================
+  // EU AI Act Framework
+  // ============================================================
+  const euAiAct = await prisma.complianceFramework.upsert({
+    where: { name: "EU AI Act" },
+    update: {},
+    create: {
+      name: "EU AI Act",
+      version: "2024",
+      description:
+        "European Union Artificial Intelligence Act (2024): the world's first comprehensive legal framework for AI. Applies a risk-based approach categorising AI systems as unacceptable risk, high risk, limited risk, or minimal risk. High-risk AI systems require conformity assessments, technical documentation, and ongoing monitoring.",
+    },
+  });
+
+  const euAiActControls = [
+    {
+      code: "EUAI-ART-9",
+      title: "Risk Management System for High-Risk AI",
+      description:
+        "A risk management system is established, implemented, documented, and maintained for high-risk AI systems throughout their entire lifecycle. Risks are identified, evaluated, and mitigated.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "EUAI-ART-10",
+      title: "Data Governance for AI Training",
+      description:
+        "Training, validation, and testing datasets are subject to appropriate data governance practices. Datasets are examined for possible biases and errors. Data provenance is documented and version-controlled.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "EUAI-ART-11",
+      title: "Technical Documentation",
+      description:
+        "Technical documentation for high-risk AI systems is maintained before system deployment. Documentation includes system description, development process, training methodologies, and performance metrics.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "EUAI-ART-12",
+      title: "Record Keeping and Logging",
+      description:
+        "High-risk AI systems automatically log events to enable post-hoc traceability. Logs include the reference database used, input data that led to outputs, and the identity of persons who verified results.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "EUAI-ART-13",
+      title: "Transparency and Human Oversight",
+      description:
+        "High-risk AI systems are designed and developed with sufficient transparency that deployers understand system capabilities and limitations. Human oversight measures are built in, including the ability to override, interrupt, or halt AI decisions.",
+      evidenceType: "ai_governance",
+    },
+    {
+      code: "EUAI-ART-15",
+      title: "Accuracy, Robustness, and Cybersecurity",
+      description:
+        "High-risk AI systems achieve appropriate levels of accuracy, robustness, and cybersecurity. Systems are resilient against adversarial attacks including data poisoning, model poisoning, prompt injection, and adversarial examples designed to deceive the system.",
+      evidenceType: "ai_governance",
+    },
+  ];
+
+  for (const control of euAiActControls) {
+    await prisma.complianceControl.upsert({
+      where: { frameworkId_code: { frameworkId: euAiAct.id, code: control.code } },
+      update: {},
+      create: { frameworkId: euAiAct.id, ...control },
+    });
+  }
+
   console.log("Seeding completed!");
   console.log(`- ISO 27001: ${isoControls.length} controls`);
   console.log(`- Essential Eight: ${e8Controls.length} controls`);
@@ -733,6 +881,8 @@ async function main() {
   console.log(`- PCI DSS 4.0: ${pciControls.length} controls`);
   console.log(`- NIST SP 800-207 (Zero Trust Architecture): ${nist800207Controls.length} controls`);
   console.log(`- ASD MDA Foundations: ${asdMdaControls.length} controls`);
+  console.log(`- NIST AI RMF: ${nistAiRmfControls.length} controls`);
+  console.log(`- EU AI Act: ${euAiActControls.length} controls`);
 }
 
 main()

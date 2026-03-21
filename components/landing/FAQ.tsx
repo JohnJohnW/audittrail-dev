@@ -23,7 +23,7 @@ const faqs = [
   {
     question: "Which frameworks do you support?",
     answer:
-      "We support ten frameworks out of the box: ISO 27001:2022, ACSC Essential Eight, NIST CSF 2.0, NIST SP 800-53 Rev 5, SOC 2, GDPR, SOCI Act, PCI DSS 4.0, NIST SP 800-207 (Zero Trust Architecture), and ASD MDA Foundations. Free plans include access to 3 frameworks; Pro unlocks all 10. Essential Eight is mandated by the ACSC for Australian government suppliers. NIST frameworks are widely required for US federal and enterprise environments. GDPR applies to any organisation handling EU personal data. Enterprise plans add IRAP, HIPAA, and custom framework mappings.",
+      "We support twelve frameworks out of the box: ISO 27001:2022, ACSC Essential Eight, NIST CSF 2.0, NIST SP 800-53 Rev 5, SOC 2, GDPR, SOCI Act, PCI DSS 4.0, NIST SP 800-207 (Zero Trust Architecture), ASD MDA Foundations, NIST AI RMF 1.0, and the EU AI Act (2024). Free plans include access to 3 frameworks; Pro unlocks all 12. NIST AI RMF and EU AI Act cover AI governance controls including model drift, prompt injection, data poisoning, and agentic AI risks. Enterprise plans add IRAP, HIPAA, and custom framework mappings.",
   },
   {
     question: "Will auditors accept these reports?",
@@ -48,12 +48,22 @@ const faqs = [
   {
     question: "What's included in the free plan?",
     answer:
-      "The free plan gives you up to 2 repositories and access to 3 of the 10 supported compliance frameworks. You get the full evidence dashboard, gap analysis with action steps, basic compliance alerts, and control notes and exceptions. Exports (PDF and CSV), the auditor portal, shareable reports, and full benchmark data are Pro features.",
+      "The free plan gives you up to 2 repositories and access to 3 of the 12 supported compliance frameworks. You get the full evidence dashboard, gap analysis with action steps, basic compliance alerts, and control notes and exceptions. Exports (PDF and CSV), the auditor portal, shareable reports, and full benchmark data are Pro features.",
   },
   {
     question: "Do you offer enterprise plans?",
     answer:
-      "Yes. Enterprise includes SSO, custom framework mappings (including IRAP, HIPAA, and custom frameworks), dedicated support, and SLAs. Open an issue on GitHub to discuss your requirements.",
+      "Yes. Enterprise includes SSO, custom framework mappings (including IRAP, HIPAA, and custom frameworks), dedicated support, and SLAs. Contact us to discuss your requirements.",
+  },
+  {
+    question: "Can GRC teams and CISOs use this day-to-day, not just at audit time?",
+    answer:
+      "Yes - that is the point. GRC teams get a live gap register with assignable ownership, risk treatment tracking (remediate, accept, transfer, avoid), and audit cycle management. CISOs get a posture trend dashboard with breach cost exposure estimates, regulatory fine risk, and AI-drafted board summaries. Compliance stays current all year, not just when an auditor is in the room.",
+  },
+  {
+    question: "Can I use Audit Trail for partner or investor due diligence?",
+    answer:
+      "Yes. You can generate a shareable compliance package - a read-only view of your framework scores, evidence summary, and control coverage - and send it as a link or export. No back-and-forth questionnaires. Works for vendor security reviews, enterprise sales deal cycles, and M&A due diligence.",
   },
 ];
 
@@ -127,13 +137,8 @@ export function FAQ() {
           <div className="mt-10 text-center">
             <p className="text-sm text-gray-500">
               More questions?{" "}
-              <a
-                href="https://github.com/JohnJohnW/audittrail-dev/issues"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-accent hover:underline"
-              >
-                Open an issue on GitHub
+              <a href="/contact" className="text-accent hover:underline">
+                Get in touch
               </a>
             </p>
           </div>

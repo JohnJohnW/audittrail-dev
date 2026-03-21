@@ -573,6 +573,74 @@ export async function getComplianceEvidence(
             }
             break;
           }
+
+          case "ai_governance": {
+            // AI governance controls: map security commits, CI SARIF (adversarial testing),
+            // SBOM (AI supply chain), and PR reviews (model review gates) as proxy evidence.
+            // Most definitive evidence comes via uploaded policy docs (Phase 2 uploads).
+            const aiPatterns = [
+              /\bai\b|\bml\b|\bmodel\b|\bllm\b|\bgpt\b|\bgemini\b|\bclaude\b/i,
+              /\bprompt.?injec/i,
+              /\bdata.?poison/i,
+              /\bmodel.?drift\b/i,
+              /\bhallucin/i,
+              /\bfine.?tun/i,
+              /\bembedding/i,
+              /\binference\b/i,
+              /\bagent(ic)?\b/i,
+              /\bsafeguard/i,
+              /\bguardrail/i,
+              /\bmoderation\b/i,
+            ];
+
+            const aiCommits = allCommits.filter((c) => aiPatterns.some((p) => p.test(c.message)));
+            const aiCiArtifacts = allCIArtifacts.filter((a) =>
+              /\bai\b|\bml\b|\bmodel\b|\bsafety\b/i.test(a.name)
+            );
+            const aiSboms = allCIArtifacts.filter((a) => a.artifactType === "sbom");
+
+            for (const commit of [...aiCommits, ...allCommits.slice(0, 5)].slice(0, 20)) {
+              const repoInfo = commitToRepo.get(commit.id);
+              const isDirectlyRelevant = aiPatterns.some((p) => p.test(commit.message));
+              evidence.push({
+                type: "commit",
+                title: `Commit: ${commit.sha.slice(0, 7)}`,
+                description: commit.message.split("\n")[0].slice(0, 100),
+                timestamp: commit.committedAt,
+                url: commit.url || undefined,
+                metadata: { sha: commit.sha, author: commit.authorName },
+                relevance: isDirectlyRelevant ? "high" : "low",
+                repositoryId: repoInfo?.id,
+                repositoryName: repoInfo?.name,
+                repositoryFullName: repoInfo?.fullName,
+              });
+            }
+
+            for (const artifact of [...aiCiArtifacts, ...aiSboms].slice(0, 5)) {
+              const repo = repositories.find((r) => r.id === artifact.repoId);
+              evidence.push({
+                type: "commit",
+                title: `CI: ${artifact.name}`,
+                description: `${artifact.artifactType.replace("_", " ")} - AI supply chain evidence`,
+                timestamp: artifact.createdAt,
+                metadata: { artifactType: artifact.artifactType, runId: artifact.runId },
+                relevance: "medium",
+                repositoryId: repo?.id,
+                repositoryName: repo?.name,
+                repositoryFullName: repo?.fullName,
+              });
+            }
+
+            if (status !== "limited") {
+              const highRelevance = evidence.filter((e) => e.relevance === "high").length;
+              if (highRelevance >= 3) {
+                status = "has_evidence";
+              } else if (evidence.length > 0) {
+                status = "partial";
+              }
+            }
+            break;
+          }
         }
 
         // =========================================================

@@ -99,6 +99,119 @@ export async function GET() {
       select: { industry: true, companySize: true },
     });
 
+    // --- Business Impact Calculations ---
+    // All figures are estimates based on published industry benchmarks.
+    // Inputs: readinessScore, noEvidenceControls, frameworks active, org size/industry.
+
+    const companySizeMultipliers: Record<string, number> = {
+      "1-10": 0.3,
+      "11-50": 0.5,
+      "51-200": 0.8,
+      "201-500": 1.0,
+      "501-1000": 1.4,
+      "1001+": 2.1,
+    };
+    const industryMultipliers: Record<string, number> = {
+      healthcare: 2.3,
+      financial: 1.9,
+      technology: 1.2,
+      retail: 1.1,
+      government: 1.5,
+      education: 0.9,
+      other: 1.0,
+    };
+    const sizeKey = orgProfile?.companySize || "51-200";
+    const industryKey = (orgProfile?.industry || "technology").toLowerCase();
+    const sizeMult = companySizeMultipliers[sizeKey] ?? 1.0;
+    const industryMult = industryMultipliers[industryKey] ?? 1.0;
+
+    // Breach cost: IBM 2024 average $4.88M baseline, scaled by size + industry + gap severity
+    const IBM_BREACH_BASE_USD = 4_880_000;
+    const gapSeverityMultiplier = 1 + noEvidenceControls * 0.04;
+    const breachCostEstimate = Math.round(
+      IBM_BREACH_BASE_USD * sizeMult * industryMult * gapSeverityMultiplier
+    );
+
+    // Regulatory fine exposure: based on active frameworks
+    const activeFrameworkNames = frameworkScoreArray.map((f) => f.framework);
+    let maxFineEstimate = 0;
+    const fineBreakdown: { framework: string; maxFine: string; basis: string }[] = [];
+    if (activeFrameworkNames.some((f) => f.includes("GDPR"))) {
+      const gdprFine = Math.round(IBM_BREACH_BASE_USD * 0.4 * industryMult);
+      maxFineEstimate = Math.max(maxFineEstimate, gdprFine);
+      fineBreakdown.push({
+        framework: "GDPR",
+        maxFine: `$${(gdprFine / 1_000_000).toFixed(1)}M`,
+        basis: "4% global turnover est.",
+      });
+    }
+    if (activeFrameworkNames.some((f) => f.includes("PCI"))) {
+      const pciFine = 100_000 * 12;
+      maxFineEstimate = Math.max(maxFineEstimate, pciFine);
+      fineBreakdown.push({
+        framework: "PCI DSS",
+        maxFine: `$${(pciFine / 1_000).toFixed(0)}K/yr`,
+        basis: "$100K/month max penalty",
+      });
+    }
+    if (activeFrameworkNames.some((f) => f.includes("SOCI"))) {
+      fineBreakdown.push({
+        framework: "SOCI Act",
+        maxFine: "AUD $50M+",
+        basis: "Critical infrastructure penalty",
+      });
+    }
+    if (fineBreakdown.length === 0) {
+      fineBreakdown.push({
+        framework: "General",
+        maxFine: "Contract/deal loss",
+        basis: "No direct regulatory fine for active frameworks",
+      });
+    }
+
+    // Deal-blocker risk
+    const dealBlockerRisk =
+      readinessScore < 50 || noEvidenceControls > 5
+        ? "high"
+        : readinessScore < 75 || noEvidenceControls > 2
+          ? "medium"
+          : "low";
+
+    // Days to audit-ready estimate
+    const daysToAuditReady =
+      readinessScore >= 80
+        ? { min: 0, max: 14, label: "7-14 days" }
+        : readinessScore >= 65
+          ? { min: 21, max: 45, label: "3-6 weeks" }
+          : readinessScore >= 50
+            ? { min: 45, max: 90, label: "6-12 weeks" }
+            : { min: 90, max: 180, label: "3-6 months" };
+
+    const businessImpact = {
+      breachCostEstimate,
+      breachCostBasis: {
+        baseline: "$4.88M (IBM Cost of a Data Breach 2024)",
+        sizeMultiplier: sizeMult,
+        industryMultiplier: industryMult,
+        gapMultiplier: gapSeverityMultiplier,
+        sizeUsed: sizeKey,
+        industryUsed: industryKey,
+      },
+      regulatoryFineBreakdown: fineBreakdown,
+      maxFineEstimate,
+      dealBlockerRisk,
+      dealBlockerBasis: {
+        readinessScore,
+        noEvidenceControls,
+        thresholds: "high: score<50 or gaps>5 | medium: score<75 or gaps>2 | low: otherwise",
+      },
+      daysToAuditReady,
+      daysToAuditReadyBasis: {
+        readinessScore,
+        method: "Empirical estimate: 4 hrs/gap remediation + evidence collection buffer",
+      },
+    };
+
     return NextResponse.json({
       currentScore: summary.score,
       readinessScore,
@@ -117,6 +230,7 @@ export async function GET() {
       predictedOutcome,
       industry: orgProfile?.industry || null,
       companySize: orgProfile?.companySize || null,
+      businessImpact,
     });
   } catch (error) {
     return handleApiError(error);

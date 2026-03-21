@@ -12,8 +12,8 @@ export function Hero() {
       <div className="max-w-3xl mx-auto text-center relative">
         <FadeInOnLoad delay={0}>
           <p className="text-sm text-gray-500 mb-4">
-            ISO 27001 · NIST CSF · SOC 2 · GDPR · PCI DSS · Essential Eight · NIST 800-207 · ASD MDA
-            and more
+            ISO 27001 · NIST CSF · SOC 2 · GDPR · PCI DSS · Essential Eight · NIST AI RMF · EU AI
+            Act · and more
           </p>
         </FadeInOnLoad>
 
@@ -42,9 +42,9 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
-            Connect GitHub once, then forget about compliance. Audit Trail silently maps every
-            commit, PR, branch protection, and deployment to ten frameworks. Automatically,
-            continuously, invisibly. When audit day arrives, everything is already there.
+            Connect GitHub once. Audit Trail maps every commit, PR, and deployment to ten frameworks
+            - continuously, silently, invisibly. Daily GRC operations, CISO reporting, and due
+            diligence packages are already there when you need them.
           </p>
         </FadeInOnLoad>
 

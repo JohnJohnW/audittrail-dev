@@ -53,9 +53,9 @@ export function HowItWorks() {
     },
     {
       number: "4",
-      title: "When auditors arrive, you're already ready.",
+      title: "Audit-ready, board-ready, deal-ready.",
       description:
-        "Generate audit-ready PDFs or CSV files with timestamped evidence, control mappings, and source references. Everything is already there.",
+        "Generate audit packages, CISO board summaries, or partner due diligence reports with timestamped evidence and control mappings. Everything is already there.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -75,7 +75,7 @@ export function HowItWorks() {
         <FadeIn direction="up" className="text-center mb-14">
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">How it works</p>
           <h2 className="text-2xl font-semibold text-gray-900">
-            Working silently. Surfacing when it counts.
+            Compliance as infrastructure - invisible until you need it.
           </h2>
         </FadeIn>
 

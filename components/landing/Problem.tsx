@@ -15,7 +15,7 @@ export function Problem() {
             <ul className="space-y-4 text-[15px] leading-relaxed">
               <li className="flex gap-3 group">
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xs font-medium group-hover:scale-110 transition-transform">
-                  ×
+                  x
                 </span>
                 <span className="text-gray-600">
                   Auditors ask for change management evidence. You spend hours screenshotting GitHub
@@ -24,16 +24,17 @@ export function Problem() {
               </li>
               <li className="flex gap-3 group">
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xs font-medium group-hover:scale-110 transition-transform">
-                  ×
+                  x
                 </span>
                 <span className="text-gray-600">
-                  Branch protection rules, code reviews, and deployment approvals live in different
-                  places. Auditors want one package.
+                  Your CISO wants a risk posture report. Your GRC team wants ownership of gaps. A
+                  partner wants a compliance package. All from different tools, none of them
+                  current.
                 </span>
               </li>
               <li className="flex gap-3 group">
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xs font-medium group-hover:scale-110 transition-transform">
-                  ×
+                  x
                 </span>
                 <span className="text-gray-600">
                   Mapping your Git workflow to ISO 27001, NIST CSF, GDPR, or SOC 2 requires
@@ -64,9 +65,9 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Every artifact maps to specific controls across ISO 27001, NIST CSF, NIST SP
-                  800-53, SOC 2, GDPR, SOCI Act, PCI DSS, Essential Eight, NIST 800-207, and ASD MDA
-                  Foundations, automatically.
+                  GRC teams get gap ownership and risk treatment tracking. CISOs get posture trends,
+                  breach cost exposure, and board-ready summaries. Partners get a shareable
+                  compliance package - all from the same live evidence base.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -74,9 +75,9 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Only surfaces what matters. Critical gaps like secret leaks, unreviewed merges,
-                  and disabled branch protection trigger alerts so you fix them before the auditor
-                  arrives.
+                  Every artifact maps to controls across ISO 27001, NIST CSF, SOC 2, GDPR, PCI DSS,
+                  Essential Eight, NIST 800-207, and ASD MDA Foundations - automatically, with AI
+                  confidence scoring.
                 </span>
               </li>
             </ul>

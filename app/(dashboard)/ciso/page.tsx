@@ -41,6 +41,37 @@ interface ActiveAudit {
   targetCloseDate: string | null;
 }
 
+interface FineBreakdownItem {
+  framework: string;
+  maxFine: string;
+  basis: string;
+}
+
+interface BusinessImpact {
+  breachCostEstimate: number;
+  breachCostBasis: {
+    baseline: string;
+    sizeMultiplier: number;
+    industryMultiplier: number;
+    gapMultiplier: number;
+    sizeUsed: string;
+    industryUsed: string;
+  };
+  regulatoryFineBreakdown: FineBreakdownItem[];
+  maxFineEstimate: number;
+  dealBlockerRisk: "low" | "medium" | "high";
+  dealBlockerBasis: {
+    readinessScore: number;
+    noEvidenceControls: number;
+    thresholds: string;
+  };
+  daysToAuditReady: { min: number; max: number; label: string };
+  daysToAuditReadyBasis: {
+    readinessScore: number;
+    method: string;
+  };
+}
+
 interface CISOData {
   currentScore: number;
   readinessScore: number;
@@ -51,6 +82,7 @@ interface CISOData {
   predictedOutcome: "likely_pass" | "pass_with_findings" | "at_risk";
   industry: string;
   companySize: string;
+  businessImpact: BusinessImpact;
 }
 
 interface ExecutiveSummaryResponse {
@@ -220,7 +252,14 @@ export default function CISODashboardPage() {
     );
   }
 
-  const { readinessScore, postureTrend, criticalRisks, activeAudit, predictedOutcome } = data;
+  const {
+    readinessScore,
+    postureTrend,
+    criticalRisks,
+    activeAudit,
+    predictedOutcome,
+    businessImpact,
+  } = data;
 
   const trendData = postureTrend.map((pt) => ({
     date: new Date(pt.snapshotDate).toLocaleDateString("en-AU", {
@@ -417,6 +456,139 @@ export default function CISODashboardPage() {
           )}
         </Card>
       </FadeIn>
+
+      {/* Business Impact Panel */}
+      {businessImpact && (
+        <FadeIn delay={0.22}>
+          <Card variant="elevated" padding="none" className="mb-6">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                  Business Impact
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Estimates based on your current posture. All figures are illustrative - see
+                  methodology for assumptions.
+                </p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+              {/* Breach Cost */}
+              <div className="p-5 group relative">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                  Breach Cost Exposure
+                </p>
+                <p className="text-2xl font-bold text-red-600">
+                  ${(businessImpact.breachCostEstimate / 1_000_000).toFixed(1)}M
+                </p>
+                <p className="text-xs text-gray-400 mt-1">estimated</p>
+                <details className="mt-3">
+                  <summary className="text-xs text-accent cursor-pointer hover:underline">
+                    Methodology
+                  </summary>
+                  <div className="mt-2 text-xs text-gray-500 space-y-1 bg-gray-50 rounded-lg p-3">
+                    <p>Baseline: {businessImpact.breachCostBasis.baseline}</p>
+                    <p>
+                      Size ({businessImpact.breachCostBasis.sizeUsed}): x
+                      {businessImpact.breachCostBasis.sizeMultiplier}
+                    </p>
+                    <p>
+                      Industry ({businessImpact.breachCostBasis.industryUsed}): x
+                      {businessImpact.breachCostBasis.industryMultiplier}
+                    </p>
+                    <p>Gap severity: x{businessImpact.breachCostBasis.gapMultiplier.toFixed(2)}</p>
+                  </div>
+                </details>
+              </div>
+
+              {/* Regulatory Fine */}
+              <div className="p-5">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                  Regulatory Fine Risk
+                </p>
+                {businessImpact.regulatoryFineBreakdown.length > 0 ? (
+                  <>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {businessImpact.regulatoryFineBreakdown[0].maxFine}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {businessImpact.regulatoryFineBreakdown[0].framework} max
+                    </p>
+                    <details className="mt-3">
+                      <summary className="text-xs text-accent cursor-pointer hover:underline">
+                        All frameworks
+                      </summary>
+                      <div className="mt-2 text-xs text-gray-500 space-y-1.5 bg-gray-50 rounded-lg p-3">
+                        {businessImpact.regulatoryFineBreakdown.map((item) => (
+                          <div key={item.framework}>
+                            <span className="font-medium text-gray-700">{item.framework}</span>:{" "}
+                            {item.maxFine}
+                            <span className="text-gray-400"> - {item.basis}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500">No active frameworks with direct fines</p>
+                )}
+              </div>
+
+              {/* Deal-Blocker Risk */}
+              <div className="p-5">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                  Deal-Blocker Risk
+                </p>
+                <p
+                  className={cn(
+                    "text-2xl font-bold capitalize",
+                    businessImpact.dealBlockerRisk === "high"
+                      ? "text-red-600"
+                      : businessImpact.dealBlockerRisk === "medium"
+                        ? "text-amber-600"
+                        : "text-green-600"
+                  )}
+                >
+                  {businessImpact.dealBlockerRisk}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">for partner/enterprise deals</p>
+                <details className="mt-3">
+                  <summary className="text-xs text-accent cursor-pointer hover:underline">
+                    Methodology
+                  </summary>
+                  <div className="mt-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
+                    <p>{businessImpact.dealBlockerBasis.thresholds}</p>
+                    <p className="mt-1">
+                      Score: {businessImpact.dealBlockerBasis.readinessScore}% | Gaps:{" "}
+                      {businessImpact.dealBlockerBasis.noEvidenceControls}
+                    </p>
+                  </div>
+                </details>
+              </div>
+
+              {/* Days to Audit-Ready */}
+              <div className="p-5">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                  Days to Audit-Ready
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {businessImpact.daysToAuditReady.label}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">estimated remediation time</p>
+                <details className="mt-3">
+                  <summary className="text-xs text-accent cursor-pointer hover:underline">
+                    Methodology
+                  </summary>
+                  <div className="mt-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
+                    <p>Readiness score: {businessImpact.daysToAuditReadyBasis.readinessScore}%</p>
+                    <p className="mt-1">{businessImpact.daysToAuditReadyBasis.method}</p>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </Card>
+        </FadeIn>
+      )}
 
       {/* AI Executive Summary */}
       <FadeIn delay={0.25}>
