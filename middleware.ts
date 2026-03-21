@@ -1,19 +1,129 @@
+/**
+ * Next.js Edge Middleware — API Gateway layer
+ *
+ * Runs at the Vercel Edge Network before any serverless function:
+ *   1. Upload size gate   — rejects oversized bodies on /api/evidence/upload before compute
+ *   2. API rate limiting  — sliding-window per IP across all /api/* routes (Upstash Redis)
+ *   3. Dashboard auth     — redirects unauthenticated users to sign-in
+ *
+ * GitHub IP allowlisting for /api/webhooks/github is handled inside the route
+ * itself (needs the raw body for HMAC) — see app/api/webhooks/github/route.ts.
+ */
+
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-// Simple middleware that checks for session cookie
-// Actual session validation happens in API routes and pages
-export function middleware(request: NextRequest) {
+// ── Upstash Redis (edge-compatible) ──────────────────────────────────────────
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    : null;
+
+// ── Rate limiters (mirrors lib/rate-limit.ts tiers) ──────────────────────────
+const apiLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(100, "10 m"),
+      prefix: "rl:mw:api",
+      analytics: true,
+    })
+  : null;
+
+const authLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, "1 m"),
+      prefix: "rl:mw:auth",
+      analytics: true,
+    })
+  : null;
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+// Max body size for evidence uploads — reject at the edge before compute.
+// Individual file-type limits are enforced again inside the route handler.
+const UPLOAD_MAX_BYTES = 55 * 1024 * 1024; // 55 MB (edge gate; route enforces 50 MB per file)
+
+// Routes that skip the general API rate limiter (they have their own controls)
+const RATE_LIMIT_SKIP_PREFIXES = [
+  "/api/cron/", // secret-gated internal cron; scheduler has its own backoff
+  "/api/health", // monitoring probes — must never be blocked
+  "/api/auth/", // NextAuth handles its own throttling internally
+  "/api/webhooks/stripe", // Stripe IPs + HMAC signature verified inside route
+  "/api/webhooks/github", // GitHub IPs + HMAC signature verified inside route
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function getClientIP(request: NextRequest): string {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+function shouldSkipRateLimit(pathname: string): boolean {
+  return RATE_LIMIT_SKIP_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+// ── Middleware ────────────────────────────────────────────────────────────────
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check for NextAuth session cookie
+  // 1. Upload size gate ── checked via Content-Length header before the body
+  //    is buffered, so oversized requests are rejected before hitting compute.
+  if (pathname === "/api/evidence/upload") {
+    const contentLength = request.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > UPLOAD_MAX_BYTES) {
+      return new NextResponse("Payload Too Large", {
+        status: 413,
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
+  }
+
+  // 2. API rate limiting (all /api/* except explicitly skipped routes)
+  if (pathname.startsWith("/api/") && !shouldSkipRateLimit(pathname)) {
+    const limiter = pathname.startsWith("/api/auth/") ? authLimiter : apiLimiter;
+
+    if (limiter) {
+      const ip = getClientIP(request);
+      const { success, limit, remaining, reset } = await limiter.limit(ip);
+
+      if (!success) {
+        return new NextResponse("Too Many Requests", {
+          status: 429,
+          headers: {
+            "Content-Type": "text/plain",
+            "X-RateLimit-Limit": String(limit),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(reset),
+            "Retry-After": String(Math.max(1, Math.ceil((reset - Date.now()) / 1000))),
+          },
+        });
+      }
+
+      // Forward quota headers to the route for downstream inspection if needed
+      const response = NextResponse.next();
+      response.headers.set("X-RateLimit-Limit", String(limit));
+      response.headers.set("X-RateLimit-Remaining", String(remaining));
+      return response;
+    }
+  }
+
+  // 3. Dashboard auth ── cookie presence check (full JWT validation happens
+  //    inside each route/page via requireAuth(); this is a fast redirect guard).
   const sessionToken =
     request.cookies.get("authjs.session-token")?.value ||
     request.cookies.get("__Secure-authjs.session-token")?.value;
 
   const isLoggedIn = !!sessionToken;
-
   const isAuthPage = pathname.startsWith("/auth");
+
   const isDashboardPage =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/repositories") ||
@@ -21,14 +131,16 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/compliance") ||
     pathname.startsWith("/exports") ||
     pathname.startsWith("/settings") ||
-    pathname.startsWith("/onboarding");
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/grc") ||
+    pathname.startsWith("/ciso") ||
+    pathname.startsWith("/risk-register") ||
+    pathname.startsWith("/audits");
 
-  // Redirect logged-in users away from auth pages
   if (isLoggedIn && isAuthPage) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Redirect unauthenticated users to sign in
   if (!isLoggedIn && isDashboardPage) {
     const signInUrl = new URL("/auth/signin", request.url);
     signInUrl.searchParams.set("callbackUrl", pathname);
@@ -40,6 +152,9 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    // All API routes (rate limiting + upload size gate)
+    "/api/:path*",
+    // Dashboard pages (auth redirect) — includes new pages added since original middleware
     "/dashboard/:path*",
     "/repositories/:path*",
     "/evidence/:path*",
@@ -47,6 +162,10 @@ export const config = {
     "/exports/:path*",
     "/settings/:path*",
     "/onboarding/:path*",
+    "/grc/:path*",
+    "/ciso/:path*",
+    "/risk-register/:path*",
+    "/audits/:path*",
     "/auth/:path*",
   ],
 };

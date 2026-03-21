@@ -4,6 +4,75 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { WEBHOOK_CONFIG } from "@/lib/constants";
+
+// ── GitHub IP Allowlist (defense-in-depth, secondary to HMAC) ────────────────
+// GitHub publishes its webhook source IPs at https://api.github.com/meta
+// We cache the list in module scope (shared across warm invocations) and
+// refresh every hour. A stale or empty cache skips the check rather than
+// blocking legitimate webhooks — HMAC remains the primary guard.
+
+let _githubHookCIDRs: string[] = [];
+let _githubIPsLastFetched = 0;
+const GITHUB_IP_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+async function getGitHubHookCIDRs(): Promise<string[]> {
+  const now = Date.now();
+  if (_githubHookCIDRs.length > 0 && now - _githubIPsLastFetched < GITHUB_IP_CACHE_TTL_MS) {
+    return _githubHookCIDRs;
+  }
+  try {
+    const res = await fetch("https://api.github.com/meta", {
+      headers: { "User-Agent": "AuditTrail-Webhook-Validator/1.0" },
+      signal: AbortSignal.timeout(3000), // 3 s timeout — don't slow webhooks
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { hooks?: string[] };
+      if (Array.isArray(data.hooks) && data.hooks.length > 0) {
+        _githubHookCIDRs = data.hooks;
+        _githubIPsLastFetched = now;
+      }
+    }
+  } catch {
+    // Network error fetching meta — use cached list (possibly empty)
+  }
+  return _githubHookCIDRs;
+}
+
+/** Convert dotted-decimal IPv4 string to unsigned 32-bit integer. */
+function ipv4ToUint32(ip: string): number {
+  return ip.split(".").reduce((acc, octet) => ((acc << 8) | parseInt(octet, 10)) >>> 0, 0);
+}
+
+/** Return true if `ip` falls within the IPv4 CIDR block. */
+function isIPv4InCIDR(ip: string, cidr: string): boolean {
+  const [network, bits] = cidr.split("/");
+  if (!network || !bits) return false;
+  const prefix = parseInt(bits, 10);
+  const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
+  return (ipv4ToUint32(ip) & mask) === (ipv4ToUint32(network) & mask);
+}
+
+/** Return true if `ip` starts with the IPv6 network prefix (coarse check). */
+function isIPv6InCIDR(ip: string, cidr: string): boolean {
+  const [network] = cidr.split("/");
+  if (!network) return false;
+  // Normalise both sides to lower-case and compare the non-wildcard segments
+  const prefix = network.replace(/::$/, "").toLowerCase();
+  return ip.toLowerCase().startsWith(prefix);
+}
+
+/**
+ * Check whether `ip` matches any CIDR in `cidrs`.
+ * Skips IPv6 ranges when `ip` is IPv4 and vice versa.
+ */
+function isIPInAnyCIDR(ip: string, cidrs: string[]): boolean {
+  const isIPv6 = ip.includes(":");
+  return cidrs.some((cidr) => {
+    const isIPv6CIDR = cidr.includes(":");
+    if (isIPv6 !== isIPv6CIDR) return false; // address family mismatch
+    return isIPv6 ? isIPv6InCIDR(ip, cidr) : isIPv4InCIDR(ip, cidr);
+  });
+}
 import {
   handlePushEvent,
   handlePullRequestEvent,
@@ -125,6 +194,29 @@ export async function POST(request: NextRequest) {
   if (!verifySignature(body, signature, webhookSecret)) {
     logger.error("Webhook signature verification failed");
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  // ── GitHub IP allowlist (defense-in-depth, after HMAC) ─────────────────────
+  // We verify HMAC first (primary guard). The IP check is secondary: if we can
+  // fetch GitHub's published ranges and the source IP is not in them, we log
+  // the anomaly. We do NOT hard-block here so that a stale IP list never breaks
+  // legitimate deliveries — the HMAC already proved authenticity.
+  const clientIP =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "";
+
+  if (clientIP) {
+    const githubCIDRs = await getGitHubHookCIDRs();
+    if (githubCIDRs.length > 0 && !isIPInAnyCIDR(clientIP, githubCIDRs)) {
+      // HMAC passed but IP is outside GitHub's published ranges — log for monitoring.
+      // This could indicate a SSRF attempt or a proxied request; escalate if recurring.
+      logger.warn("Webhook: source IP not in GitHub published ranges", {
+        ip: clientIP,
+        event: request.headers.get("x-github-event"),
+        delivery: request.headers.get("x-github-delivery"),
+      });
+    }
   }
 
   // Parse event metadata
