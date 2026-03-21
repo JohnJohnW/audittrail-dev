@@ -42,9 +42,9 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
-            Connect GitHub once. Audit Trail maps every commit, PR, and deployment to ten frameworks
-            - continuously, silently, invisibly. Daily GRC operations, CISO reporting, and due
-            diligence packages are already there when you need them.
+            Connect GitHub once. Audit Trail maps every commit, PR, and deployment to twelve
+            frameworks - continuously, silently, invisibly. Daily GRC operations, CISO reporting,
+            and due diligence packages are already there when you need them.
           </p>
         </FadeInOnLoad>
 

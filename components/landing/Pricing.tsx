@@ -17,10 +17,12 @@ const FREE_EXCLUDED = ["Exports, auditor portal, or shareable reports"];
 
 const PRO_FEATURES = [
   "Unlimited repositories",
-  "All 8 compliance frameworks",
+  "All 12 compliance frameworks incl. NIST AI RMF & EU AI Act",
+  "GRC dashboard: gap ownership, risk register, audit cycles",
+  "CISO dashboard: posture trend, business impact, board summary",
   "PDF & CSV exports",
   "Auditor portal (comments, sign-offs, ZIP)",
-  "Shareable read-only reports",
+  "Shareable read-only reports for due diligence",
   "Full industry benchmark data",
   "Advanced alerts & full alert history",
   "Priority support",
@@ -141,13 +143,8 @@ export function Pricing() {
 
         <FadeIn direction="up" delay={0.4}>
           <p className="text-center text-sm text-gray-500 mt-8">
-            Need enterprise features?{" "}
-            <a
-              href="https://github.com/JohnJohnW/audittrail-dev/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent hover:underline"
-            >
+            Need enterprise features like SSO, IRAP, or HIPAA?{" "}
+            <a href="/contact" className="text-accent hover:underline">
               Let&apos;s talk
             </a>
           </p>

@@ -75,9 +75,9 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Every artifact maps to controls across ISO 27001, NIST CSF, SOC 2, GDPR, PCI DSS,
-                  Essential Eight, NIST 800-207, and ASD MDA Foundations - automatically, with AI
-                  confidence scoring.
+                  Every artifact maps to controls across twelve frameworks including ISO 27001, NIST
+                  CSF, SOC 2, GDPR, NIST AI RMF, and EU AI Act - automatically, with AI confidence
+                  scoring.
                 </span>
               </li>
             </ul>
