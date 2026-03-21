@@ -33,7 +33,7 @@ export async function POST() {
       });
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, status: "ok" });
   } catch (error) {
     logger.error("Executive summary API error", error);
     return handleApiError(error);

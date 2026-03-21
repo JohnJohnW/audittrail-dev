@@ -177,8 +177,9 @@ export default function ExportsPage() {
                       Pro feature: exports require an upgrade
                     </p>
                     <p className="text-sm text-yellow-700 mt-1">
-                      PDF and CSV exports are a Pro feature. Pro also unlocks all 8 compliance
-                      frameworks, the auditor portal, shareable reports, and unlimited repositories.
+                      PDF and CSV exports are a Pro feature. Pro also unlocks all 12 compliance
+                      frameworks incl. NIST AI RMF & EU AI Act, the auditor portal, shareable
+                      reports, and unlimited repositories.
                     </p>
                     <Link
                       href="/settings"
