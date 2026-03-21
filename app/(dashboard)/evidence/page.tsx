@@ -65,10 +65,26 @@ export default function EvidencePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedControl, setExpandedControl] = useState<string | null>(null);
   const [sortByPriority, setSortByPriority] = useState(false);
+  const [canExport, setCanExport] = useState<boolean | null>(null);
+  const [upgradeDismissed, setUpgradeDismissed] = useState(false);
 
   useEffect(() => {
     setLoadingPhrase(getContextualLoadingPhrase("evidence"));
     fetchData();
+    // Check dismiss state from localStorage
+    const dismissed = localStorage.getItem("evidence_upgrade_dismissed");
+    if (dismissed === "true") setUpgradeDismissed(true);
+    // Fetch canExport to determine Pro status
+    fetch("/api/exports")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.canExport === "boolean") {
+          setCanExport(data.canExport);
+        }
+      })
+      .catch(() => {
+        // Non-critical — silently ignore
+      });
   }, []);
 
   const fetchData = async () => {
@@ -301,6 +317,11 @@ export default function EvidencePage() {
     score: 0,
   };
 
+  const handleDismissUpgrade = () => {
+    setUpgradeDismissed(true);
+    localStorage.setItem("evidence_upgrade_dismissed", "true");
+  };
+
   return (
     <div>
       {/* Header */}
@@ -324,6 +345,66 @@ export default function EvidencePage() {
           </div>
         </div>
       </FadeIn>
+
+      {/* Upgrade banner — only for non-Pro users, dismissible */}
+      <AnimatePresence>
+        {canExport === false && !upgradeDismissed && (
+          <motion.div
+            key="upgrade-banner"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 flex items-start justify-between gap-4 sticky top-0 z-10"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg
+                  className="w-5 h-5 text-amber-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-amber-800 text-sm">
+                  Unlock all 12 frameworks, PDF exports, and the GRC dashboard
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  You&apos;re on the free plan — upgrade to Pro to access NIST AI RMF, EU AI Act,
+                  SOCI Act, and more.
+                </p>
+                <Link
+                  href="/settings"
+                  className="inline-block mt-1.5 text-xs font-semibold text-amber-800 hover:text-amber-900 underline underline-offset-2 transition-colors"
+                >
+                  Upgrade to Pro →
+                </Link>
+              </div>
+            </div>
+            <button
+              onClick={handleDismissUpgrade}
+              className="text-amber-500 hover:text-amber-700 transition-colors flex-shrink-0 mt-0.5"
+              aria-label="Dismiss upgrade banner"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Summary Cards - All using accent color for consistency */}
       <FadeIn delay={0.1}>

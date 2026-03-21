@@ -13,7 +13,9 @@ export function Footer() {
             <div className="relative w-5 h-5 rounded overflow-hidden flex-shrink-0">
               <Image src="/icon.svg" alt="" width={20} height={20} />
             </div>
-            <span className="text-sm font-medium text-gray-900">Audit Trail</span>
+            <span className="text-sm font-medium text-gray-900">
+              Audit <span className="text-accent">Trail</span>
+            </span>
           </Link>
 
           <div className="flex items-center gap-6 text-xs text-gray-500">

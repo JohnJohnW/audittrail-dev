@@ -71,6 +71,48 @@ export default function ExportsPage() {
     );
   };
 
+  const handleReExport = async (exp: ExportRecord) => {
+    setExporting(true);
+    try {
+      const response = await fetch("/api/exports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ format: exp.type }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        if (error.requiresUpgrade) {
+          alert("Please upgrade to Pro to export reports.");
+        } else {
+          alert(error.error || "Export failed");
+        }
+        return;
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get("Content-Disposition");
+      const fileName =
+        contentDisposition?.match(/filename="(.+)"/)?.[1] || exp.fileName || `export.${exp.type}`;
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      await fetchData();
+    } catch (error) {
+      logger.error("Re-export error", error);
+      alert("Export failed. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleExport = async () => {
     if (!canExport) return;
 
@@ -365,17 +407,29 @@ export default function ExportsPage() {
                       </p>
                     </div>
                   </div>
-                  <Badge
-                    variant={
-                      exp.status === "completed"
-                        ? "success"
-                        : exp.status === "failed"
-                          ? "error"
-                          : "warning"
-                    }
-                  >
-                    {exp.status}
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    {exp.status === "completed" && (
+                      <button
+                        onClick={() => handleReExport(exp)}
+                        disabled={exporting}
+                        title="Re-export"
+                        className="p-1.5 text-gray-400 hover:text-accent hover:bg-accent-light/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <DownloadIcon className="w-4 h-4" />
+                      </button>
+                    )}
+                    <Badge
+                      variant={
+                        exp.status === "completed"
+                          ? "success"
+                          : exp.status === "failed"
+                            ? "error"
+                            : "warning"
+                      }
+                    >
+                      {exp.status}
+                    </Badge>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -469,6 +523,19 @@ function ExportIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={1.5}
         d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+}
+
+function DownloadIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
       />
     </svg>
   );

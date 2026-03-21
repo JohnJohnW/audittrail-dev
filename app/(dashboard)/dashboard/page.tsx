@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { DashboardContent } from "./DashboardContent";
 import { logger } from "@/lib/logger";
 import { getDashboardData } from "@/lib/dashboard";
@@ -52,6 +53,21 @@ export default async function DashboardPage() {
     logger.error("Dashboard data fetch error", error);
     return null;
   });
+
+  // Redirect brand-new users (no GitHub connection AND no tracked repos) to the
+  // onboarding wizard. The ?skip=1 query param lets users bypass this after they
+  // have explicitly dismissed onboarding. We check the URL here because
+  // localStorage is not accessible in Server Components.
+  const headersList = await headers();
+  const referer = headersList.get("referer") ?? "";
+  const isFromOnboarding = referer.includes("/onboarding");
+  const hasGithubConnection = data?.githubConnection != null;
+  const hasRepos = (data?.repositories?.length ?? 0) > 0;
+  const isNewUser = !hasGithubConnection && !hasRepos;
+
+  if (isNewUser && !isFromOnboarding) {
+    redirect("/onboarding");
+  }
 
   return (
     <DashboardContent

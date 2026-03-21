@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { logger } from "@/lib/logger";
 import { FadeIn } from "@/components/ui/Motion";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
+
+// ─── Constants ──────────────────────────────────────────────────────────────
 
 const FRAMEWORK_OPTIONS = [
   "ISO 27001",
@@ -20,7 +22,19 @@ const FRAMEWORK_OPTIONS = [
   "PCI DSS",
 ];
 
-const TREATMENT_TYPE_OPTIONS = ["remediate", "accept", "transfer", "avoid"];
+const TREATMENT_TYPE_OPTIONS = ["remediate", "accept", "transfer", "avoid"] as const;
+type TreatmentType = (typeof TREATMENT_TYPE_OPTIONS)[number];
+
+const STATUS_FILTERS = ["All", "Open", "In Progress", "Overdue", "Closed"] as const;
+type StatusFilter = (typeof STATUS_FILTERS)[number];
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface OwnerRef {
+  id: string;
+  name: string | null;
+  email: string;
+}
 
 interface RiskTreatment {
   id: string;
@@ -30,32 +44,50 @@ interface RiskTreatment {
   status: string;
   rationale: string;
   ownerId: string | null;
+  owner: OwnerRef | null;
   reviewDate: string | null;
   linkedGithubIssue: string | null;
   createdAt: string;
 }
 
-interface RiskTreatmentsResponse {
-  treatments: RiskTreatment[];
-  total: number;
-}
-
 interface NewTreatmentForm {
   controlCode: string;
   frameworkName: string;
-  treatmentType: string;
+  treatmentType: TreatmentType;
   rationale: string;
+  owner: string;
   reviewDate: string;
+  linkedGithubIssue: string;
 }
 
-const STATUS_ORDER = ["open", "in_progress", "overdue", "closed"];
+const EMPTY_FORM: NewTreatmentForm = {
+  controlCode: "",
+  frameworkName: FRAMEWORK_OPTIONS[0],
+  treatmentType: "remediate",
+  rationale: "",
+  owner: "",
+  reviewDate: "",
+  linkedGithubIssue: "",
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function isOverdue(t: RiskTreatment): boolean {
+  if (!t.reviewDate) return false;
+  return t.status !== "closed" && new Date(t.reviewDate) < new Date();
+}
+
+function effectiveStatus(t: RiskTreatment): string {
+  if (isOverdue(t)) return "overdue";
+  return t.status;
+}
 
 function statusVariant(status: string): "default" | "success" | "warning" | "error" | "info" {
-  switch (status.toLowerCase()) {
+  switch (status) {
     case "open":
-      return "info";
-    case "in_progress":
       return "warning";
+    case "in_progress":
+      return "info";
     case "overdue":
       return "error";
     case "closed":
@@ -69,9 +101,19 @@ function statusLabel(status: string): string {
   switch (status) {
     case "in_progress":
       return "In Progress";
+    case "overdue":
+      return "Overdue";
+    case "closed":
+      return "Closed";
+    case "open":
+      return "Open";
     default:
       return status.charAt(0).toUpperCase() + status.slice(1);
   }
+}
+
+function treatmentTypeLabel(t: string): string {
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
 function frameworkBadgeColor(framework: string): string {
@@ -88,33 +130,27 @@ function frameworkBadgeColor(framework: string): string {
   return map[framework] ?? "bg-gray-100 text-gray-700 border-gray-200";
 }
 
-function isOverdue(treatment: RiskTreatment): boolean {
-  if (!treatment.reviewDate) return false;
-  return treatment.status !== "closed" && new Date(treatment.reviewDate) < new Date();
+function ownerDisplay(t: RiskTreatment): string {
+  if (t.owner) {
+    return t.owner.name || t.owner.email;
+  }
+  return "—";
 }
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function RiskRegisterPage() {
   const [treatments, setTreatments] = useState<RiskTreatment[]>([]);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isPro, setIsPro] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [closingId, setClosingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [form, setForm] = useState<NewTreatmentForm>(EMPTY_FORM);
 
-  const [form, setForm] = useState<NewTreatmentForm>({
-    controlCode: "",
-    frameworkName: FRAMEWORK_OPTIONS[0],
-    treatmentType: TREATMENT_TYPE_OPTIONS[0],
-    rationale: "",
-    reviewDate: "",
-  });
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await fetch("/api/risk-treatments");
       if (res.status === 403) {
@@ -125,15 +161,18 @@ export default function RiskRegisterPage() {
         }
       }
       if (!res.ok) throw new Error("Failed to fetch risk treatments");
-      const json: RiskTreatmentsResponse = await res.json();
-      setTreatments(json.treatments);
-      setTotal(json.total);
+      const json = await res.json();
+      setTreatments(json.treatments ?? []);
     } catch (error) {
       logger.error("Failed to fetch risk treatments", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,18 +188,14 @@ export default function RiskRegisterPage() {
           frameworkName: form.frameworkName,
           treatmentType: form.treatmentType,
           rationale: form.rationale.trim(),
+          owner: form.owner.trim() || undefined,
           reviewDate: form.reviewDate || undefined,
+          linkedGithubIssue: form.linkedGithubIssue.trim() || undefined,
         }),
       });
       if (!res.ok) throw new Error("Failed to create treatment");
-      setForm({
-        controlCode: "",
-        frameworkName: FRAMEWORK_OPTIONS[0],
-        treatmentType: TREATMENT_TYPE_OPTIONS[0],
-        rationale: "",
-        reviewDate: "",
-      });
-      setShowForm(false);
+      setForm(EMPTY_FORM);
+      setShowModal(false);
       await fetchData();
     } catch (error) {
       logger.error("Failed to create risk treatment", error);
@@ -188,18 +223,45 @@ export default function RiskRegisterPage() {
     }
   };
 
-  const counts = {
-    open: treatments.filter((t) => t.status === "open").length,
-    in_progress: treatments.filter((t) => t.status === "in_progress").length,
-    closed: treatments.filter((t) => t.status === "closed").length,
-    overdue: treatments.filter((t) => isOverdue(t)).length,
+  const deleteTreatment = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this treatment?")) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/risk-treatments/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete treatment");
+      await fetchData();
+    } catch (error) {
+      logger.error("Failed to delete risk treatment", error);
+      alert("Failed to delete treatment. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
-  const grouped = STATUS_ORDER.reduce<Record<string, RiskTreatment[]>>((acc, status) => {
-    const group = treatments.filter((t) => t.status === status);
-    if (group.length > 0) acc[status] = group;
-    return acc;
-  }, {});
+  // Counts based on effective status (incorporating overdue logic)
+  const counts = {
+    open: treatments.filter((t) => effectiveStatus(t) === "open").length,
+    overdue: treatments.filter((t) => effectiveStatus(t) === "overdue").length,
+    in_progress: treatments.filter((t) => effectiveStatus(t) === "in_progress").length,
+    closed: treatments.filter((t) => t.status === "closed").length,
+  };
+
+  const filteredTreatments = treatments.filter((t) => {
+    if (statusFilter === "All") return true;
+    const eff = effectiveStatus(t);
+    switch (statusFilter) {
+      case "Open":
+        return eff === "open";
+      case "In Progress":
+        return eff === "in_progress";
+      case "Overdue":
+        return eff === "overdue";
+      case "Closed":
+        return t.status === "closed";
+    }
+  });
+
+  // ─── Pro gate ─────────────────────────────────────────────────────────────
 
   if (!isPro) {
     return (
@@ -207,19 +269,7 @@ export default function RiskRegisterPage() {
         <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-yellow-200 rounded-xl p-6">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center shrink-0">
-              <svg
-                className="w-5 h-5 text-yellow-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
+              <WarningIcon className="w-5 h-5 text-yellow-600" />
             </div>
             <div>
               <p className="font-semibold text-yellow-800">
@@ -241,6 +291,8 @@ export default function RiskRegisterPage() {
     );
   }
 
+  // ─── Loading ──────────────────────────────────────────────────────────────
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -252,6 +304,8 @@ export default function RiskRegisterPage() {
     );
   }
 
+  // ─── Render ───────────────────────────────────────────────────────────────
+
   return (
     <div>
       {/* Header */}
@@ -262,58 +316,251 @@ export default function RiskRegisterPage() {
               Risk Register
             </h1>
             <p className="text-sm sm:text-base text-gray-500 mt-1">
-              Track risk treatments and acceptance decisions
+              Track and manage compliance gap treatments
             </p>
           </div>
-          <Button variant="accent" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? "Cancel" : "+ Add Treatment"}
+          <Button variant="accent" onClick={() => setShowModal(true)}>
+            + Add Risk Treatment
           </Button>
         </div>
       </FadeIn>
 
-      {/* Stats */}
+      {/* Stats row */}
       <FadeIn delay={0.05}>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <RiskStatPill
-            label="Total"
-            count={total}
-            color="border-gray-200 bg-white text-gray-900"
+          <StatCard
+            label="Total Open"
+            count={counts.open + counts.in_progress}
+            colorClass="border-gray-200 bg-white text-gray-900"
           />
-          <RiskStatPill
-            label="Open"
-            count={counts.open}
-            color="border-blue-200 bg-blue-50 text-blue-700"
-          />
-          <RiskStatPill
-            label="In Progress"
-            count={counts.in_progress}
-            color="border-yellow-200 bg-yellow-50 text-yellow-700"
-          />
-          <RiskStatPill
+          <StatCard
             label="Overdue"
             count={counts.overdue}
-            color="border-red-200 bg-red-50 text-red-700"
+            colorClass="border-red-200 bg-red-50 text-red-700"
+          />
+          <StatCard
+            label="In Progress"
+            count={counts.in_progress}
+            colorClass="border-yellow-200 bg-yellow-50 text-yellow-700"
+          />
+          <StatCard
+            label="Closed"
+            count={counts.closed}
+            colorClass="border-green-200 bg-green-50 text-green-700"
           />
         </div>
       </FadeIn>
 
-      {/* Add Treatment Form */}
+      {/* Status filter tabs */}
+      <FadeIn delay={0.08}>
+        <div className="flex flex-wrap gap-2 mb-5">
+          {STATUS_FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setStatusFilter(f)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
+                statusFilter === f
+                  ? "bg-accent text-white border-accent shadow-sm"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-accent hover:text-accent"
+              )}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </FadeIn>
+
+      {/* Table */}
+      <FadeIn delay={0.1}>
+        <Card variant="elevated" padding="none">
+          {filteredTreatments.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <ShieldIcon className="w-7 h-7 text-gray-400" />
+              </div>
+              <p className="text-gray-900 font-medium mb-1">No risk treatments yet</p>
+              <p className="text-sm text-gray-500 mb-4">
+                Add your first treatment to start tracking compliance gaps.
+              </p>
+              <Button variant="accent" onClick={() => setShowModal(true)}>
+                Add Treatment
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="text-left px-5 py-3 font-medium text-gray-600 whitespace-nowrap">
+                      Control
+                    </th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-600 whitespace-nowrap">
+                      Framework
+                    </th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-600 whitespace-nowrap">
+                      Treatment Type
+                    </th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-600 whitespace-nowrap">
+                      Status
+                    </th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-600 whitespace-nowrap">
+                      Owner
+                    </th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-600 whitespace-nowrap">
+                      Due Date
+                    </th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-600 whitespace-nowrap">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredTreatments.map((t, i) => {
+                    const eff = effectiveStatus(t);
+                    const overdue = eff === "overdue";
+                    return (
+                      <motion.tr
+                        key={t.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="hover:bg-gray-50/60 transition-colors"
+                      >
+                        {/* Control */}
+                        <td className="px-5 py-3">
+                          <div className="font-mono text-xs font-semibold text-gray-900">
+                            {t.controlCode}
+                          </div>
+                          {t.linkedGithubIssue && (
+                            <a
+                              href={t.linkedGithubIssue}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-accent hover:underline mt-0.5 inline-block truncate max-w-[140px]"
+                              title={t.linkedGithubIssue}
+                            >
+                              GitHub issue
+                            </a>
+                          )}
+                        </td>
+
+                        {/* Framework */}
+                        <td className="px-5 py-3">
+                          <span
+                            className={cn(
+                              "inline-flex px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap",
+                              frameworkBadgeColor(t.frameworkName)
+                            )}
+                          >
+                            {t.frameworkName}
+                          </span>
+                        </td>
+
+                        {/* Treatment Type */}
+                        <td className="px-5 py-3 capitalize text-gray-700">
+                          {treatmentTypeLabel(t.treatmentType)}
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-5 py-3">
+                          <Badge variant={statusVariant(eff)} dot>
+                            {statusLabel(eff)}
+                          </Badge>
+                        </td>
+
+                        {/* Owner */}
+                        <td className="px-5 py-3 text-gray-600 text-xs">{ownerDisplay(t)}</td>
+
+                        {/* Due Date */}
+                        <td
+                          className={cn(
+                            "px-5 py-3 text-sm whitespace-nowrap",
+                            overdue ? "text-red-600 font-medium" : "text-gray-600"
+                          )}
+                        >
+                          {t.reviewDate ? new Date(t.reviewDate).toLocaleDateString() : "—"}
+                          {overdue && <span className="ml-1 text-xs text-red-400">(overdue)</span>}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            {t.status !== "closed" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                loading={closingId === t.id}
+                                disabled={closingId === t.id || deletingId === t.id}
+                                onClick={() => markClosed(t.id)}
+                              >
+                                Close
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              loading={deletingId === t.id}
+                              disabled={closingId === t.id || deletingId === t.id}
+                              onClick={() => deleteTreatment(t.id)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </FadeIn>
+
+      {/* Add Treatment Modal */}
       <AnimatePresence>
-        {showForm && (
-          <motion.div
-            key="add-form"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden mb-6"
-          >
-            <Card variant="elevated">
-              <CardHeader>
-                <CardTitle>New Risk Treatment</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+        {showModal && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-40"
+              onClick={() => !submitting && setShowModal(false)}
+            />
+
+            {/* Modal */}
+            <motion.div
+              key="modal"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
+                {/* Modal header */}
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900">Add Risk Treatment</h2>
+                  <button
+                    onClick={() => !submitting && setShowModal(false)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    aria-label="Close"
+                  >
+                    <XIcon />
+                  </button>
+                </div>
+
+                {/* Form */}
+                <form
+                  onSubmit={handleSubmit}
+                  className="p-6 space-y-4 overflow-y-auto max-h-[75vh]"
+                >
+                  {/* Row 1: Control Code + Framework */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -323,7 +570,7 @@ export default function RiskRegisterPage() {
                         type="text"
                         value={form.controlCode}
                         onChange={(e) => setForm((f) => ({ ...f, controlCode: e.target.value }))}
-                        placeholder="e.g. A.9.1.1"
+                        placeholder="e.g. A.5.1"
                         required
                         className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                       />
@@ -344,34 +591,43 @@ export default function RiskRegisterPage() {
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  {/* Row 2: Treatment Type + Owner */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         Treatment Type <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={form.treatmentType}
-                        onChange={(e) => setForm((f) => ({ ...f, treatmentType: e.target.value }))}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, treatmentType: e.target.value as TreatmentType }))
+                        }
                         className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                       >
                         {TREATMENT_TYPE_OPTIONS.map((t) => (
                           <option key={t} value={t}>
-                            {t.charAt(0).toUpperCase() + t.slice(1)}
+                            {treatmentTypeLabel(t)}
                           </option>
                         ))}
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Review Date (optional)
+                        Owner <span className="text-gray-400 font-normal text-xs">(optional)</span>
                       </label>
                       <input
-                        type="date"
-                        value={form.reviewDate}
-                        onChange={(e) => setForm((f) => ({ ...f, reviewDate: e.target.value }))}
+                        type="text"
+                        value={form.owner}
+                        onChange={(e) => setForm((f) => ({ ...f, owner: e.target.value }))}
+                        placeholder="Email or name"
                         className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                       />
                     </div>
                   </div>
+
+                  {/* Rationale */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Rationale <span className="text-red-500">*</span>
@@ -385,7 +641,40 @@ export default function RiskRegisterPage() {
                       className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none"
                     />
                   </div>
-                  <div className="flex gap-3">
+
+                  {/* Row 3: Review Date + GitHub Issue */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Review Date{" "}
+                        <span className="text-gray-400 font-normal text-xs">(optional)</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={form.reviewDate}
+                        onChange={(e) => setForm((f) => ({ ...f, reviewDate: e.target.value }))}
+                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Linked GitHub Issue URL{" "}
+                        <span className="text-gray-400 font-normal text-xs">(optional)</span>
+                      </label>
+                      <input
+                        type="url"
+                        value={form.linkedGithubIssue}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, linkedGithubIssue: e.target.value }))
+                        }
+                        placeholder="https://github.com/…"
+                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-2">
                     <Button
                       type="submit"
                       variant="accent"
@@ -397,140 +686,42 @@ export default function RiskRegisterPage() {
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={() => setShowForm(false)}
+                      onClick={() => setShowModal(false)}
                       disabled={submitting}
                     >
                       Cancel
                     </Button>
                   </div>
                 </form>
-              </CardContent>
-            </Card>
-          </motion.div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
-
-      {/* Treatments Table */}
-      <FadeIn delay={0.1}>
-        {treatments.length === 0 ? (
-          <Card variant="elevated">
-            <div className="p-12 text-center">
-              <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <ShieldIcon className="w-7 h-7 text-gray-400" />
-              </div>
-              <p className="text-gray-900 font-medium mb-1">No risk treatments yet</p>
-              <p className="text-sm text-gray-500">
-                Add your first treatment to start tracking risk decisions.
-              </p>
-            </div>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {Object.entries(grouped).map(([status, items]) => (
-              <Card key={status} variant="elevated" padding="none">
-                <div className="px-6 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-                  <Badge variant={statusVariant(status)} dot>
-                    {statusLabel(status)}
-                  </Badge>
-                  <span className="text-xs text-gray-500">
-                    {items.length} treatment{items.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-100">
-                        <th className="text-left px-6 py-3 font-medium text-gray-600">Control</th>
-                        <th className="text-left px-6 py-3 font-medium text-gray-600">Framework</th>
-                        <th className="text-left px-6 py-3 font-medium text-gray-600">Type</th>
-                        <th className="text-left px-6 py-3 font-medium text-gray-600">
-                          Review Date
-                        </th>
-                        <th className="text-left px-6 py-3 font-medium text-gray-600">Rationale</th>
-                        <th className="text-left px-6 py-3 font-medium text-gray-600">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {items.map((treatment, i) => {
-                        const overdue = isOverdue(treatment);
-                        return (
-                          <motion.tr
-                            key={treatment.id}
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.03 }}
-                            className="hover:bg-gray-50/50 transition-colors"
-                          >
-                            <td className="px-6 py-3 font-mono text-xs font-medium text-gray-900">
-                              {treatment.controlCode}
-                            </td>
-                            <td className="px-6 py-3">
-                              <span
-                                className={cn(
-                                  "inline-flex px-2 py-0.5 rounded-full text-xs font-medium border",
-                                  frameworkBadgeColor(treatment.frameworkName)
-                                )}
-                              >
-                                {treatment.frameworkName}
-                              </span>
-                            </td>
-                            <td className="px-6 py-3 capitalize text-gray-700">
-                              {treatment.treatmentType}
-                            </td>
-                            <td
-                              className={cn(
-                                "px-6 py-3 text-sm",
-                                overdue ? "text-red-600 font-medium" : "text-gray-700"
-                              )}
-                            >
-                              {treatment.reviewDate
-                                ? new Date(treatment.reviewDate).toLocaleDateString()
-                                : "-"}
-                              {overdue && (
-                                <span className="ml-1 text-xs text-red-500">(overdue)</span>
-                              )}
-                            </td>
-                            <td className="px-6 py-3 text-gray-600 max-w-xs">
-                              <p className="truncate" title={treatment.rationale}>
-                                {treatment.rationale}
-                              </p>
-                            </td>
-                            <td className="px-6 py-3">
-                              {treatment.status !== "closed" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  loading={closingId === treatment.id}
-                                  disabled={closingId === treatment.id}
-                                  onClick={() => markClosed(treatment.id)}
-                                >
-                                  Mark Closed
-                                </Button>
-                              )}
-                            </td>
-                          </motion.tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </FadeIn>
     </div>
   );
 }
 
-function RiskStatPill({ label, count, color }: { label: string; count: number; color: string }) {
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function StatCard({
+  label,
+  count,
+  colorClass,
+}: {
+  label: string;
+  count: number;
+  colorClass: string;
+}) {
   return (
-    <div className={cn("rounded-xl border shadow-sm p-4 flex flex-col", color)}>
+    <div className={cn("rounded-xl border shadow-sm p-4 flex flex-col", colorClass)}>
       <span className="text-2xl font-bold">{count}</span>
       <span className="text-sm mt-0.5 opacity-80">{label}</span>
     </div>
   );
 }
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
 
 function ShieldIcon({ className }: { className?: string }) {
   return (
@@ -541,6 +732,27 @@ function ShieldIcon({ className }: { className?: string }) {
         strokeWidth={1.5}
         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
       />
+    </svg>
+  );
+}
+
+function WarningIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+      />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
   );
 }

@@ -13,6 +13,8 @@ import {
   CheckIcon,
   ExportIcon,
   GrcIcon,
+  RiskIcon,
+  AuditIcon,
   CisoIcon,
   MenuIcon,
   CloseIcon,
@@ -60,6 +62,8 @@ export function DashboardNav({ user }: DashboardNavProps) {
       { name: "Evidence", href: "/evidence", icon: ShieldIcon },
       { name: "Compliance", href: "/compliance", icon: CheckIcon },
       { name: "GRC", href: "/grc", icon: GrcIcon },
+      { name: "Risk Register", href: "/risk-register", icon: RiskIcon },
+      { name: "Audits", href: "/audits", icon: AuditIcon },
       { name: "CISO", href: "/ciso", icon: CisoIcon },
       { name: "Exports", href: "/exports", icon: ExportIcon },
     ],
@@ -128,7 +132,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   />
                 </div>
                 <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                  Audit Trail
+                  Audit <span className="text-accent">Trail</span>
                 </span>
               </Link>
 
