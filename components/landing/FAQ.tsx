@@ -8,7 +8,7 @@ const faqs = [
   {
     question: "Who is Audit Trail for?",
     answer:
-      "SaaS companies that use GitHub and need compliance evidence for enterprise deals, SOC 2 audits, or security questionnaires. Especially teams of 5-50 engineers with no dedicated compliance person. If your product lives in GitHub repos, Audit Trail turns your existing developer activity into compliance evidence automatically.",
+      "SaaS companies that use GitHub and need compliance evidence for enterprise deals, SOC 2 or ISO 27001 audits, or security questionnaires. Especially teams of 5-50 engineers with no dedicated compliance person. If your product lives in GitHub repos, Audit Trail turns your existing developer activity into compliance evidence automatically.",
   },
   {
     question: "What does Audit Trail NOT cover?",
@@ -18,7 +18,7 @@ const faqs = [
   {
     question: "Which frameworks do you support?",
     answer:
-      "Six frameworks with strong GitHub evidence coverage: SOC 2 (5 controls), ISO 27001:2022 (10 controls), NIST CSF 2.0 (7 controls), NIST SP 800-53 Rev 5 (7 controls), ACSC Essential Eight (5 controls), and PCI DSS 4.0 (5 controls). Free plans include 2 frameworks; Pro ($5/mo) unlocks all 6. We focus on frameworks where GitHub activity produces meaningful evidence rather than spreading thin across standards we can't properly support.",
+      "Six frameworks across two tiers. SOC 2 (5 controls), ISO 27001:2022 (10 controls), and NIST CSF 2.0 (7 controls) form the primary tier where GitHub evidence is strongest and most auditor-accepted. NIST SP 800-53 Rev 5 (7 controls), ACSC Essential Eight (5 controls), and PCI DSS 4.0 (5 controls) are available as extended frameworks for specific regulatory contexts. Free plans include 2 frameworks; Pro ($5/mo) unlocks all 6.",
   },
   {
     question: "What methodology do you use?",

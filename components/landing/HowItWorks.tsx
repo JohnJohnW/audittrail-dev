@@ -53,7 +53,7 @@ export function HowItWorks() {
     },
     {
       number: "4",
-      title: "Audit-ready, board-ready, deal-ready.",
+      title: "Audit-ready and deal-ready.",
       description:
         "Generate audit packages, partner due diligence reports, and shareable compliance packages with timestamped evidence and control mappings. Everything is already there.",
       icon: (

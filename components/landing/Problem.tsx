@@ -10,7 +10,7 @@ export function Problem() {
           <FadeIn direction="right" delay={0}>
             <p className="text-xs text-gray-400 uppercase tracking-wider mb-4">The problem</p>
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-              Your enterprise deal needs SOC 2. You have 6 engineers.
+              Your enterprise prospect wants compliance evidence. You have no compliance team.
             </h2>
             <ul className="space-y-4 text-[15px] leading-relaxed">
               <li className="flex gap-3 group">
