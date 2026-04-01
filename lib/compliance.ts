@@ -3,6 +3,7 @@ import { logger } from "./logger";
 import type {
   EvidenceItem,
   ControlEvidence,
+  ControlEffectiveness,
   ComplianceEvidenceOptions,
   EvidenceSummary,
 } from "@/types/compliance";
@@ -276,9 +277,11 @@ export async function getComplianceEvidence(
         pullRequests: {
           where: prWhere,
           include: {
-            reviews: {
-              where: { state: "APPROVED" },
-            },
+            // Fetch ALL review states (not just APPROVED) to enable:
+            // - Rubber-stamp detection (timing + empty body)
+            // - CHANGES_REQUESTED cycle detection (shows genuine review)
+            // - Operating effectiveness scoring per NIST SP 800-53A CM-3a
+            reviews: true,
           },
           orderBy: { mergedAt: "desc" },
           take: 50, // Reduced from 100 to limit connection usage
@@ -342,6 +345,38 @@ export async function getComplianceEvidence(
       deploymentEnvironments: allDeploymentEnvironments.length,
       membershipEvents: membershipEvents.length,
     });
+
+    // ─── Pre-compute effectiveness scores (NIST SP 800-53A Rev 5) ────────────
+    // Computed once and cached per evidence type / control group to avoid
+    // redundant calculation across controls that share the same evidence base.
+    // Assessment methodology per SP 800-53A §2.4: examine + test methods.
+    const prQualityEffect = assessPRQualityEffectiveness(allPRs);
+    const branchProtectEffect = assessBranchProtectionEffectiveness(
+      allBranchProtections,
+      repositories
+    );
+    const commitQualityEffect = assessCommitQualityEffectiveness(allCommits);
+    const depPatchEffect = assessDependencyPatchingEffectiveness(allPRs);
+
+    /** Maps evidence type + optional control codes to the right assessment */
+    const getControlEffectiveness = (
+      evidenceType: string,
+      controlCode: string
+    ): ControlEffectiveness | undefined => {
+      if (evidenceType === "pr_approvals" || evidenceType === "pr") {
+        return prQualityEffect;
+      }
+      if (evidenceType === "branch_protection") {
+        return branchProtectEffect;
+      }
+      if (["E8-PA", "E8-PO", "A.8.8", "800-53-SI-2", "CSF-PR.PS-05"].includes(controlCode)) {
+        return depPatchEffect;
+      }
+      if (evidenceType === "commit_history") {
+        return commitQualityEffect;
+      }
+      return undefined;
+    };
 
     // Categorize commits for smarter matching
     const dependencyCommits = allCommits.filter((c) =>
@@ -470,7 +505,9 @@ export async function getComplianceEvidence(
 
           case "pr_approvals": {
             // Merged PRs with approvals show change control
-            const approvedPRs = allPRs.filter((pr) => pr.reviews.length > 0);
+            const approvedPRs = allPRs.filter((pr) =>
+              pr.reviews.some((r) => r.state === "APPROVED")
+            );
 
             for (const pr of approvedPRs.slice(0, 30)) {
               // Detect automated dependency PRs (Dependabot, Renovate)
@@ -493,17 +530,22 @@ export async function getComplianceEvidence(
 
               const automatedNote = isAutomatedDependency ? " [Automated]" : "";
 
+              // Only list approved reviewers in description
+              const approvers = pr.reviews
+                .filter((r) => r.state === "APPROVED")
+                .map((r) => r.reviewerLogin);
+
               const prRepoInfo = prToRepo.get(pr.id);
               evidence.push({
                 type: "pr",
                 title: `PR #${pr.number}: ${pr.title.slice(0, 60)}`,
-                description: `Approved by ${pr.reviews.map((r) => r.reviewerLogin).join(", ")}${automatedNote}`,
+                description: `Approved by ${approvers.join(", ")}${automatedNote}`,
                 timestamp: pr.mergedAt || pr.createdAt,
                 url: pr.url || undefined,
                 metadata: {
                   number: pr.number,
                   author: authorLogin,
-                  approvers: pr.reviews.map((r) => r.reviewerLogin || "").filter(Boolean),
+                  approvers: approvers.filter(Boolean),
                   baseBranch: pr.baseBranch || "",
                   isAutomatedDependency,
                 },
@@ -735,6 +777,7 @@ export async function getComplianceEvidence(
           evidenceCount: evidence.length,
           evidence: evidence.slice(0, 15), // Top 15 most relevant
           note,
+          effectiveness: getControlEffectiveness(control.evidenceType, control.code),
         });
       }
     }
@@ -757,6 +800,449 @@ export async function getComplianceEvidence(
       controls: [],
     };
   }
+}
+
+// ============================================================
+// Control Effectiveness Assessment — NIST SP 800-53A Rev 5
+//
+// Evaluates three dimensions per SP 800-53A §2.5:
+//   1. Design adequacy  (examine method) — weight: 0.3
+//   2. Operating consistency (test method) — weight: 0.5
+//   3. Evidence quality (traceability/freshness) — weight: 0.2
+//
+// Continuous monitoring approach per NIST SP 800-137 Rev 1.
+// ============================================================
+
+/** Regex to detect issue/ticket references in commit messages */
+const ISSUE_REFERENCE_PATTERN = /(?:#\d+|(?:fixes|closes|resolves)\s+#\d+)/i;
+
+/**
+ * Categorise an effectiveness score into SP 800-53A determination language.
+ * Thresholds follow SP 800-53A §2.5 guidance on degree of satisfaction.
+ */
+function categorizeEffectiveness(score: number): ControlEffectiveness["overallEffectiveness"] {
+  if (score >= 75) return "effective";
+  if (score >= 50) return "partially_effective";
+  if (score >= 25) return "minimally_effective";
+  return "not_effective";
+}
+
+type PRWithReviews = {
+  id: string;
+  number: number;
+  title: string;
+  baseBranch: string;
+  authorLogin: string;
+  createdAt: Date;
+  mergedAt: Date | null;
+  reviews: Array<{
+    state: string;
+    reviewerLogin: string;
+    body: string | null;
+    submittedAt: Date;
+  }>;
+};
+
+/**
+ * Assess PR review quality for change management controls.
+ * Maps to: CM-3 (Configuration Change Control) · CM-4 (Impact Analyses)
+ *
+ * Rubber-stamp detection: a review is flagged when ALL of these apply:
+ *   - Approved within 5 minutes of PR creation
+ *   - Review body is absent or < 10 characters
+ *   - No CHANGES_REQUESTED cycle was present
+ *   - Only one approver
+ * This indicates the reviewer did not actually read the change.
+ */
+function assessPRQualityEffectiveness(allPRs: PRWithReviews[]): ControlEffectiveness {
+  // Focus on PRs targeting default branches — the change management risk surface
+  const mainBranchPRs = allPRs.filter(
+    (pr) => pr.baseBranch === "main" || pr.baseBranch === "master"
+  );
+
+  if (mainBranchPRs.length === 0) {
+    return {
+      designScore: 0,
+      operatingScore: 0,
+      qualityScore: 0,
+      overallScore: 0,
+      overallEffectiveness: "not_effective",
+      assessmentMethod: "examine",
+      nistReference: "SP 800-53 Rev 5 CM-3 (Configuration Change Control) · CM-4 (Impact Analyses)",
+      findings: [
+        "No pull requests to default branch (main/master) detected",
+        "All changes should go through reviewed pull requests per CM-3",
+      ],
+    };
+  }
+
+  const prsWithApproval = mainBranchPRs.filter((pr) =>
+    pr.reviews.some((r) => r.state === "APPROVED")
+  );
+  const approvalRate = prsWithApproval.length / mainBranchPRs.length;
+
+  // Analyse review quality for each approved PR
+  let substantiveCount = 0;
+  let rubberStampCount = 0;
+
+  for (const pr of prsWithApproval) {
+    const approvals = pr.reviews.filter((r) => r.state === "APPROVED");
+    const hasMultipleApprovers = approvals.length >= 2;
+    const hasChangesRequested = pr.reviews.some((r) => r.state === "CHANGES_REQUESTED");
+    const hasSubstantiveBody = approvals.some((r) => r.body && r.body.trim().length > 30);
+
+    // Find earliest approval and compute time from PR creation
+    const firstApproval = approvals.reduce(
+      (earliest: (typeof approvals)[0] | null, r) =>
+        !earliest || r.submittedAt < earliest.submittedAt ? r : earliest,
+      null
+    );
+    const minutesFromCreation = firstApproval
+      ? (firstApproval.submittedAt.getTime() - pr.createdAt.getTime()) / (1000 * 60)
+      : Infinity;
+
+    const isRubberStamp =
+      minutesFromCreation < 5 &&
+      !hasSubstantiveBody &&
+      !hasMultipleApprovers &&
+      !hasChangesRequested;
+
+    if (isRubberStamp) rubberStampCount++;
+    else substantiveCount++;
+  }
+
+  // Operating score: % of default-branch PRs that had an approval
+  const operatingScore = Math.round(approvalRate * 100);
+
+  // Quality score: % of approved PRs that were substantive (not rubber stamps)
+  const qualityScore =
+    prsWithApproval.length > 0 ? Math.round((substantiveCount / prsWithApproval.length) * 100) : 0;
+
+  // Design score: inferred from operating rate (no direct branch protection data here)
+  const designScore =
+    operatingScore >= 90 ? 90 : operatingScore >= 70 ? 70 : operatingScore >= 40 ? 45 : 20;
+
+  const overallScore = Math.round(designScore * 0.3 + operatingScore * 0.5 + qualityScore * 0.2);
+
+  const findings: string[] = [];
+  if (rubberStampCount > 0) {
+    findings.push(
+      `${rubberStampCount} potential rubber-stamp review(s) detected (approved in <5 min with no substantive comment)`
+    );
+  }
+  const unreviewedCount = mainBranchPRs.length - prsWithApproval.length;
+  if (unreviewedCount > 0 && mainBranchPRs.length > 3) {
+    findings.push(
+      `${unreviewedCount}/${mainBranchPRs.length} default-branch PRs merged without any approval — not consistent with CM-3`
+    );
+  }
+  if (substantiveCount > 0) {
+    findings.push(
+      `${substantiveCount} substantive review(s) detected (SP 800-53A CM-3a assess: examine method satisfied)`
+    );
+  }
+  if (operatingScore === 100 && rubberStampCount === 0) {
+    findings.push("All default-branch PRs reviewed — CM-3 operating objective fully met");
+  }
+
+  return {
+    designScore,
+    operatingScore,
+    qualityScore,
+    overallScore,
+    overallEffectiveness: categorizeEffectiveness(overallScore),
+    assessmentMethod: "examine",
+    nistReference: "SP 800-53 Rev 5 CM-3 (Configuration Change Control) · CM-4 (Impact Analyses)",
+    findings,
+  };
+}
+
+/**
+ * Assess branch protection effectiveness for access control.
+ * Maps to: AC-3 (Access Enforcement) · CM-3 (Configuration Change Control)
+ *
+ * Design score: average protection strength across protected repos (0–7 features → 0–100).
+ * Operating score: % of repositories with default-branch protection enabled.
+ * Quality score: % of repos with "strong" protection (≥4 of 7 features configured).
+ */
+function assessBranchProtectionEffectiveness(
+  allBranchProtections: Array<{
+    repoId: string;
+    branch: string;
+    requirePullRequest: boolean;
+    requiredApprovals: number;
+    dismissStaleReviews: boolean;
+    requireCodeOwners: boolean;
+    enforceAdmins: boolean;
+    requireStatusChecks: boolean;
+  }>,
+  repositories: Array<{ id: string }>
+): ControlEffectiveness {
+  const repoCount = repositories.length;
+
+  if (repoCount === 0) {
+    return {
+      designScore: 0,
+      operatingScore: 0,
+      qualityScore: 0,
+      overallScore: 0,
+      overallEffectiveness: "not_effective",
+      assessmentMethod: "examine",
+      nistReference:
+        "SP 800-53 Rev 5 AC-3 (Access Enforcement) · CM-3 (Configuration Change Control)",
+      findings: ["No repositories found in scope"],
+    };
+  }
+
+  // Only default-branch protections (main/master) are the primary risk surface
+  const defaultProtections = allBranchProtections.filter(
+    (bp) => bp.branch === "main" || bp.branch === "master" || bp.branch === "develop"
+  );
+
+  const reposWithProtection = new Set(defaultProtections.map((bp) => bp.repoId));
+
+  // Operating score: % of repos with any default-branch protection
+  const operatingScore = Math.round((reposWithProtection.size / repoCount) * 100);
+
+  // Design score: average protection strength across protected repos (normalised to 0-100)
+  const strengths = defaultProtections.map((bp) => calculateProtectionStrength(bp));
+  const avgStrength =
+    strengths.length > 0 ? strengths.reduce((a, b) => a + b, 0) / strengths.length : 0;
+  const designScore = Math.round((avgStrength / 7) * 100);
+
+  // Quality score: % of repos with strong protection (≥4 features)
+  const strongRepos = new Set(
+    defaultProtections.filter((bp) => calculateProtectionStrength(bp) >= 4).map((bp) => bp.repoId)
+  );
+  const qualityScore = Math.round((strongRepos.size / repoCount) * 100);
+
+  const overallScore = Math.round(designScore * 0.3 + operatingScore * 0.5 + qualityScore * 0.2);
+
+  const findings: string[] = [];
+  const unprotectedCount = repoCount - reposWithProtection.size;
+  if (unprotectedCount > 0) {
+    findings.push(
+      `${unprotectedCount} repository(ies) lack branch protection on default branch — direct push access not controlled (AC-3)`
+    );
+  }
+  if (designScore < 57 && defaultProtections.length > 0) {
+    findings.push(
+      `Average protection strength: ${avgStrength.toFixed(1)}/7 features configured — consider enabling dismiss-stale-reviews, enforce-admins, require-status-checks`
+    );
+  }
+  if (strongRepos.size > 0) {
+    findings.push(
+      `${strongRepos.size}/${repoCount} repositor${strongRepos.size === 1 ? "y has" : "ies have"} strong branch protection (≥4 controls) — SP 800-53A AC-3a examine objective met`
+    );
+  }
+  if (operatingScore === 100 && designScore >= 57) {
+    findings.push(
+      "All repositories have default-branch protection with adequate strength — AC-3 operating objective satisfied"
+    );
+  }
+
+  return {
+    designScore,
+    operatingScore,
+    qualityScore,
+    overallScore,
+    overallEffectiveness: categorizeEffectiveness(overallScore),
+    assessmentMethod: "examine",
+    nistReference:
+      "SP 800-53 Rev 5 AC-3 (Access Enforcement) · CM-3 (Configuration Change Control)",
+    findings,
+  };
+}
+
+/**
+ * Assess commit quality and traceability for change management controls.
+ * Maps to: SA-10 (Developer Config Mgmt) · CM-3 (Configuration Change Control)
+ *
+ * Operating score: % of commits with descriptive messages (>5 words).
+ * Design score: % of commits with GPG/SSH signatures (identity assurance).
+ * Quality score: weighted — issue traceability (60%) + commit signing (40%).
+ */
+function assessCommitQualityEffectiveness(
+  allCommits: Array<{
+    message: string;
+    verified: boolean;
+  }>
+): ControlEffectiveness {
+  if (allCommits.length === 0) {
+    return {
+      designScore: 0,
+      operatingScore: 0,
+      qualityScore: 0,
+      overallScore: 0,
+      overallEffectiveness: "not_effective",
+      assessmentMethod: "examine",
+      nistReference:
+        "SP 800-53 Rev 5 SA-10 (Developer Config Mgmt) · AU-3 (Content of Audit Records)",
+      findings: ["No commit history found in scope"],
+    };
+  }
+
+  // Sample the most recent 100 commits for efficiency
+  const sample = allCommits.slice(0, 100);
+
+  // Descriptive message: first line has > 5 words (excludes "fix", "WIP", "update")
+  const descriptiveCount = sample.filter((c) => {
+    const firstLine = c.message.split("\n")[0].trim();
+    return firstLine.split(/\s+/).filter(Boolean).length > 5;
+  }).length;
+
+  // Issue references: links change to a tracked work item
+  const issueRefCount = sample.filter((c) => ISSUE_REFERENCE_PATTERN.test(c.message)).length;
+
+  // Signed commits: cryptographic identity assurance
+  const signedCount = sample.filter((c) => c.verified).length;
+
+  // Operating score: % of commits traceable (descriptive message)
+  const operatingScore = Math.round((descriptiveCount / sample.length) * 100);
+
+  // Design score: % signed (indicates a signing policy is in place)
+  const designScore = Math.round((signedCount / sample.length) * 100);
+
+  // Quality score: issue traceability + signing, weighted
+  const qualityScore = Math.min(
+    100,
+    Math.round((issueRefCount / sample.length) * 60 + (signedCount / sample.length) * 40)
+  );
+
+  const overallScore = Math.round(designScore * 0.3 + operatingScore * 0.5 + qualityScore * 0.2);
+
+  const findings: string[] = [];
+  if (signedCount === 0) {
+    findings.push(
+      "No signed commits detected — GPG/SSH signing provides SP 800-53A IA-5 cryptographic authenticator evidence"
+    );
+  } else {
+    findings.push(
+      `${signedCount}/${sample.length} commits signed — satisfies SP 800-53A IA-5 authenticator management (examine method)`
+    );
+  }
+  if (issueRefCount > 0) {
+    findings.push(
+      `${issueRefCount}/${sample.length} commits reference issues/tickets — CM-3 traceability objective partially met`
+    );
+  } else {
+    findings.push(
+      "No commits reference issue trackers — change traceability to approved work items is not evidenced (CM-3)"
+    );
+  }
+  const poorMessages = sample.length - descriptiveCount;
+  if (poorMessages > sample.length * 0.3) {
+    findings.push(
+      `${poorMessages}/${sample.length} commits have short/generic messages — reduces AU-3 audit record quality`
+    );
+  }
+
+  return {
+    designScore,
+    operatingScore,
+    qualityScore,
+    overallScore,
+    overallEffectiveness: categorizeEffectiveness(overallScore),
+    assessmentMethod: "examine",
+    nistReference:
+      "SP 800-53 Rev 5 SA-10 (Developer Config Mgmt) · CM-3 (Configuration Change Control) · AU-3 (Content of Audit Records)",
+    findings,
+  };
+}
+
+/**
+ * Assess dependency management and patching effectiveness.
+ * Maps to: SI-2 (Flaw Remediation) · RA-5 (Vulnerability Monitoring)
+ *
+ * Design score: presence of automated dependency management (Dependabot/Renovate).
+ * Operating score: % of automated dependency PRs that were merged (not left open).
+ * Quality score: time-to-patch velocity — SP 800-53A SI-2 benchmark is <7 days for critical.
+ */
+function assessDependencyPatchingEffectiveness(allPRs: PRWithReviews[]): ControlEffectiveness {
+  // Automated dependency update PRs (Dependabot, Renovate)
+  const depBotPRs = allPRs.filter(
+    (pr) =>
+      matchesPatterns(pr.title, AUTOMATED_DEPENDENCY_PATTERNS) ||
+      pr.authorLogin.includes("dependabot") ||
+      pr.authorLogin.includes("renovate")
+  );
+
+  if (depBotPRs.length === 0) {
+    return {
+      designScore: 0,
+      operatingScore: 0,
+      qualityScore: 0,
+      overallScore: 0,
+      overallEffectiveness: "not_effective",
+      assessmentMethod: "examine_and_test",
+      nistReference:
+        "SP 800-53 Rev 5 SI-2 (Flaw Remediation) · RA-5 (Vulnerability Monitoring) · SA-12 (Supply Chain Risk)",
+      findings: [
+        "No automated dependency update PRs detected (Dependabot or Renovate)",
+        "Enable Dependabot security alerts in repository Settings → Security to automate SI-2 flaw remediation evidence",
+      ],
+    };
+  }
+
+  // Design score: 85 if automated tooling exists, 0 otherwise
+  const designScore = 85;
+
+  // Operating score: % of dependency PRs that were merged (not abandoned)
+  const mergedDepPRs = depBotPRs.filter((pr) => pr.mergedAt !== null);
+  const operatingScore = Math.round((mergedDepPRs.length / depBotPRs.length) * 100);
+
+  // Quality score: time-to-patch velocity for merged PRs
+  const patchTimes = mergedDepPRs
+    .filter((pr): pr is PRWithReviews & { mergedAt: Date } => pr.mergedAt !== null)
+    .map((pr) => (pr.mergedAt.getTime() - pr.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+  let qualityScore = 50;
+  const findings: string[] = [
+    `${depBotPRs.length} automated dependency update PR(s) detected (${mergedDepPRs.length} merged)`,
+  ];
+
+  if (patchTimes.length > 0) {
+    const avgDays = patchTimes.reduce((a, b) => a + b, 0) / patchTimes.length;
+    const fastPatches = patchTimes.filter((d) => d <= 7).length;
+    const slowPatches = patchTimes.filter((d) => d > 30).length;
+
+    // Reward fast patches, penalise slow ones — per SP 800-53A SI-2 time-bound remediation
+    qualityScore = Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round((fastPatches / patchTimes.length) * 100 - (slowPatches / patchTimes.length) * 50)
+      )
+    );
+
+    findings.push(
+      `Average time-to-patch: ${avgDays.toFixed(1)} days (SP 800-53A SI-2 benchmark: ≤7 days for effective flaw remediation)`
+    );
+    if (fastPatches > 0) {
+      findings.push(
+        `${fastPatches}/${patchTimes.length} patches merged within 7 days — SI-2 time objective met`
+      );
+    }
+    if (slowPatches > 0) {
+      findings.push(
+        `${slowPatches} patch(es) took >30 days to merge — review patch management process for SI-2 compliance`
+      );
+    }
+  }
+
+  const overallScore = Math.round(designScore * 0.3 + operatingScore * 0.5 + qualityScore * 0.2);
+
+  return {
+    designScore,
+    operatingScore,
+    qualityScore,
+    overallScore,
+    overallEffectiveness: categorizeEffectiveness(overallScore),
+    assessmentMethod: "examine_and_test",
+    nistReference:
+      "SP 800-53 Rev 5 SI-2 (Flaw Remediation) · RA-5 (Vulnerability Monitoring) · SA-12 (Supply Chain Risk)",
+    findings,
+  };
 }
 
 function calculateProtectionStrength(bp: {

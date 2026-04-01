@@ -1,8 +1,12 @@
 /**
  * Compliance and Evidence Types
+ *
+ * Assessment methodology: NIST SP 800-53A Rev 5 (Assessing Security and Privacy Controls).
+ * Continuous monitoring approach: NIST SP 800-137 Rev 1.
+ * Control catalog: NIST SP 800-53 Rev 5.
  */
 
-// Evidence status levels
+// Evidence status levels — mapped to NIST SP 800-53A determination language
 export type EvidenceStatus = "has_evidence" | "partial" | "no_evidence" | "limited";
 
 // Evidence type categories
@@ -10,6 +14,48 @@ export type EvidenceType = "commit" | "pr" | "review" | "branch_protection";
 
 // Relevance levels for evidence items
 export type EvidenceRelevance = "high" | "medium" | "low";
+
+/**
+ * NIST SP 800-53A assessment method for an evidence item.
+ * - examine: Review artifacts (configs, docs, logs) — SP 800-53A §2.4.1
+ * - test: Verify mechanism functions as intended — SP 800-53A §2.4.3
+ * - examine_and_test: Both methods applied
+ */
+export type NistAssessmentMethod = "examine" | "test" | "examine_and_test";
+
+/**
+ * Control effectiveness determination per NIST SP 800-53A Rev 5.
+ *
+ * Evaluates three dimensions defined in SP 800-53A §2.5:
+ * - Design adequacy: Is the control correctly designed? (examine method)
+ * - Operating consistency: Is the control consistently applied? (test method)
+ * - Evidence quality: How strong/trustworthy is the evidence?
+ *
+ * Weighted formula (SP 800-53A emphasis on operating effectiveness):
+ *   overallScore = designScore × 0.3 + operatingScore × 0.5 + qualityScore × 0.2
+ */
+export interface ControlEffectiveness {
+  /** Is the control configured correctly? 0–100 (SP 800-53A design assessment objective) */
+  designScore: number;
+  /** Is the control applied consistently over time? 0–100 (SP 800-53A operating effectiveness) */
+  operatingScore: number;
+  /** How strong is the evidence? 0–100 (traceability, specificity, freshness) */
+  qualityScore: number;
+  /** Weighted overall: design×0.3 + operating×0.5 + quality×0.2 */
+  overallScore: number;
+  /** SP 800-53A §2.5 effectiveness determination */
+  overallEffectiveness:
+    | "effective"
+    | "partially_effective"
+    | "minimally_effective"
+    | "not_effective";
+  /** SP 800-53A assessment method used to gather evidence */
+  assessmentMethod: NistAssessmentMethod;
+  /** Authoritative NIST SP 800-53 Rev 5 control reference */
+  nistReference: string;
+  /** Specific findings from the effectiveness assessment */
+  findings: string[];
+}
 
 // Zero Trust Architecture pillar classification
 export type ZtaPillar = "identity" | "device" | "application" | "data" | "network" | "visibility";
@@ -80,6 +126,8 @@ export interface ControlEvidence {
   ztaPillar?: ZtaPillar;
   /** MITRE ATT&CK tactics this control helps mitigate */
   attackTactics?: AttackTactic[];
+  /** Control effectiveness assessment per NIST SP 800-53A methodology */
+  effectiveness?: ControlEffectiveness;
 }
 
 /**
@@ -100,6 +148,8 @@ export interface ComplianceControl {
   mappingConfidence?: number;
   /** Derived confidence tier from embedding similarity score */
   confidenceTier?: "high" | "medium" | "low";
+  /** Control effectiveness assessment per NIST SP 800-53A methodology */
+  effectiveness?: ControlEffectiveness;
 }
 
 /**

@@ -26,4 +26,9 @@ export interface CalcResult<T> {
     currentValue: unknown;
     impact: string;
   }[];
+  /**
+   * NIST SP 800-53A effectiveness aggregate, present when per-control
+   * effectiveness data is available in the assessed controls.
+   */
+  effectiveness?: Record<string, unknown>;
 }
