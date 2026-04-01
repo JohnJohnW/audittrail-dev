@@ -82,9 +82,9 @@ describe("utils", () => {
       expect(isValidCuid("c")).toBe(false);
     });
 
-    it("should be case insensitive", () => {
-      expect(isValidCuid("CM1234567890123456789")).toBe(true);
-      expect(isValidCuid("Cm1234567890123456789")).toBe(true);
+    it("should reject uppercase CUIDs (CUIDs are always lowercase by spec)", () => {
+      expect(isValidCuid("CM1234567890123456789")).toBe(false);
+      expect(isValidCuid("Cm1234567890123456789")).toBe(false);
     });
 
     it("should return false for empty string", () => {
