@@ -39,7 +39,6 @@ export const FUNNEL_EVENTS = {
   PRO_UPGRADE_COMPLETED: "pro_upgrade_completed",
   AUDIT_CYCLE_CREATED: "audit_cycle_created",
   AUDITOR_SESSION_SHARED: "auditor_session_shared",
-  ZTA_DASHBOARD_VIEWED: "zta_dashboard_viewed",
 } as const;
 
 export type FunnelEvent = (typeof FUNNEL_EVENTS)[keyof typeof FUNNEL_EVENTS];

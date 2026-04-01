@@ -35,7 +35,7 @@ flowchart LR
 2. **Evidence streams in** - every push, PR, review, Dependabot alert, code scanning finding, secret exposure, and deployment approval is captured the moment it happens.
 3. **The compliance engine maps it** - pattern matching combined with Gemini vector embeddings maps each artifact to specific controls. Evidence is scored, confidence-tiered, and stored.
 4. **Gaps are flagged** - security alerts, unreviewed merges, and weakened branch protection trigger compliance alerts before your auditor sees them.
-5. **Deliver anything, instantly** - audit packages, CISO board summaries, or partner due diligence reports are generated from the same live evidence base.
+5. **Deliver anything, instantly** - audit packages, executive summaries, or partner due diligence reports are generated from the same live evidence base.
 
 ---
 
@@ -235,13 +235,13 @@ Cross-referenced against:
 
 Industry multipliers are derived from the IBM 2024 Australian cohort breakdown: technology sector averaged AUD $5.81M (x1.36 baseline), financial services AUD $5.61M (x1.32). Each unmitigated compliance gap adds 4% to the estimate - IBM AU 2024 found that organisations with AI and automation saved an average of AUD $1.74M per breach.
 
-| Figure               | Basis                                                                                                                  |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Breach cost          | AUD $4.26M baseline (IBM Cost of a Data Breach 2024, AU cohort) x size x industry x gap severity                       |
-| Government cross-ref | ASD Cyber Threat Report 2024-25 (Oct 2025): AUD $202,700 avg self-reported loss, large business                        |
-| Regulatory fines     | GDPR Art. 83: 4% global turnover / PCI DSS: USD $100K/month max / SOCI Act: AUD $50M+ / Privacy Act 2024: AUD $50M max |
-| Deal-blocker risk    | Readiness score and count of controls with no evidence against defined thresholds                                      |
-| Days to audit-ready  | Readiness score bracket with empirical remediation time estimate per gap                                               |
+| Figure               | Basis                                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| Breach cost          | AUD $4.26M baseline (IBM Cost of a Data Breach 2024, AU cohort) x size x industry x gap severity |
+| Government cross-ref | ASD Cyber Threat Report 2024-25 (Oct 2025): AUD $202,700 avg self-reported loss, large business  |
+| Regulatory fines     | PCI DSS: USD $100K/month max / Privacy Act 2024: AUD $50M max                                    |
+| Deal-blocker risk    | Readiness score and count of controls with no evidence against defined thresholds                |
+| Days to audit-ready  | Readiness score bracket with empirical remediation time estimate per gap                         |
 
 ---
 

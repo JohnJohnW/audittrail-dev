@@ -39,10 +39,6 @@ describe("posthog", () => {
       expect(FUNNEL_EVENTS).toHaveProperty("FIRST_SYNC_COMPLETED");
     });
 
-    it("contains ZTA_DASHBOARD_VIEWED key", () => {
-      expect(FUNNEL_EVENTS).toHaveProperty("ZTA_DASHBOARD_VIEWED");
-    });
-
     it("all FUNNEL_EVENTS values are strings", () => {
       for (const [key, value] of Object.entries(FUNNEL_EVENTS)) {
         expect(typeof value, `FUNNEL_EVENTS.${key} should be a string`).toBe("string");

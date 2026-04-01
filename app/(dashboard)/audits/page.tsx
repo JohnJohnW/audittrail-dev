@@ -16,8 +16,6 @@ const FRAMEWORK_OPTIONS = [
   "Essential Eight",
   "NIST CSF",
   "NIST SP 800-53",
-  "GDPR",
-  "SOCI Act",
   "PCI DSS",
 ];
 

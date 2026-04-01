@@ -1,7 +1,7 @@
 # Pricing & Onboarding Model Recommendation
 
 **Date:** 2026-04-01
-**Status:** Recommendation (pending decision)
+**Status:** Historical (the product has since been repositioned to $5/mo with 6 frameworks)
 
 ---
 
@@ -21,23 +21,23 @@ This creates a **dead-end evaluation experience**: the user sees promise but can
 
 ### Pricing
 
-|                        | Free    | Pro ($49/mo) | Enterprise (custom) |
-| ---------------------- | ------- | ------------ | ------------------- |
-| Repositories           | 2       | Unlimited    | Unlimited           |
-| Frameworks             | 3 of 12 | All 12       | All + Custom        |
-| Compliance Dashboard   | Yes     | Yes          | Yes                 |
-| Evidence View          | Yes     | Yes          | Yes                 |
-| Gap Analysis           | Yes     | Yes          | Yes                 |
-| Exports (PDF/CSV)      | **No**  | Yes          | Yes                 |
-| Full Data Export       | **No**  | Yes          | Yes                 |
-| Auditor Portal         | **No**  | Yes          | Yes                 |
-| Risk Register          | **No**  | Yes          | Yes                 |
-| CISO Dashboard         | **No**  | Yes          | Yes                 |
-| GRC Dashboard          | **No**  | Yes          | Yes                 |
-| Executive Summary (AI) | **No**  | Yes          | Yes                 |
-| Evidence Upload        | **No**  | Yes          | Yes                 |
-| Custom Frameworks      | **No**  | **No**       | Yes                 |
-| SSO/SAML               | **No**  | **No**       | Yes                 |
+|                        | Free   | Pro ($5/mo) | Enterprise (custom) |
+| ---------------------- | ------ | ----------- | ------------------- |
+| Repositories           | 2      | Unlimited   | Unlimited           |
+| Frameworks             | 2 of 6 | All 6       | All + Custom        |
+| Compliance Dashboard   | Yes    | Yes         | Yes                 |
+| Evidence View          | Yes    | Yes         | Yes                 |
+| Gap Analysis           | Yes    | Yes         | Yes                 |
+| Exports (PDF/CSV)      | **No** | Yes         | Yes                 |
+| Full Data Export       | **No** | Yes         | Yes                 |
+| Auditor Portal         | **No** | Yes         | Yes                 |
+| Risk Register          | **No** | Yes         | Yes                 |
+| CISO Dashboard         | **No** | Yes         | Yes                 |
+| GRC Dashboard          | **No** | Yes         | Yes                 |
+| Executive Summary (AI) | **No** | Yes         | Yes                 |
+| Evidence Upload        | **No** | Yes         | Yes                 |
+| Custom Frameworks      | **No** | **No**      | Yes                 |
+| SSO/SAML               | **No** | **No**      | Yes                 |
 
 ### Onboarding Flow
 
@@ -262,25 +262,25 @@ This creates a subscription that starts billing after 14 days. If the user doesn
 
 ## Proposed Updated Pricing Structure
 
-|                          | Free  | Trial (14 days) | Pro ($49/mo) | Enterprise (custom) |
-| ------------------------ | ----- | --------------- | ------------ | ------------------- |
-| **Repositories**         | 2     | Unlimited       | Unlimited    | Unlimited           |
-| **Frameworks**           | 3     | All 12          | All 12       | All + Custom        |
-| **Compliance Dashboard** | Yes   | Yes             | Yes          | Yes                 |
-| **Evidence View**        | Yes   | Yes             | Yes          | Yes                 |
-| **Gap Analysis**         | Basic | Full            | Full         | Full                |
-| **Exports**              | No    | 3 max           | Unlimited    | Unlimited           |
-| **Auditor Portal**       | No    | 1 session       | Unlimited    | Unlimited           |
-| **Risk Register**        | No    | Yes             | Yes          | Yes                 |
-| **CISO Dashboard**       | No    | Yes             | Yes          | Yes                 |
-| **GRC Dashboard**        | No    | Yes             | Yes          | Yes                 |
-| **Executive Summary**    | No    | Yes             | Yes          | Yes                 |
-| **Evidence Upload**      | No    | Yes             | Yes          | Yes                 |
-| **Industry Benchmarks**  | Basic | Full            | Full         | Full                |
-| **Custom Frameworks**    | No    | No              | No           | Yes                 |
-| **SSO/SAML**             | No    | No              | No           | Yes                 |
-| **Priority Support**     | No    | No              | Yes          | Yes                 |
-| **SLA**                  | No    | No              | No           | Yes                 |
+|                          | Free  | Trial (14 days) | Pro ($5/mo) | Enterprise (custom) |
+| ------------------------ | ----- | --------------- | ----------- | ------------------- |
+| **Repositories**         | 2     | Unlimited       | Unlimited   | Unlimited           |
+| **Frameworks**           | 3     | All 6           | All 6       | All + Custom        |
+| **Compliance Dashboard** | Yes   | Yes             | Yes         | Yes                 |
+| **Evidence View**        | Yes   | Yes             | Yes         | Yes                 |
+| **Gap Analysis**         | Basic | Full            | Full        | Full                |
+| **Exports**              | No    | 3 max           | Unlimited   | Unlimited           |
+| **Auditor Portal**       | No    | 1 session       | Unlimited   | Unlimited           |
+| **Risk Register**        | No    | Yes             | Yes         | Yes                 |
+| **CISO Dashboard**       | No    | Yes             | Yes         | Yes                 |
+| **GRC Dashboard**        | No    | Yes             | Yes         | Yes                 |
+| **Executive Summary**    | No    | Yes             | Yes         | Yes                 |
+| **Evidence Upload**      | No    | Yes             | Yes         | Yes                 |
+| **Industry Benchmarks**  | Basic | Full            | Full        | Full                |
+| **Custom Frameworks**    | No    | No              | No          | Yes                 |
+| **SSO/SAML**             | No    | No              | No          | Yes                 |
+| **Priority Support**     | No    | No              | Yes         | Yes                 |
+| **SLA**                  | No    | No              | No          | Yes                 |
 
 ### Pricing Page Messaging
 

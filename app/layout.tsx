@@ -14,17 +14,16 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Audit Trail - Compliance Infrastructure for Engineering Teams",
   description:
-    "Audit Trail connects to GitHub once and silently maps every commit, PR, branch protection, and deployment across 10 frameworks. Built for GRC teams, CISOs, and audit readiness.",
+    "Audit Trail connects to GitHub once and silently maps every commit, PR, branch protection, and deployment across 6 frameworks. Built for GRC teams, CISOs, and audit readiness.",
   keywords: [
     "compliance",
     "audit",
     "ISO 27001",
     "NIST CSF",
     "SOC 2",
-    "GDPR",
+    "NIST SP 800-53",
     "Essential Eight",
     "PCI DSS",
-    "SOCI Act",
     "GitHub",
     "security",
     "GRC",
@@ -40,14 +39,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Audit Trail - Compliance Infrastructure for Engineering Teams",
     description:
-      "Compliance that works in the background. Surfaces when it counts. Ten frameworks, zero manual work.",
+      "Compliance that works in the background. Surfaces when it counts. Six frameworks, zero manual work.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Audit Trail - Compliance Infrastructure for Engineering Teams",
     description:
-      "Compliance that works in the background. Surfaces when it counts. Ten frameworks, zero manual work.",
+      "Compliance that works in the background. Surfaces when it counts. Six frameworks, zero manual work.",
   },
 };
 

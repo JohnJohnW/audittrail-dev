@@ -68,7 +68,7 @@ export default async function Image() {
 
       {/* Framework pills */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-        {["ISO 27001", "NIST CSF", "SOC 2", "GDPR", "Essential Eight", "PCI DSS"].map(
+        {["ISO 27001", "NIST CSF", "SOC 2", "NIST SP 800-53", "Essential Eight", "PCI DSS"].map(
           (framework) => (
             <div
               key={framework}

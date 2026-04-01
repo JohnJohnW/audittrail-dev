@@ -17,8 +17,6 @@ const FRAMEWORK_OPTIONS = [
   "Essential Eight",
   "NIST CSF",
   "NIST SP 800-53",
-  "GDPR",
-  "SOCI Act",
   "PCI DSS",
 ];
 
@@ -123,8 +121,6 @@ function frameworkBadgeColor(framework: string): string {
     "Essential Eight": "bg-orange-50 text-orange-700 border-orange-200",
     "NIST CSF": "bg-cyan-50 text-cyan-700 border-cyan-200",
     "NIST SP 800-53": "bg-teal-50 text-teal-700 border-teal-200",
-    GDPR: "bg-green-50 text-green-700 border-green-200",
-    "SOCI Act": "bg-yellow-50 text-yellow-700 border-yellow-200",
     "PCI DSS": "bg-red-50 text-red-700 border-red-200",
   };
   return map[framework] ?? "bg-gray-100 text-gray-700 border-gray-200";

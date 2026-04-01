@@ -27,7 +27,7 @@ This opacity undermines trust -- the same "black box" problem that commoditized 
 | **Framework scores**           | `lib/compliance.ts:calculateFrameworkScores()` | Same formula per framework group                                                            |
 | **Readiness score**            | `app/api/dashboards/ciso/route.ts`             | SOC 2 / ISO 27001 weight = 1.5x, others = 1.0x                                              |
 | **Breach cost estimate**       | `app/api/dashboards/ciso/route.ts`             | AUD $4.26M baseline, 6 size multipliers, 7 industry multipliers, +4% per gap                |
-| **Regulatory fine exposure**   | `app/api/dashboards/ciso/route.ts`             | GDPR = 40% of breach cost, PCI = $165K\*12, SOCI = $50M+, Privacy Act = $50M                |
+| **Regulatory fine exposure**   | `app/api/dashboards/ciso/route.ts`             | PCI = $165K\*12, Privacy Act = $50M                                                         |
 | **Deal-blocker risk**          | `app/api/dashboards/ciso/route.ts`             | High: score<50 or gaps>5, Medium: score<75 or gaps>2                                        |
 | **Days to audit-ready**        | `app/api/dashboards/ciso/route.ts`             | 4 tiers based on readiness score (80/65/50)                                                 |
 | **Predicted audit outcome**    | `app/api/dashboards/ciso/route.ts`             | 0 gaps = likely_pass, <=3 = pass_with_findings, >3 = at_risk                                |

@@ -57,10 +57,7 @@ export interface ControlEffectiveness {
   findings: string[];
 }
 
-// Zero Trust Architecture pillar classification
-export type ZtaPillar = "identity" | "device" | "application" | "data" | "network" | "visibility";
-
-// MITRE ATT&CK tactic coverage (derived from MDA Foundation mappings)
+// MITRE ATT&CK tactic coverage
 export type AttackTactic =
   | "initial-access"
   | "persistence"
@@ -122,8 +119,6 @@ export interface ControlEvidence {
   confidence?: number;
   /** Confidence tier: high (≥0.85), medium (0.60-0.84), low (<0.60), auditor_confirmed */
   confidenceTier?: "high" | "medium" | "low" | "auditor_confirmed";
-  /** Zero Trust Architecture pillar this control maps to */
-  ztaPillar?: ZtaPillar;
   /** MITRE ATT&CK tactics this control helps mitigate */
   attackTactics?: AttackTactic[];
   /** Control effectiveness assessment per NIST SP 800-53A methodology */
