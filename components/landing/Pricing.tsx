@@ -35,8 +35,11 @@ export function Pricing() {
         <FadeIn direction="up" className="text-center mb-12">
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Pricing</p>
           <h2 className="text-2xl font-semibold text-gray-900">
-            Start free, upgrade when you&apos;re ready to scale
+            14-day Pro trial included. No credit card required.
           </h2>
+          <p className="mt-3 text-sm text-gray-500">
+            Every account starts with full Pro access. Downgrade to free or subscribe at any time.
+          </p>
         </FadeIn>
 
         <StaggerChildren className="grid md:grid-cols-2 gap-6" staggerDelay={0.15}>
@@ -109,6 +112,9 @@ export function Pricing() {
                 <span className="text-3xl font-semibold text-gray-900">$49</span>
                 <span className="text-sm text-gray-500">/month</span>
               </div>
+              <p className="text-xs text-accent mt-1 font-medium">
+                14-day free trial · 3 exports · 1 auditor session
+              </p>
             </div>
 
             <ul className="space-y-3 mb-6">

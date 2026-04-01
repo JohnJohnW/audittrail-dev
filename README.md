@@ -127,7 +127,7 @@ flowchart LR
 
 ## Compliance Frameworks
 
-Twelve frameworks mapped out of the box. Free plans include 3; Pro unlocks all twelve.
+Twelve frameworks mapped out of the box. Every account starts with a 14-day Pro trial; free plans include 3 frameworks, Pro unlocks all twelve.
 
 | Framework            | Controls | Key areas                                               |
 | -------------------- | -------- | ------------------------------------------------------- |
@@ -241,7 +241,7 @@ flowchart LR
     DATA --> BS[AI Board Summary\nClaude, cached 24h]
 ```
 
-Every business impact figure ships with an expandable methodology panel - the exact inputs, multipliers, and thresholds used are always visible. Nothing is a black box.
+Every business impact figure is powered by the Transparent Calculation Engine (see below) - the exact inputs, multipliers, and thresholds used are always visible. Nothing is a black box.
 
 ### Breach cost sources
 
@@ -316,19 +316,86 @@ Example use cases: security policy PDFs mapped to ISO 27001 A.5.1, MFA setup scr
 
 ---
 
+## Transparent Calculation Engine
+
+Every calculated value - compliance score, breach cost estimate, readiness score, gap effort - is wrapped in a `CalcResult<T>` that exposes the full audit trail of how the number was derived.
+
+```mermaid
+flowchart LR
+    RAW[Raw Evidence\n& Org Profile]
+
+    RAW --> CE[Calc Engine\nlib/calc-engine/]
+
+    CE --> CS[Compliance Score\nweighted evidence coverage]
+    CE --> BC[Breach Cost\nIBM 2024 baseline × multipliers]
+    CE --> RS[Readiness Score\nweighted framework avg]
+    CE --> GP[Gap Priority\neffort + days-to-fix per control]
+
+    CS --> CR[CalcResult T\nsteps · formula · inputs · warnings]
+    BC --> CR
+    RS --> CR
+    GP --> CR
+
+    CR --> API[API response\n_calc namespace]
+    CR --> UI[UI\nexpandable methodology panel]
+```
+
+Every `CalcResult` includes:
+
+| Field         | Description                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| `value`       | The calculated result                                                                           |
+| `methodology` | Plain-language description of the approach                                                      |
+| `formula`     | The exact formula used                                                                          |
+| `steps`       | Step-by-step breakdown with source labels (`default` / `configured` / `automated` / `computed`) |
+| `inputs`      | All raw inputs used                                                                             |
+| `warnings`    | Any assumptions or missing data                                                                 |
+| `isDefault`   | Whether org-specific overrides were applied                                                     |
+
+### Per-org configuration
+
+Every default value has a citation (IBM 2024, NIST methodology, etc.) and a recommendation string explaining when to override it. Admins can customise via `PUT /api/settings/calc-config`:
+
+- `scoring.partialWeight` - how much partial evidence counts (default: 0.5)
+- `scoring.frameworkWeights` - per-framework weighting (SOC 2 / ISO 27001 default: 1.5×)
+- `businessImpact.breachBaseline` - replace the AUD $4.26M baseline with your own actuarial figure
+- `businessImpact.gapEscalationRate` - adjust the 4%/gap rate
+- `auditReadiness.dealBlocker` - customise high/medium risk thresholds
+- `auditReadiness.predictedOutcome` - adjust pass/findings/at-risk gap counts
+- `gapAnalysis.effortEstimates` - per-control effort and days-to-fix overrides
+
+The `_calc` key is present on all relevant API responses (`/api/compliance/score`, `/api/dashboards/ciso`).
+
+---
+
 ## Reports and Exports
 
 ```mermaid
 flowchart LR
     EB[(Evidence Base)]
 
-    EB --> PDF[PDF Report\nexec summary + control breakdown\n+ auditor sign-offs]
+    EB --> PDF[PDF Report\nexec summary + control breakdown\n+ auditor sign-offs\nCONFIDENTIAL watermark]
     EB --> CSV[CSV Export\nevidence per control\ntimestamped + sourced]
     EB --> SH[Shareable Link\nread-only, no account needed\nfor due diligence]
     EB --> FE[Full Data Export\nJSON + CSV ZIP\nall org data via Resend]
 ```
 
+All PDF exports include a diagonal `CONFIDENTIAL` watermark and the exporter's email address in the footer. Every export (PDF/CSV, full org ZIP, auditor ZIP) is written to the `Export` audit log with type, file name, status, and exporter identity.
+
 Full data export includes: evidence artifacts, compliance snapshots, audit cycles and findings, risk treatments, control notes, gap assignments, auditor sign-offs. Excludes: benchmark percentiles, confidence model weights.
+
+---
+
+## Pricing
+
+| Plan       | Price            | Limits                                                                      |
+| ---------- | ---------------- | --------------------------------------------------------------------------- |
+| Free       | $0/month         | 2 repos, 3 frameworks, no exports or auditor portal                         |
+| Pro trial  | Free for 14 days | Full Pro access; 3 exports and 1 auditor session during trial               |
+| Pro        | $49/month        | Unlimited repos, all 12 frameworks, exports, auditor portal, CISO dashboard |
+| Enterprise | Custom           | SSO, IRAP, HIPAA, dedicated support                                         |
+
+No credit card required to start. The 14-day trial begins automatically on signup and converts to the free plan at expiry unless a subscription is started via Stripe.
 
 ---
 
