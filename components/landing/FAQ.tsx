@@ -53,7 +53,7 @@ const faqs = [
   {
     question: "Can I use Audit Trail for partner or investor due diligence?",
     answer:
-      "Yes. Generate a shareable compliance package: your framework scores, evidence summary, and control coverage. Send it as a link. No back-and-forth questionnaires. Works for vendor security reviews, enterprise sales, and M&A due diligence.",
+      "Yes. Generate a shareable compliance package with your framework scores, evidence summary, and control coverage. Send it as a link. It reduces the back-and-forth on technical security questions and works for vendor security reviews, enterprise sales, and M&A due diligence.",
   },
   {
     question: "Do you offer enterprise plans?",

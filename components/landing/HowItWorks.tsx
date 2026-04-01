@@ -39,7 +39,7 @@ export function HowItWorks() {
       number: "3",
       title: "Only surfaces what matters.",
       description:
-        "Security alerts, unreviewed PRs, and weakened branch protection trigger compliance alerts before your auditor sees them. Everything else runs silently.",
+        "Security alerts, unreviewed PRs, and weakened branch protection trigger compliance alerts so you can fix them before audit day. Everything else runs silently.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -55,7 +55,7 @@ export function HowItWorks() {
       number: "4",
       title: "Audit-ready and deal-ready.",
       description:
-        "Generate audit packages, partner due diligence reports, and shareable compliance packages with timestamped evidence and control mappings. Everything is already there.",
+        "Generate audit packages, partner due diligence reports, and shareable compliance packages with timestamped evidence and control mappings. The GitHub-evidenceable controls are already documented.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -106,7 +106,7 @@ export function HowItWorks() {
 
         <FadeIn direction="up" delay={0.5} className="mt-12 text-center">
           <p className="text-sm text-gray-500">
-            Average time from signup to first export:{" "}
+            Average time from signup to first compliance score:{" "}
             <span className="font-medium text-accent">under 5 minutes</span>
           </p>
         </FadeIn>

@@ -41,9 +41,10 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
-            Built for SaaS teams. Connect your GitHub repos once and Audit Trail maps every commit,
-            PR, and deployment to six compliance frameworks, automatically and continuously. When
-            your enterprise prospect asks for SOC 2 or ISO 27001, you&apos;re already ready.
+            Built for SaaS teams. Connect your GitHub repos once and Audit Trail maps your GitHub
+            activity to six compliance frameworks, automatically and continuously. When your
+            enterprise prospect asks for SOC 2 or ISO 27001, the technical controls are already
+            documented.
           </p>
         </FadeInOnLoad>
 
