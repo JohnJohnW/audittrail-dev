@@ -18,10 +18,10 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.1}>
           <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 tracking-tight leading-[1.15] mb-6">
-            Your developers keep shipping.
+            You won&apos;t notice Audit Trail working.
             <br />
             <span className="relative">
-              Your compliance evidence builds itself.
+              Your auditor will.
               <svg
                 className="absolute -bottom-2 left-0 w-full h-3 text-accent/30"
                 viewBox="0 0 200 12"
