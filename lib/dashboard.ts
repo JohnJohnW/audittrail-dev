@@ -101,14 +101,22 @@ export async function getDashboardData(orgId: string): Promise<DashboardData> {
       ? latestSnapshot.overallScore - previousSnapshot.overallScore
       : null;
 
-  // Find weakest framework from latest snapshot
+  // Fetch active framework names to guard against stale snapshot data
+  const activeFrameworks = await db.complianceFramework
+    .findMany({ select: { name: true } })
+    .catch(() => [] as { name: string }[]);
+  const activeFrameworkNames = new Set(activeFrameworks.map((f) => f.name));
+
+  // Find weakest framework from latest snapshot (active frameworks only)
   let weakestFramework: { name: string; score: number } | null = null;
   if (latestSnapshot?.frameworkScores) {
     const scores = latestSnapshot.frameworkScores as Record<
       string,
       { score: number; total: number; withEvidence: number }
     >;
-    const sorted = Object.entries(scores).sort((a, b) => a[1].score - b[1].score);
+    const sorted = Object.entries(scores)
+      .filter(([name]) => activeFrameworkNames.size === 0 || activeFrameworkNames.has(name))
+      .sort((a, b) => a[1].score - b[1].score);
     if (sorted.length > 0) {
       weakestFramework = { name: sorted[0][0], score: sorted[0][1].score };
     }
