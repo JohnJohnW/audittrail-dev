@@ -38,10 +38,10 @@ export const PLAN_LIMITS = {
   PRO_REPO_LIMIT: Infinity,
   /**
    * Maximum compliance frameworks accessible on the free plan.
-   * Free users may track any 3 of the 8 supported frameworks.
+   * Free users may track any 2 of the 6 supported frameworks.
    * Enforcement is applied in the evidence API and compliance engine.
    */
-  FREE_FRAMEWORK_LIMIT: 3,
+  FREE_FRAMEWORK_LIMIT: 2,
 } as const;
 
 // Data limits

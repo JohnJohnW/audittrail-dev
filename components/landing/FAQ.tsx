@@ -6,64 +6,59 @@ import { FadeIn } from "@/components/ui/Motion";
 
 const faqs = [
   {
-    question: "What GitHub permissions do you need?",
+    question: "Who is Audit Trail for?",
     answer:
-      "Read-only access to repository contents, pull requests, code reviews, deployments, environments, Dependabot alerts, code scanning alerts, and secret scanning alerts. We use a GitHub App with the minimum required scopes. We never write to or modify your repositories. You can uninstall the App anytime from GitHub Settings.",
+      "SaaS companies that use GitHub and need compliance evidence for enterprise deals, SOC 2 audits, or security questionnaires. Especially teams of 5-50 engineers with no dedicated compliance person. If your product lives in GitHub repos, Audit Trail turns your existing developer activity into compliance evidence automatically.",
   },
   {
-    question: "Is my source code secure?",
+    question: "What does Audit Trail NOT cover?",
     answer:
-      "We never store your source code. We only extract metadata: commit hashes, PR numbers, branch names, timestamps, and authors. All data is encrypted in transit (TLS 1.3) and at rest. We're hosted on Vercel and Supabase with enterprise-grade security.",
-  },
-  {
-    question: "Which compliance controls can you evidence?",
-    answer:
-      "We map Git activity to controls across ten frameworks. For ISO 27001, that includes A.8.32 (Change Management), A.8.4 (Access to Source Code), and secure development lifecycle controls. For NIST CSF, we cover configuration management (PR.PS-01), software development security (PR.PS-02), and continuous monitoring (DE.CM-09). For GDPR, we evidence privacy-by-design (Art. 25) and security of processing (Art. 32). SOC 2, NIST SP 800-53, SOCI Act, PCI DSS, Essential Eight, NIST SP 800-207 (Zero Trust Architecture), and ASD MDA Foundations are all fully mapped. Full control mappings are available in the dashboard.",
+      "Audit Trail covers the technical SDLC controls that live in your GitHub repos: change management, access control, vulnerability management, and security testing. It does NOT cover HR controls (background checks, offboarding), physical security, vendor/third-party risk management, or written policies. For those, Audit Trail tells you exactly what's missing so you know where to focus. We're honest about scope — most compliance frameworks require more than GitHub can evidence, and we show you the gap clearly.",
   },
   {
     question: "Which frameworks do you support?",
     answer:
-      "We support twelve frameworks out of the box: ISO 27001:2022, ACSC Essential Eight, NIST CSF 2.0, NIST SP 800-53 Rev 5, SOC 2, GDPR, SOCI Act, PCI DSS 4.0, NIST SP 800-207 (Zero Trust Architecture), ASD MDA Foundations, NIST AI RMF 1.0, and the EU AI Act (2024). Free plans include access to 3 frameworks; Pro unlocks all 12. NIST AI RMF and EU AI Act cover AI governance controls including model drift, prompt injection, data poisoning, and agentic AI risks. Enterprise plans add IRAP, HIPAA, and custom framework mappings.",
+      "Six frameworks with strong GitHub evidence coverage: SOC 2 (5 controls), ISO 27001:2022 (10 controls), NIST CSF 2.0 (7 controls), NIST SP 800-53 Rev 5 (7 controls), ACSC Essential Eight (5 controls), and PCI DSS 4.0 (5 controls). Free plans include 2 frameworks; Pro ($5/mo) unlocks all 6. We focus on frameworks where GitHub activity produces meaningful evidence rather than spreading thin across standards we can't properly support.",
   },
   {
-    question: "Will auditors accept these reports?",
+    question: "What methodology do you use?",
     answer:
-      "Our reports are designed for auditor review. Each report includes timestamped evidence, control mappings, and source references. The PDF format includes an executive summary and control-by-control breakdown. We recommend reviewing reports with your auditor during the planning phase.",
+      "Our assessment methodology is based on NIST SP 800-53A Rev 5 (Assessing Security and Privacy Controls). We evaluate controls across three dimensions: design adequacy (is the control configured correctly?), operating consistency (is it applied consistently over time?), and evidence quality (how strong is the evidence?). Our continuous monitoring approach follows NIST SP 800-137. Every score shows its methodology and can be drilled into.",
+  },
+  {
+    question: "What GitHub permissions do you need?",
+    answer:
+      "Read-only access to repository contents, pull requests, code reviews, deployments, environments, Dependabot alerts, code scanning alerts, and secret scanning alerts. We use a GitHub App with the minimum required scopes. We never write to or modify your repositories.",
+  },
+  {
+    question: "Is my source code secure?",
+    answer:
+      "We never store your source code. We only extract metadata: commit hashes, PR numbers, branch names, timestamps, and authors. All data is encrypted in transit (TLS 1.3) and at rest. Hosted on Vercel and Supabase with enterprise-grade security.",
   },
   {
     question: "How often do you sync data?",
     answer:
-      "Evidence updates in real time via GitHub App webhooks. The moment a commit is pushed, a PR is merged, or a Dependabot alert is created, it appears in your dashboard. We also run a daily background sync to catch anything missed. Manual syncs are available anytime from the dashboard.",
+      "Evidence updates in real time via GitHub App webhooks. The moment a commit is pushed, a PR is merged, or a Dependabot alert is created, it appears in your dashboard. A daily background sync catches anything missed.",
   },
   {
-    question: "What security events do you monitor?",
+    question: "Will auditors accept these reports?",
     answer:
-      "We receive and process Dependabot vulnerability alerts, code scanning (SAST) findings, secret scanning alerts, and deployment protection rule bypass requests in real time. Critical findings like exposed credentials trigger immediate compliance alerts mapped to your framework controls. We also track org membership changes, team access changes, and repository visibility changes (private → public) as access control evidence.",
-  },
-  {
-    question: "Can I use this for my certification audit?",
-    answer:
-      "Yes. Audit Trail generates evidence that supports certification and compliance audits across ISO 27001, NIST, SOC 2, GDPR, and other frameworks. However, we're one part of your compliance program. You'll still need policies, risk assessments, and other controls that Git activity can't evidence.",
+      "Our reports are designed for auditor review. Each includes timestamped evidence, control mappings, and source references. The PDF format includes an executive summary and control-by-control breakdown with NIST-grounded assessment methodology. We recommend sharing reports with your auditor during audit planning.",
   },
   {
     question: "What's included in the free plan?",
     answer:
-      "The free plan gives you up to 2 repositories and access to 3 of the 12 supported compliance frameworks. You get the full evidence dashboard, gap analysis with action steps, basic compliance alerts, and control notes and exceptions. Exports (PDF and CSV), the auditor portal, shareable reports, and full benchmark data are Pro features.",
-  },
-  {
-    question: "Do you offer enterprise plans?",
-    answer:
-      "Yes. Enterprise includes SSO, custom framework mappings (including IRAP, HIPAA, and custom frameworks), dedicated support, and SLAs. Contact us to discuss your requirements.",
-  },
-  {
-    question: "Can GRC teams and CISOs use this day-to-day, not just at audit time?",
-    answer:
-      "Yes - that is the point. GRC teams get a live gap register with assignable ownership, risk treatment tracking (remediate, accept, transfer, avoid), and audit cycle management. CISOs get a posture trend dashboard with breach cost exposure estimates, regulatory fine risk, and AI-drafted board summaries. Compliance stays current all year, not just when an auditor is in the room.",
+      "Up to 2 repositories, 2 compliance frameworks, the full evidence dashboard, gap analysis with prioritised action steps, basic compliance alerts, and control notes. Exports, the auditor portal, and shareable reports are Pro features at $5/mo.",
   },
   {
     question: "Can I use Audit Trail for partner or investor due diligence?",
     answer:
-      "Yes. You can generate a shareable compliance package - a read-only view of your framework scores, evidence summary, and control coverage - and send it as a link or export. No back-and-forth questionnaires. Works for vendor security reviews, enterprise sales deal cycles, and M&A due diligence.",
+      "Yes. Generate a shareable compliance package — a read-only view of your framework scores, evidence summary, and control coverage — and send it as a link. No back-and-forth questionnaires. Works for vendor security reviews, enterprise sales, and M&A due diligence.",
+  },
+  {
+    question: "Do you offer enterprise plans?",
+    answer:
+      "Yes. Enterprise includes SSO, custom framework mappings (IRAP, HIPAA, custom frameworks), dedicated support, and SLAs. Contact us to discuss.",
   },
 ];
 

@@ -288,7 +288,7 @@ function SettingsContent() {
                 <CheckIcon className="w-5 h-5 text-green-600" />
               </div>
               <p className="text-green-700 font-medium">
-                Successfully upgraded to Pro! Unlimited repositories, all 12 frameworks, and exports
+                Successfully upgraded to Pro! Unlimited repositories, all 6 frameworks, and exports
                 are now unlocked.
               </p>
             </div>
@@ -362,8 +362,8 @@ function SettingsContent() {
                 </div>
                 <p className="text-sm sm:text-base text-gray-500 mt-1">
                   {subscription?.plan === "pro"
-                    ? "Unlimited repositories, all 12 frameworks, and exports"
-                    : "2 repositories, 3 frameworks. No exports or auditor portal."}
+                    ? "Unlimited repositories, all 6 frameworks, and exports"
+                    : "2 repositories, 2 frameworks. No exports or auditor portal."}
                 </p>
                 {subscription?.currentPeriodEnd && (
                   <p className="text-sm text-gray-500 mt-2">
@@ -423,24 +423,17 @@ function SettingsContent() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <p className="font-semibold text-gray-900">Pro</p>
-                    <span className="text-accent font-semibold">$49/month</span>
+                    <span className="text-accent font-semibold">$5/month</span>
                   </div>
                   <ul className="space-y-3 text-sm">
                     <FeatureItem included>Unlimited repositories</FeatureItem>
-                    <FeatureItem included>
-                      All 12 compliance frameworks incl. NIST AI RMF &amp; EU AI Act
-                    </FeatureItem>
-                    <FeatureItem included>
-                      GRC dashboard: gap ownership, risk register, audit cycles
-                    </FeatureItem>
-                    <FeatureItem included>
-                      CISO dashboard: posture trend, business impact, board summary
-                    </FeatureItem>
+                    <FeatureItem included>All 6 compliance frameworks</FeatureItem>
                     <FeatureItem included>PDF & CSV exports</FeatureItem>
                     <FeatureItem included>Auditor portal (comments, sign-offs)</FeatureItem>
                     <FeatureItem included>Shareable read-only reports</FeatureItem>
-                    <FeatureItem included>Full industry benchmarks</FeatureItem>
-                    <FeatureItem included>Priority support</FeatureItem>
+                    <FeatureItem included>Security posture trends</FeatureItem>
+                    <FeatureItem included>Control effectiveness analysis</FeatureItem>
+                    <FeatureItem included>Advanced alerts</FeatureItem>
                   </ul>
                 </motion.div>
               </div>

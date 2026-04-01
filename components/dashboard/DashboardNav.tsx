@@ -64,7 +64,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
       { name: "GRC", href: "/grc", icon: GrcIcon },
       { name: "Risk Register", href: "/risk-register", icon: RiskIcon },
       { name: "Audits", href: "/audits", icon: AuditIcon },
-      { name: "CISO", href: "/ciso", icon: CisoIcon },
+      { name: "Posture", href: "/ciso", icon: CisoIcon },
       { name: "Exports", href: "/exports", icon: ExportIcon },
     ],
     []

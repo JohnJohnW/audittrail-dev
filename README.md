@@ -2,7 +2,9 @@
 
 > Compliance that works in the background. Surfaces when it counts.
 
-Connect your GitHub repositories once. Audit Trail maps every commit, pull request, code review, branch protection rule, and security alert to the controls inside twelve compliance frameworks - continuously, in real time, without any manual tagging. When your auditor asks, your CISO needs a board report, or a partner requests a due diligence package, everything is already there.
+Compliance automation for SaaS teams that use GitHub. Connect your repositories once and Audit Trail maps every commit, pull request, code review, branch protection rule, and security alert to the controls inside six compliance frameworks — continuously, in real time, without any manual tagging. Built for SaaS startups (5-50 engineers) who need SOC 2 or ISO 27001 to close enterprise deals.
+
+Assessment methodology based on NIST SP 800-53A Rev 5. Continuous monitoring approach follows NIST SP 800-137.
 
 ---
 
@@ -127,51 +129,30 @@ flowchart LR
 
 ## Compliance Frameworks
 
-Twelve frameworks mapped out of the box. Every account starts with a 14-day Pro trial; free plans include 3 frameworks, Pro unlocks all twelve.
+Six frameworks with strong GitHub evidence coverage. Every account starts with a 14-day Pro trial; free plans include 2 frameworks, Pro ($5/mo) unlocks all six.
 
-| Framework            | Controls | Key areas                                               |
-| -------------------- | -------- | ------------------------------------------------------- |
-| ISO 27001:2022       | 10       | Secure development, access control, change management   |
-| Essential Eight      | 5        | Patching, MFA, application control                      |
-| NIST CSF 2.0         | 7        | Configuration management, software dev, monitoring      |
-| NIST SP 800-53 Rev 5 | 7        | Account management, change control, flaw remediation    |
-| SOC 2                | 5        | Access control, change management, monitoring           |
-| GDPR                 | 3        | Privacy by design, security of processing               |
-| SOCI Act             | 4        | Critical infrastructure access and system security      |
-| PCI DSS 4.0          | 5        | Vulnerability management, web app security              |
-| NIST SP 800-207      | 10       | Zero Trust: identity, device, network, visibility       |
-| ASD MDA Foundations  | 10       | Modern Defensible Architecture                          |
-| **NIST AI RMF 1.0**  | **8**    | **AI governance, model risk, agentic AI, supply chain** |
-| **EU AI Act (2024)** | **6**    | **Risk management, data governance, robustness**        |
+| Framework            | Controls | Key areas                                             |
+| -------------------- | -------- | ----------------------------------------------------- |
+| SOC 2                | 5        | Access control, change management, monitoring         |
+| ISO 27001:2022       | 10       | Secure development, access control, change management |
+| NIST CSF 2.0         | 7        | Configuration management, software dev, monitoring    |
+| NIST SP 800-53 Rev 5 | 7        | Account management, change control, flaw remediation  |
+| Essential Eight      | 5        | Patching, MFA, application control                    |
+| PCI DSS 4.0          | 5        | Vulnerability management, web app security            |
 
-### AI governance frameworks
+We focus on frameworks where GitHub activity produces meaningful evidence. For frameworks that are primarily policy, organisational, or physical (GDPR, Zero Trust architecture, etc.), the controls can't be adequately evidenced from Git activity alone.
 
-For teams building AI products, Audit Trail maps developer activity to controls covering the specific risks of AI systems:
+### What Audit Trail does NOT cover
 
-```mermaid
-flowchart TD
-    AIC[AI-Related Activity\nin GitHub]
+Audit Trail covers SDLC controls evidenced by GitHub: change management, access control, vulnerability management, and security testing. It does not cover:
 
-    AIC --> MC[Model code commits\nllm, embedding, inference, agent]
-    AIC --> AT[Adversarial test runs\nCI SARIF from safety suites]
-    AIC --> SB[SBOMs\nmodel weights + inference deps]
-    AIC --> GP[Governance policies\nuploaded PDFs]
+- **HR controls** — background checks, onboarding/offboarding, training records
+- **Vendor/third-party risk** — supplier assessments, subprocessor management
+- **Physical security** — facility access, environmental controls
+- **Written policies** — acceptable use, incident response plans, business continuity
+- **Network and infrastructure** — firewall rules, cloud IAM, encryption at rest
 
-    MC --> RMF[NIST AI RMF\nAI-GOV, AI-MAP, AI-MEAS, AI-MANAGE]
-    AT --> RMF
-    SB --> RMF
-    GP --> RMF
-
-    MC --> EUA[EU AI Act\nArt. 9-15]
-    AT --> EUA
-    SB --> EUA
-    GP --> EUA
-
-    RMF --> COV[AI Governance\nCoverage Score]
-    EUA --> COV
-```
-
-Risks covered: model drift, prompt injection, data poisoning, training data bias, agentic AI tool-calling risks, adversarial robustness, AI supply chain integrity.
+For these, Audit Trail clearly flags the gap and tells you what supplementary evidence is needed.
 
 ---
 
@@ -388,12 +369,12 @@ Full data export includes: evidence artifacts, compliance snapshots, audit cycle
 
 ## Pricing
 
-| Plan       | Price            | Limits                                                                      |
-| ---------- | ---------------- | --------------------------------------------------------------------------- |
-| Free       | $0/month         | 2 repos, 3 frameworks, no exports or auditor portal                         |
-| Pro trial  | Free for 14 days | Full Pro access; 3 exports and 1 auditor session during trial               |
-| Pro        | $49/month        | Unlimited repos, all 12 frameworks, exports, auditor portal, CISO dashboard |
-| Enterprise | Custom           | SSO, IRAP, HIPAA, dedicated support                                         |
+| Plan       | Price            | Limits                                                                     |
+| ---------- | ---------------- | -------------------------------------------------------------------------- |
+| Free       | $0/month         | 2 repos, 2 frameworks, no exports or auditor portal                        |
+| Pro trial  | Free for 14 days | Full Pro access; 3 exports and 1 auditor session during trial              |
+| Pro        | $5/month         | Unlimited repos, all 6 frameworks, exports, auditor portal, posture trends |
+| Enterprise | Custom           | SSO, IRAP, HIPAA, dedicated support                                        |
 
 No credit card required to start. The 14-day trial begins automatically on signup and converts to the free plan at expiry unless a subscription is started via Stripe.
 
@@ -422,7 +403,7 @@ cp .env.example .env.local
 # 3. Run migrations
 npx prisma migrate dev
 
-# 4. Seed frameworks and controls (12 frameworks, 97 controls)
+# 4. Seed frameworks and controls (6 frameworks, 39 controls)
 npx tsx prisma/seed.ts
 
 # 5. Seed control embeddings (requires GEMINI_API_KEY)

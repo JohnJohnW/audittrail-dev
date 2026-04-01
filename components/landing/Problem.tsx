@@ -10,7 +10,7 @@ export function Problem() {
           <FadeIn direction="right" delay={0}>
             <p className="text-xs text-gray-400 uppercase tracking-wider mb-4">The problem</p>
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-              Compliance is treated as work
+              Your enterprise deal needs SOC 2. You have 6 engineers.
             </h2>
             <ul className="space-y-4 text-[15px] leading-relaxed">
               <li className="flex gap-3 group">
@@ -18,8 +18,8 @@ export function Problem() {
                   x
                 </span>
                 <span className="text-gray-600">
-                  Auditors ask for change management evidence. You spend hours screenshotting GitHub
-                  PRs and commit logs.
+                  Enterprise prospects ask for compliance evidence. You spend hours screenshotting
+                  GitHub PRs and writing up change management narratives.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -27,9 +27,8 @@ export function Problem() {
                   x
                 </span>
                 <span className="text-gray-600">
-                  Your CISO wants a risk posture report. Your GRC team wants ownership of gaps. A
-                  partner wants a compliance package. All from different tools, none of them
-                  current.
+                  Mapping your Git workflow to SOC 2, ISO 27001, or NIST CSF requires compliance
+                  expertise you don&apos;t have and can&apos;t afford to hire for.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -37,8 +36,8 @@ export function Problem() {
                   x
                 </span>
                 <span className="text-gray-600">
-                  Mapping your Git workflow to ISO 27001, NIST CSF, GDPR, or SOC 2 requires
-                  compliance expertise you don&apos;t have time for.
+                  You&apos;re already doing the right things in GitHub — code reviews, branch
+                  protection, dependency updates. But none of it is captured as compliance evidence.
                 </span>
               </li>
             </ul>
@@ -47,7 +46,7 @@ export function Problem() {
           <FadeIn direction="left" delay={0.15}>
             <p className="text-xs text-gray-400 uppercase tracking-wider mb-4">The solution</p>
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-              Compliance infrastructure. Not compliance overhead.
+              Turn your GitHub activity into compliance evidence. Automatically.
             </h2>
             <ul className="space-y-4 text-[15px] leading-relaxed">
               <li className="flex gap-3 group">
@@ -55,9 +54,9 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Install once. Audit Trail watches everything. Webhooks stream commits, PRs,
-                  reviews, Dependabot alerts, and deployment approvals in real time. No daily batch
-                  lag.
+                  Install once. Audit Trail watches everything — commits, PRs, reviews, Dependabot
+                  alerts, branch protection, deployments — and maps them to 39 controls across 6
+                  frameworks.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -65,9 +64,9 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  GRC teams get gap ownership and risk treatment tracking. CISOs get posture trends,
-                  breach cost exposure, and board-ready summaries. Partners get a shareable
-                  compliance package - all from the same live evidence base.
+                  Not just checkboxes — Audit Trail measures control effectiveness using NIST SP
+                  800-53A methodology. Are your PR reviews substantive or rubber-stamps? Are
+                  dependency patches applied in days or weeks?
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -75,9 +74,9 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Every artifact maps to controls across twelve frameworks including ISO 27001, NIST
-                  CSF, SOC 2, GDPR, NIST AI RMF, and EU AI Act - automatically, with AI confidence
-                  scoring.
+                  Covers the technical SDLC controls that live in your repos. For everything else —
+                  HR policies, vendor risk, physical security — Audit Trail tells you exactly
+                  what&apos;s missing so you know where to focus.
                 </span>
               </li>
             </ul>

@@ -419,24 +419,6 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
     ],
   },
 
-  // ─── GDPR ─────────────────────────────────────────────────────────────────
-  "GDPR-Art25": {
-    summary: "No privacy-by-design evidence in code",
-    actions: [
-      "Commit data minimisation patterns (avoid logging PII, mask sensitive fields)",
-      "Add privacy-related commit messages or PR descriptions referencing Art. 25",
-      "Include data handling policy files in your repository",
-    ],
-  },
-  "GDPR-Art32": {
-    summary: "No security-of-processing evidence",
-    actions: [
-      "Add encryption configuration to your codebase (TLS configs, key management)",
-      "Commit security review PRs that document risk assessments",
-      "Add automated security scanning to your CI pipeline",
-    ],
-  },
-
   // ─── PCI DSS 4.0 ──────────────────────────────────────────────────────────
   "PCI-6.2": {
     summary: "No security vulnerability identification evidence",
@@ -518,40 +500,6 @@ const CONTROL_RECOMMENDATIONS: Record<string, GapRecommendation> = {
       "All code changes should go through reviewed pull requests",
       "Enable branch protection with required approvals",
       "Use PR templates that capture the reason for change, testing done, and risk assessment",
-    ],
-  },
-
-  // ─── SOCI Act ─────────────────────────────────────────────────────────────
-  "SOCI-PSO1": {
-    summary: "No hazard and risk management evidence",
-    actions: [
-      "Commit a risk register or risk assessment document to a policy repository",
-      "Add PR templates that include a risk assessment section for significant changes",
-      "Reference risk mitigation steps in commit messages or PR descriptions",
-    ],
-  },
-  "SOCI-PSO2": {
-    summary: "No incident response plan evidence",
-    actions: [
-      "Commit an incident response runbook to your repository (docs/incident-response.md)",
-      "Add GitHub issue templates for security incidents and outages",
-      "Reference incident response procedures in your CI/CD alerting configuration",
-    ],
-  },
-  "SOCI-PSO3": {
-    summary: "No system security plan evidence",
-    actions: [
-      "Commit a system security plan document to a protected repository",
-      "Add branch protection on the repository containing security documentation",
-      "Reference your system security plan in PRs that change security controls",
-    ],
-  },
-  "SOCI-PSO4": {
-    summary: "No access control evidence",
-    actions: [
-      "Configure branch protection to enforce review before merging",
-      "Commit access control policies and CODEOWNERS files",
-      "Add IAM policy definitions that implement least-privilege access",
     ],
   },
 };

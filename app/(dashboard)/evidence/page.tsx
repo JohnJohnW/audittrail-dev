@@ -374,11 +374,11 @@ export default function EvidencePage() {
               </div>
               <div>
                 <p className="font-semibold text-amber-800 text-sm">
-                  Unlock all 12 frameworks, PDF exports, and the GRC dashboard
+                  Unlock all 6 frameworks, PDF exports, and the auditor portal
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">
-                  You&apos;re on the free plan — upgrade to Pro to access NIST AI RMF, EU AI Act,
-                  SOCI Act, and more.
+                  You&apos;re on the free plan — upgrade to Pro ($5/mo) to access all frameworks and
+                  export features.
                 </p>
                 <Link
                   href="/settings"

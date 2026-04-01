@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { FadeIn, StaggerChildren } from "@/components/ui/Motion";
 
-// Static feature lists - defined outside component to avoid recreation on every render
 const FREE_FEATURES = [
   "Up to 2 repositories",
-  "3 compliance frameworks",
+  "2 compliance frameworks",
   "Live compliance scoring & evidence dashboard",
   "Gap analysis with prioritised action steps",
   "Basic compliance alerts",
@@ -17,15 +16,13 @@ const FREE_EXCLUDED = ["Exports, auditor portal, or shareable reports"];
 
 const PRO_FEATURES = [
   "Unlimited repositories",
-  "All 12 compliance frameworks incl. NIST AI RMF & EU AI Act",
-  "GRC dashboard: gap ownership, risk register, audit cycles",
-  "CISO dashboard: posture trend, business impact, board summary",
-  "PDF & CSV exports",
-  "Auditor portal (comments, sign-offs, ZIP)",
+  "All 6 frameworks (SOC 2, ISO 27001, NIST CSF, NIST 800-53, Essential Eight, PCI DSS)",
+  "PDF & CSV compliance exports",
+  "Auditor portal with comments, sign-offs, and evidence ZIP",
   "Shareable read-only reports for due diligence",
-  "Full industry benchmark data",
+  "Security posture trends and readiness scoring",
   "Advanced alerts & full alert history",
-  "Priority support",
+  "Control effectiveness analysis (NIST SP 800-53A methodology)",
 ];
 
 export function Pricing() {
@@ -38,7 +35,8 @@ export function Pricing() {
             14-day Pro trial included. No credit card required.
           </h2>
           <p className="mt-3 text-sm text-gray-500">
-            Every account starts with full Pro access. Downgrade to free or subscribe at any time.
+            Every account starts with full Pro access. Downgrade to free or subscribe when
+            you&apos;re ready.
           </p>
         </FadeIn>
 
@@ -103,13 +101,13 @@ export function Pricing() {
           {/* Pro Plan */}
           <div className="bg-white border-2 border-accent rounded-lg p-6 relative hover:shadow-lg hover:shadow-accent/10 transition-all duration-300">
             <div className="absolute -top-3 left-4 px-3 py-0.5 bg-accent text-white text-xs font-medium rounded-full">
-              Popular
+              Most popular
             </div>
 
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-900 mb-1">Pro</h3>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-semibold text-gray-900">$49</span>
+                <span className="text-3xl font-semibold text-gray-900">$5</span>
                 <span className="text-sm text-gray-500">/month</span>
               </div>
               <p className="text-xs text-accent mt-1 font-medium">
@@ -148,12 +146,19 @@ export function Pricing() {
         </StaggerChildren>
 
         <FadeIn direction="up" delay={0.4}>
-          <p className="text-center text-sm text-gray-500 mt-8">
-            Need enterprise features like SSO, IRAP, or HIPAA?{" "}
-            <a href="/contact" className="text-accent hover:underline">
-              Let&apos;s talk
-            </a>
-          </p>
+          <div className="text-center mt-8 space-y-2">
+            <p className="text-xs text-gray-400">
+              Covers SDLC controls evidenced by GitHub activity: change management, access control,
+              vulnerability management, and security testing. For HR policies, vendor risk, and
+              physical security, Audit Trail tells you what&apos;s missing.
+            </p>
+            <p className="text-sm text-gray-500">
+              Need enterprise features like SSO, IRAP, or HIPAA?{" "}
+              <a href="/contact" className="text-accent hover:underline">
+                Let&apos;s talk
+              </a>
+            </p>
+          </div>
         </FadeIn>
       </div>
     </section>

@@ -203,37 +203,6 @@ function getCommitRelevance(message: string, controlCode: string): "high" | "med
     return "low";
   }
 
-  // GDPR records of processing (partial git evidence)
-  if (controlCode === "GDPR-Art30") {
-    if (matchesPatterns(message, SECURITY_PATTERNS)) return "high";
-    return "medium";
-  }
-
-  // SOCI Act risk and hazard management (SOCI-PSO1)
-  if (controlCode === "SOCI-PSO1") {
-    if (/\brisk\b|\bhazard\b|\bincident\b|\bthreat\b|\bexposure\b/i.test(message)) return "high";
-    if (matchesPatterns(message, SECURITY_PATTERNS)) return "medium";
-    return "low";
-  }
-
-  // SOCI Act incident response (SOCI-PSO2)
-  if (controlCode === "SOCI-PSO2") {
-    if (
-      /\bincident.?response\b|\brunbook\b|\bplaybook\b|\bescalation\b|\bpostmortem\b/i.test(message)
-    )
-      return "high";
-    if (/\bincident\b|\bresponse\b|\brecovery\b/i.test(message)) return "medium";
-    return "low";
-  }
-
-  // SOCI Act system security plan (SOCI-PSO3)
-  if (controlCode === "SOCI-PSO3") {
-    if (/\bsecurity.?plan\b|\bsecurity.?policy\b|\bssp\b|\bsystem.?security\b/i.test(message))
-      return "high";
-    if (matchesPatterns(message, SECURITY_PATTERNS)) return "medium";
-    return "low";
-  }
-
   // Default relevance for general commit evidence
   return "medium";
 }
@@ -395,7 +364,7 @@ export async function getComplianceEvidence(
     );
 
     // Controls that have limited Git evidence
-    const LIMITED_EVIDENCE_CONTROLS = ["E8-MM", "E8-UAH", "GDPR-Art30"];
+    const LIMITED_EVIDENCE_CONTROLS = ["E8-MM", "E8-UAH"];
 
     // Map controls to evidence
     const controls: ControlEvidence[] = [];
@@ -448,43 +417,6 @@ export async function getComplianceEvidence(
               // Signed commits directly evidence developer authentication / MFA practices.
               // Use only signed commits when available so every evidence item is high relevance.
               relevantCommits = signedCommits.length > 0 ? signedCommits : allCommits;
-            } else if (control.code === "SOCI-PSO1") {
-              // Risk and hazard management: prioritize security and risk-related commits
-              const riskCommits = allCommits.filter((c) =>
-                /\brisk\b|\bhazard\b|\bthreat\b|\bexposure\b/i.test(c.message)
-              );
-              relevantCommits =
-                riskCommits.length > 0
-                  ? [...riskCommits, ...securityCommits, ...allCommits.slice(0, 5)]
-                  : securityCommits.length > 0
-                    ? [...securityCommits, ...allCommits.slice(0, 10)]
-                    : allCommits;
-            } else if (control.code === "SOCI-PSO2") {
-              // Incident response: prioritize incident/runbook/playbook commits
-              const irCommits = allCommits.filter((c) =>
-                /\bincident.?response\b|\brunbook\b|\bplaybook\b|\bescalation\b|\bpostmortem\b|\bincident\b/i.test(
-                  c.message
-                )
-              );
-              relevantCommits =
-                irCommits.length > 0
-                  ? [...irCommits, ...securityCommits.slice(0, 5)]
-                  : securityCommits.length > 0
-                    ? securityCommits
-                    : allCommits;
-            } else if (control.code === "SOCI-PSO3") {
-              // System security plan: prioritize security policy/plan commits
-              const sspCommits = allCommits.filter((c) =>
-                /\bsecurity.?plan\b|\bsecurity.?policy\b|\bssp\b|\bsystem.?security\b/i.test(
-                  c.message
-                )
-              );
-              relevantCommits =
-                sspCommits.length > 0
-                  ? [...sspCommits, ...securityCommits.slice(0, 10)]
-                  : securityCommits.length > 0
-                    ? securityCommits
-                    : allCommits;
             }
 
             // Build evidence items
@@ -636,71 +568,8 @@ export async function getComplianceEvidence(
             break;
           }
 
-          case "ai_governance": {
-            // AI governance controls: map security commits, CI SARIF (adversarial testing),
-            // SBOM (AI supply chain), and PR reviews (model review gates) as proxy evidence.
-            // Most definitive evidence comes via uploaded policy docs (Phase 2 uploads).
-            const aiPatterns = [
-              /\bai\b|\bml\b|\bmodel\b|\bllm\b|\bgpt\b|\bgemini\b|\bclaude\b/i,
-              /\bprompt.?injec/i,
-              /\bdata.?poison/i,
-              /\bmodel.?drift\b/i,
-              /\bhallucin/i,
-              /\bfine.?tun/i,
-              /\bembedding/i,
-              /\binference\b/i,
-              /\bagent(ic)?\b/i,
-              /\bsafeguard/i,
-              /\bguardrail/i,
-              /\bmoderation\b/i,
-            ];
-
-            const aiCommits = allCommits.filter((c) => aiPatterns.some((p) => p.test(c.message)));
-            const aiCiArtifacts = allCIArtifacts.filter((a) =>
-              /\bai\b|\bml\b|\bmodel\b|\bsafety\b/i.test(a.name)
-            );
-            const aiSboms = allCIArtifacts.filter((a) => a.artifactType === "sbom");
-
-            for (const commit of [...aiCommits, ...allCommits.slice(0, 5)].slice(0, 20)) {
-              const repoInfo = commitToRepo.get(commit.id);
-              const isDirectlyRelevant = aiPatterns.some((p) => p.test(commit.message));
-              evidence.push({
-                type: "commit",
-                title: `Commit: ${commit.sha.slice(0, 7)}`,
-                description: commit.message.split("\n")[0].slice(0, 100),
-                timestamp: commit.committedAt,
-                url: commit.url || undefined,
-                metadata: { sha: commit.sha, author: commit.authorName },
-                relevance: isDirectlyRelevant ? "high" : "low",
-                repositoryId: repoInfo?.id,
-                repositoryName: repoInfo?.name,
-                repositoryFullName: repoInfo?.fullName,
-              });
-            }
-
-            for (const artifact of [...aiCiArtifacts, ...aiSboms].slice(0, 5)) {
-              const repo = repositories.find((r) => r.id === artifact.repoId);
-              evidence.push({
-                type: "commit",
-                title: `CI: ${artifact.name}`,
-                description: `${artifact.artifactType.replace("_", " ")} - AI supply chain evidence`,
-                timestamp: artifact.createdAt,
-                metadata: { artifactType: artifact.artifactType, runId: artifact.runId },
-                relevance: "medium",
-                repositoryId: repo?.id,
-                repositoryName: repo?.name,
-                repositoryFullName: repo?.fullName,
-              });
-            }
-
-            if (status !== "limited") {
-              const highRelevance = evidence.filter((e) => e.relevance === "high").length;
-              if (highRelevance >= 3) {
-                status = "has_evidence";
-              } else if (evidence.length > 0) {
-                status = "partial";
-              }
-            }
+          default: {
+            // Unrecognised evidence type — no automated evidence available
             break;
           }
         }
@@ -720,8 +589,6 @@ export async function getComplianceEvidence(
           "SOC2-CC7.1",
           "SOC2-CC7.2", // System operations monitoring
           "800-53-SA-11", // Developer security testing
-          "SOCI-PSO1", // SOCI: Hazard and risk management - security scans as evidence
-          "SOCI-PSO3", // SOCI: System security plan - CI security artifacts
         ];
         if (ciControlCodes.includes(control.code) && allCIArtifacts.length > 0) {
           const sarifArtifacts = allCIArtifacts.filter((a) => a.artifactType === "sarif");
@@ -786,7 +653,6 @@ export async function getComplianceEvidence(
           "SOC2-CC8.1", // Change management
           "800-53-CM-3",
           "800-53-CM-4", // Configuration change control
-          "SOCI-PSO4", // SOCI: Access control to critical infrastructure - deployment gates
         ];
         if (envControlCodes.includes(control.code) && allDeploymentEnvironments.length > 0) {
           for (const env of allDeploymentEnvironments.slice(0, 5)) {
@@ -827,7 +693,6 @@ export async function getComplianceEvidence(
           "SOC2-CC6.2",
           "SOC2-CC6.3", // Logical access security
           "800-53-AC-2", // Account management
-          "SOCI-PSO4", // SOCI Act: Access control to critical infrastructure
         ];
         if (accessControlCodes.includes(control.code) && membershipEvents.length > 0) {
           for (const event of membershipEvents.slice(0, 10)) {

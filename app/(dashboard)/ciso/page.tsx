@@ -41,40 +41,6 @@ interface ActiveAudit {
   targetCloseDate: string | null;
 }
 
-interface FineBreakdownItem {
-  framework: string;
-  maxFine: string;
-  basis: string;
-}
-
-interface BusinessImpact {
-  breachCostEstimate: number;
-  breachCostBasis: {
-    baseline: string;
-    secondarySource?: string;
-    notificationVolume?: string;
-    sizeMultiplier: number;
-    industryMultiplier: number;
-    gapMultiplier: number;
-    sizeUsed: string;
-    industryUsed: string;
-    note?: string;
-  };
-  regulatoryFineBreakdown: FineBreakdownItem[];
-  maxFineEstimate: number;
-  dealBlockerRisk: "low" | "medium" | "high";
-  dealBlockerBasis: {
-    readinessScore: number;
-    noEvidenceControls: number;
-    thresholds: string;
-  };
-  daysToAuditReady: { min: number; max: number; label: string };
-  daysToAuditReadyBasis: {
-    readinessScore: number;
-    method: string;
-  };
-}
-
 interface CISOData {
   currentScore: number;
   readinessScore: number;
@@ -85,13 +51,6 @@ interface CISOData {
   predictedOutcome: "likely_pass" | "pass_with_findings" | "at_risk";
   industry: string;
   companySize: string;
-  businessImpact: BusinessImpact;
-}
-
-interface ExecutiveSummaryResponse {
-  status: "unavailable" | "ok";
-  summary?: string;
-  generatedAt?: string;
 }
 
 function predictedOutcomeVariant(outcome: string): "success" | "warning" | "error" | "default" {
@@ -154,8 +113,6 @@ export default function CISODashboardPage() {
   const [data, setData] = useState<CISOData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPro, setIsPro] = useState(true);
-  const [execSummary, setExecSummary] = useState<ExecutiveSummaryResponse | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -181,26 +138,12 @@ export default function CISODashboardPage() {
     }
   };
 
-  const generateExecSummary = async () => {
-    setSummaryLoading(true);
-    try {
-      const res = await fetch("/api/ciso/executive-summary", { method: "POST" });
-      if (!res.ok) throw new Error("Failed to generate executive summary");
-      const json: ExecutiveSummaryResponse = await res.json();
-      setExecSummary(json);
-    } catch (error) {
-      logger.error("Failed to generate executive summary", error);
-    } finally {
-      setSummaryLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4" />
-          <p className="text-gray-500">Loading CISO dashboard…</p>
+          <p className="text-gray-500">Loading security posture…</p>
         </div>
       </div>
     );
@@ -228,11 +171,10 @@ export default function CISODashboardPage() {
             </div>
             <div>
               <p className="font-semibold text-yellow-800">
-                CISO Dashboard requires a Pro subscription
+                Security Posture requires a Pro subscription
               </p>
               <p className="text-sm text-yellow-700 mt-1">
-                The CISO dashboard with posture trend, readiness scoring, and AI executive summary
-                generation is a Pro feature.
+                Posture trends, readiness scoring, and predicted audit outcomes are Pro features.
               </p>
               <a
                 href="/settings"
@@ -255,14 +197,7 @@ export default function CISODashboardPage() {
     );
   }
 
-  const {
-    readinessScore,
-    postureTrend,
-    criticalRisks,
-    activeAudit,
-    predictedOutcome,
-    businessImpact,
-  } = data;
+  const { readinessScore, postureTrend, criticalRisks, activeAudit, predictedOutcome } = data;
 
   const trendData = postureTrend.map((pt) => ({
     date: new Date(pt.snapshotDate).toLocaleDateString("en-AU", {
@@ -272,21 +207,16 @@ export default function CISODashboardPage() {
     score: pt.overallScore,
   }));
 
-  const isCached =
-    execSummary?.status === "ok" &&
-    execSummary.generatedAt &&
-    new Date().getTime() - new Date(execSummary.generatedAt).getTime() < 24 * 60 * 60 * 1000;
-
   return (
     <div>
       {/* Header */}
       <FadeIn>
         <div className="mb-6 sm:mb-8">
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">
-            CISO Dashboard
+            Security Posture
           </h1>
           <p className="text-sm sm:text-base text-gray-500 mt-1">
-            Executive security posture overview
+            Compliance readiness and posture trends
           </p>
         </div>
       </FadeIn>
@@ -457,212 +387,6 @@ export default function CISODashboardPage() {
               </table>
             </div>
           )}
-        </Card>
-      </FadeIn>
-
-      {/* Business Impact Panel */}
-      {businessImpact && (
-        <FadeIn delay={0.22}>
-          <Card variant="elevated" padding="none" className="mb-6">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <div>
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                  Business Impact
-                </h2>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Estimates based on your current posture. All figures are illustrative - see
-                  methodology for assumptions.
-                </p>
-              </div>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
-              {/* Breach Cost */}
-              <div className="p-5 group relative">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                  Breach Cost Exposure
-                </p>
-                <p className="text-2xl font-bold text-red-600">
-                  ${(businessImpact.breachCostEstimate / 1_000_000).toFixed(1)}M
-                </p>
-                <p className="text-xs text-gray-400 mt-1">estimated</p>
-                <details className="mt-3">
-                  <summary className="text-xs text-accent cursor-pointer hover:underline">
-                    Methodology
-                  </summary>
-                  <div className="mt-2 text-xs text-gray-500 space-y-1.5 bg-gray-50 rounded-lg p-3">
-                    <p className="font-medium text-gray-700">Primary source</p>
-                    <p>{businessImpact.breachCostBasis.baseline}</p>
-                    {businessImpact.breachCostBasis.secondarySource && (
-                      <>
-                        <p className="font-medium text-gray-700 pt-1">Government source</p>
-                        <p>{businessImpact.breachCostBasis.secondarySource}</p>
-                      </>
-                    )}
-                    {businessImpact.breachCostBasis.notificationVolume && (
-                      <p className="text-gray-400 italic">
-                        {businessImpact.breachCostBasis.notificationVolume}
-                      </p>
-                    )}
-                    <p className="font-medium text-gray-700 pt-1">Calculation</p>
-                    <p>
-                      Size ({businessImpact.breachCostBasis.sizeUsed}): x
-                      {businessImpact.breachCostBasis.sizeMultiplier}
-                    </p>
-                    <p>
-                      Industry ({businessImpact.breachCostBasis.industryUsed}): x
-                      {businessImpact.breachCostBasis.industryMultiplier}
-                    </p>
-                    <p>Gap severity: x{businessImpact.breachCostBasis.gapMultiplier.toFixed(2)}</p>
-                    {businessImpact.breachCostBasis.note && (
-                      <p className="text-gray-400 italic pt-1">
-                        {businessImpact.breachCostBasis.note}
-                      </p>
-                    )}
-                  </div>
-                </details>
-              </div>
-
-              {/* Regulatory Fine */}
-              <div className="p-5">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                  Regulatory Fine Risk
-                </p>
-                {businessImpact.regulatoryFineBreakdown.length > 0 ? (
-                  <>
-                    <p className="text-2xl font-bold text-orange-600">
-                      {businessImpact.regulatoryFineBreakdown[0].maxFine}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {businessImpact.regulatoryFineBreakdown[0].framework} max
-                    </p>
-                    <details className="mt-3">
-                      <summary className="text-xs text-accent cursor-pointer hover:underline">
-                        All frameworks
-                      </summary>
-                      <div className="mt-2 text-xs text-gray-500 space-y-1.5 bg-gray-50 rounded-lg p-3">
-                        {businessImpact.regulatoryFineBreakdown.map((item) => (
-                          <div key={item.framework}>
-                            <span className="font-medium text-gray-700">{item.framework}</span>:{" "}
-                            {item.maxFine}
-                            <span className="text-gray-400"> - {item.basis}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </details>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500">No active frameworks with direct fines</p>
-                )}
-              </div>
-
-              {/* Deal-Blocker Risk */}
-              <div className="p-5">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                  Deal-Blocker Risk
-                </p>
-                <p
-                  className={cn(
-                    "text-2xl font-bold capitalize",
-                    businessImpact.dealBlockerRisk === "high"
-                      ? "text-red-600"
-                      : businessImpact.dealBlockerRisk === "medium"
-                        ? "text-amber-600"
-                        : "text-green-600"
-                  )}
-                >
-                  {businessImpact.dealBlockerRisk}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">for partner/enterprise deals</p>
-                <details className="mt-3">
-                  <summary className="text-xs text-accent cursor-pointer hover:underline">
-                    Methodology
-                  </summary>
-                  <div className="mt-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
-                    <p>{businessImpact.dealBlockerBasis.thresholds}</p>
-                    <p className="mt-1">
-                      Score: {businessImpact.dealBlockerBasis.readinessScore}% | Gaps:{" "}
-                      {businessImpact.dealBlockerBasis.noEvidenceControls}
-                    </p>
-                  </div>
-                </details>
-              </div>
-
-              {/* Days to Audit-Ready */}
-              <div className="p-5">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                  Days to Audit-Ready
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {businessImpact.daysToAuditReady.label}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">estimated remediation time</p>
-                <details className="mt-3">
-                  <summary className="text-xs text-accent cursor-pointer hover:underline">
-                    Methodology
-                  </summary>
-                  <div className="mt-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
-                    <p>Readiness score: {businessImpact.daysToAuditReadyBasis.readinessScore}%</p>
-                    <p className="mt-1">{businessImpact.daysToAuditReadyBasis.method}</p>
-                  </div>
-                </details>
-              </div>
-            </div>
-          </Card>
-        </FadeIn>
-      )}
-
-      {/* AI Executive Summary */}
-      <FadeIn delay={0.25}>
-        <Card variant="elevated" className="mb-6">
-          <CardHeader>
-            <CardTitle>AI Board Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500 mb-4">
-              Generate a board-ready narrative summarising your current security posture, key risks,
-              and recommended actions.
-            </p>
-
-            {execSummary?.status === "ok" && execSummary.summary ? (
-              <div>
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-                  {execSummary.summary}
-                </div>
-                {isCached && execSummary.generatedAt && (
-                  <p className="mt-2 text-xs text-gray-400">
-                    Cached, refreshes every 24h · Generated{" "}
-                    {new Date(execSummary.generatedAt).toLocaleString()}
-                  </p>
-                )}
-                <div className="mt-4">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={generateExecSummary}
-                    loading={summaryLoading}
-                    disabled={summaryLoading}
-                  >
-                    Regenerate
-                  </Button>
-                </div>
-              </div>
-            ) : execSummary?.status === "unavailable" ? (
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
-                AI summaries are not available right now. Please try again later.
-              </div>
-            ) : (
-              <Button
-                variant="accent"
-                onClick={generateExecSummary}
-                loading={summaryLoading}
-                disabled={summaryLoading}
-              >
-                {summaryLoading
-                  ? "Claude is drafting your board narrative…"
-                  : "Generate Board Summary"}
-              </Button>
-            )}
-          </CardContent>
         </Card>
       </FadeIn>
 
