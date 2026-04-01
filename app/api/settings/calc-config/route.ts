@@ -88,7 +88,7 @@ export async function PUT(request: Request) {
 
     const body = await parseJsonBody<OrgCalcOverrides>(request);
 
-    // Basic validation — reject obviously wrong values
+    // Basic validation: reject obviously wrong values
     if (body.scoring?.partialWeight !== undefined) {
       const w = body.scoring.partialWeight;
       if (typeof w !== "number" || w < 0 || w > 1) {
@@ -112,7 +112,7 @@ export async function PUT(request: Request) {
       }
     }
 
-    // Upsert org calc config — JSON.parse(JSON.stringify()) gives a plain value
+    // Upsert org calc config. JSON.parse(JSON.stringify()) gives a plain value
     // that satisfies Prisma's InputJsonValue constraint
     const configJson = JSON.parse(JSON.stringify(body)) as Prisma.InputJsonValue;
     await db.orgCalcConfig.upsert({

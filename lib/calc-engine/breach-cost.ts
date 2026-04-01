@@ -112,10 +112,10 @@ export async function calculateTransparentBreachCost(
   });
 
   if (!inputs.companySize) {
-    warnings.push(`Company size not set — defaulting to "${sizeKey}". Set in Org Settings.`);
+    warnings.push(`Company size not set, defaulting to "${sizeKey}". Set in Org Settings.`);
   }
   if (!inputs.industry) {
-    warnings.push(`Industry not set — defaulting to "${industryKey}". Set in Org Settings.`);
+    warnings.push(`Industry not set, defaulting to "${industryKey}". Set in Org Settings.`);
   }
 
   return {

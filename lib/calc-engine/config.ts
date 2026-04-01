@@ -1,5 +1,5 @@
 /**
- * Transparent Calculation Engine — Configuration Loader
+ * Transparent Calculation Engine: Configuration Loader
  *
  * Loads org-specific calculation config and merges with system defaults.
  */

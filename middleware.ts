@@ -1,13 +1,13 @@
 /**
- * Next.js Edge Middleware — API Gateway layer
+ * Next.js Edge Middleware. API Gateway layer
  *
  * Runs at the Vercel Edge Network before any serverless function:
- *   1. Upload size gate   — rejects oversized bodies on /api/evidence/upload before compute
- *   2. API rate limiting  — sliding-window per IP across all /api/* routes (Upstash Redis)
- *   3. Dashboard auth     — redirects unauthenticated users to sign-in
+ *   1. Upload size gate  . rejects oversized bodies on /api/evidence/upload before compute
+ *   2. API rate limiting . sliding-window per IP across all /api/* routes (Upstash Redis)
+ *   3. Dashboard auth    . redirects unauthenticated users to sign-in
  *
  * GitHub IP allowlisting for /api/webhooks/github is handled inside the route
- * itself (needs the raw body for HMAC) — see app/api/webhooks/github/route.ts.
+ * itself (needs the raw body for HMAC). see app/api/webhooks/github/route.ts.
  */
 
 import { NextResponse } from "next/server";
@@ -44,14 +44,14 @@ const authLimiter = redis
   : null;
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-// Max body size for evidence uploads — reject at the edge before compute.
+// Max body size for evidence uploads. reject at the edge before compute.
 // Individual file-type limits are enforced again inside the route handler.
 const UPLOAD_MAX_BYTES = 55 * 1024 * 1024; // 55 MB (edge gate; route enforces 50 MB per file)
 
 // Routes that skip the general API rate limiter (they have their own controls)
 const RATE_LIMIT_SKIP_PREFIXES = [
   "/api/cron/", // secret-gated internal cron; scheduler has its own backoff
-  "/api/health", // monitoring probes — must never be blocked
+  "/api/health", // monitoring probes. must never be blocked
   "/api/auth/", // NextAuth handles its own throttling internally
   "/api/webhooks/stripe", // Stripe IPs + HMAC signature verified inside route
   "/api/webhooks/github", // GitHub IPs + HMAC signature verified inside route
@@ -154,7 +154,7 @@ export const config = {
   matcher: [
     // All API routes (rate limiting + upload size gate)
     "/api/:path*",
-    // Dashboard pages (auth redirect) — includes new pages added since original middleware
+    // Dashboard pages (auth redirect). includes new pages added since original middleware
     "/dashboard/:path*",
     "/repositories/:path*",
     "/evidence/:path*",

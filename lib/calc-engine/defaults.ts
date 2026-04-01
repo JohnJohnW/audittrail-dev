@@ -1,5 +1,5 @@
 /**
- * Transparent Calculation Engine — System Defaults
+ * Transparent Calculation Engine: System Defaults
  *
  * Every default value includes its source citation and a recommendation
  * string explaining when to override it.
@@ -10,14 +10,14 @@
  * - NIST SP 800-137 Rev 1: Information Security Continuous Monitoring (ISCM)
  *   (justifies real-time, webhook-based evidence collection)
  * - NIST SP 800-37 Rev 2: Risk Management Framework
- *   (Step 4 — Assess Controls; Step 6 — Monitor Controls)
+ *   (Step 4: Assess Controls; Step 6: Monitor Controls)
  */
 
 export const DEFAULTS = {
   scoring: {
     partialWeight: 0.5,
     partialWeightCitation:
-      "NIST SP 800-53A Rev 5 §2.5: partial satisfaction means some — but not all — assessment objectives are met. 0.5 reflects the midpoint between satisfied and not satisfied.",
+      "NIST SP 800-53A Rev 5 §2.5: partial satisfaction means some, but not all, assessment objectives are met. 0.5 reflects the midpoint between satisfied and not satisfied.",
     partialWeightRecommendation:
       "0.5 is standard. Lower to 0.25 if your auditor requires stronger evidence thresholds. Raise to 0.75 if partial evidence is commonly accepted in your industry.",
 
@@ -34,7 +34,7 @@ export const DEFAULTS = {
      * Control effectiveness weighting per NIST SP 800-53A Rev 5.
      *
      * SP 800-53A defines three assessment dimensions. Weights reflect NIST's
-     * emphasis that operating effectiveness is the primary indicator of control health —
+     * emphasis that operating effectiveness is the primary indicator of control health:
      * a well-designed control that is not consistently applied provides little assurance.
      *
      * Formula: controlScore = design × 0.3 + operating × 0.5 + quality × 0.2
@@ -42,13 +42,13 @@ export const DEFAULTS = {
     effectivenessWeights: {
       design: 0.3,
       designCitation:
-        "NIST SP 800-53A Rev 5 §2.4: design adequacy — examine assessment method. Necessary but insufficient without operating effectiveness.",
+        "NIST SP 800-53A Rev 5 §2.4: design adequacy. examine assessment method. Necessary but insufficient without operating effectiveness.",
       operating: 0.5,
       operatingCitation:
-        "NIST SP 800-53A Rev 5 §2.4: operating effectiveness — test assessment method. Primary indicator of whether a control is functioning as intended in practice.",
+        "NIST SP 800-53A Rev 5 §2.4: operating effectiveness. test assessment method. Primary indicator of whether a control is functioning as intended in practice.",
       quality: 0.2,
       qualityCitation:
-        "NIST SP 800-53A Rev 5 §2.3: evidence quality — specificity, freshness, and traceability of artifacts collected.",
+        "NIST SP 800-53A Rev 5 §2.3: evidence quality. specificity, freshness, and traceability of artifacts collected.",
     },
 
     /**
@@ -57,12 +57,12 @@ export const DEFAULTS = {
      */
     evidenceTierLabels: {
       has_evidence:
-        "Satisfied — control objective met (SP 800-53A: examine + test evidence available)",
+        "Satisfied. control objective met (SP 800-53A: examine + test evidence available)",
       partial:
-        "Partially Satisfied — some assessment objectives met; supplementary evidence recommended",
+        "Partially Satisfied. some assessment objectives met; supplementary evidence recommended",
       limited:
-        "Other Than Satisfied — requires supplementary assessment beyond GitHub-evidenceable controls",
-      no_evidence: "Not Determined — no assessment evidence available from GitHub activity",
+        "Other Than Satisfied. requires supplementary assessment beyond GitHub-evidenceable controls",
+      no_evidence: "Not Determined. no assessment evidence available from GitHub activity",
     } as Record<string, string>,
   },
 

@@ -437,7 +437,7 @@ async function main() {
     });
   }
 
-  console.log("Seeding completed — 6 frameworks, 39 controls");
+  console.log("Seeding completed: 6 frameworks, 39 controls");
   console.log(`- SOC 2: ${soc2Controls.length} controls`);
   console.log(`- ISO 27001: ${isoControls.length} controls`);
   console.log(`- NIST CSF 2.0: ${nistCsfControls.length} controls`);

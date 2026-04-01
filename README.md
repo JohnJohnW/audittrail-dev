@@ -2,7 +2,7 @@
 
 > Compliance that works in the background. Surfaces when it counts.
 
-Compliance automation for SaaS teams that use GitHub. Connect your repositories once and Audit Trail maps every commit, pull request, code review, branch protection rule, and security alert to the controls inside six compliance frameworks — continuously, in real time, without any manual tagging. Built for SaaS startups (5-50 engineers) who need SOC 2 or ISO 27001 to close enterprise deals.
+Compliance automation for SaaS teams that use GitHub. Connect your repositories once and Audit Trail maps every commit, pull request, code review, branch protection rule, and security alert to the controls inside six compliance frameworks, continuously, in real time, without any manual tagging. Built for SaaS startups (5-50 engineers) who need SOC 2 or ISO 27001 to close enterprise deals.
 
 Assessment methodology based on NIST SP 800-53A Rev 5. Continuous monitoring approach follows NIST SP 800-137.
 
@@ -146,11 +146,11 @@ We focus on frameworks where GitHub activity produces meaningful evidence. For f
 
 Audit Trail covers SDLC controls evidenced by GitHub: change management, access control, vulnerability management, and security testing. It does not cover:
 
-- **HR controls** — background checks, onboarding/offboarding, training records
-- **Vendor/third-party risk** — supplier assessments, subprocessor management
-- **Physical security** — facility access, environmental controls
-- **Written policies** — acceptable use, incident response plans, business continuity
-- **Network and infrastructure** — firewall rules, cloud IAM, encryption at rest
+- **HR controls**: background checks, onboarding/offboarding, training records
+- **Vendor/third-party risk**: supplier assessments, subprocessor management
+- **Physical security**: facility access, environmental controls
+- **Written policies**: acceptable use, incident response plans, business continuity
+- **Network and infrastructure**: firewall rules, cloud IAM, encryption at rest
 
 For these, Audit Trail clearly flags the gap and tells you what supplementary evidence is needed.
 

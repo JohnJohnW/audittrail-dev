@@ -9,7 +9,7 @@ import { WEBHOOK_CONFIG } from "@/lib/constants";
 // GitHub publishes its webhook source IPs at https://api.github.com/meta
 // We cache the list in module scope (shared across warm invocations) and
 // refresh every hour. A stale or empty cache skips the check rather than
-// blocking legitimate webhooks — HMAC remains the primary guard.
+// blocking legitimate webhooks. The HMAC remains the primary guard.
 
 let _githubHookCIDRs: string[] = [];
 let _githubIPsLastFetched = 0;
@@ -23,7 +23,7 @@ async function getGitHubHookCIDRs(): Promise<string[]> {
   try {
     const res = await fetch("https://api.github.com/meta", {
       headers: { "User-Agent": "AuditTrail-Webhook-Validator/1.0" },
-      signal: AbortSignal.timeout(3000), // 3 s timeout — don't slow webhooks
+      signal: AbortSignal.timeout(3000), // 3 s timeout, don't slow webhooks
     });
     if (res.ok) {
       const data = (await res.json()) as { hooks?: string[] };
@@ -33,7 +33,7 @@ async function getGitHubHookCIDRs(): Promise<string[]> {
       }
     }
   } catch {
-    // Network error fetching meta — use cached list (possibly empty)
+    // Network error fetching meta, use cached list (possibly empty)
   }
   return _githubHookCIDRs;
 }
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
   // We verify HMAC first (primary guard). The IP check is secondary: if we can
   // fetch GitHub's published ranges and the source IP is not in them, we log
   // the anomaly. We do NOT hard-block here so that a stale IP list never breaks
-  // legitimate deliveries — the HMAC already proved authenticity.
+  // legitimate deliveries. The HMAC already proved authenticity.
   const clientIP =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
   if (clientIP) {
     const githubCIDRs = await getGitHubHookCIDRs();
     if (githubCIDRs.length > 0 && !isIPInAnyCIDR(clientIP, githubCIDRs)) {
-      // HMAC passed but IP is outside GitHub's published ranges — log for monitoring.
+      // HMAC passed but IP is outside GitHub's published ranges. Log for monitoring.
       // This could indicate a SSRF attempt or a proxied request; escalate if recurring.
       logger.warn("Webhook: source IP not in GitHub published ranges", {
         ip: clientIP,

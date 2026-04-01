@@ -99,7 +99,7 @@ function outcomeLabel(outcome: AuditOutcome): string {
     case "disclaimer":
       return "Disclaimer";
     default:
-      return "—";
+      return "N/A";
   }
 }
 
@@ -481,7 +481,7 @@ export default function AuditCyclesPage() {
                           </div>
                           <h3 className="text-base font-semibold text-gray-900 truncate">
                             {cycle.frameworkName}{" "}
-                            <span className="font-normal text-gray-500">— {cycle.auditType}</span>
+                            <span className="font-normal text-gray-500">, {cycle.auditType}</span>
                           </h3>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500">
                             <span>

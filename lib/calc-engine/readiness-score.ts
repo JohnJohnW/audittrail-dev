@@ -143,7 +143,7 @@ export async function calculateTransparentReadinessScore(
   });
 
   if (frameworkScores.length === 0) {
-    warnings.push("No active frameworks found — readiness score defaults to 0.");
+    warnings.push("No active frameworks found. Readiness score defaults to 0.");
   }
 
   return {

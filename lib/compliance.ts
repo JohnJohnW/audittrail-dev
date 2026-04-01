@@ -611,7 +611,7 @@ export async function getComplianceEvidence(
           }
 
           default: {
-            // Unrecognised evidence type — no automated evidence available
+            // Unrecognised evidence type. No automated evidence available
             break;
           }
         }
@@ -803,12 +803,12 @@ export async function getComplianceEvidence(
 }
 
 // ============================================================
-// Control Effectiveness Assessment — NIST SP 800-53A Rev 5
+// Control Effectiveness Assessment: NIST SP 800-53A Rev 5
 //
 // Evaluates three dimensions per SP 800-53A §2.5:
-//   1. Design adequacy  (examine method) — weight: 0.3
-//   2. Operating consistency (test method) — weight: 0.5
-//   3. Evidence quality (traceability/freshness) — weight: 0.2
+//   1. Design adequacy  (examine method), weight: 0.3
+//   2. Operating consistency (test method), weight: 0.5
+//   3. Evidence quality (traceability/freshness), weight: 0.2
 //
 // Continuous monitoring approach per NIST SP 800-137 Rev 1.
 // ============================================================
@@ -855,7 +855,7 @@ type PRWithReviews = {
  * This indicates the reviewer did not actually read the change.
  */
 function assessPRQualityEffectiveness(allPRs: PRWithReviews[]): ControlEffectiveness {
-  // Focus on PRs targeting default branches — the change management risk surface
+  // Focus on PRs targeting default branches (the change management risk surface)
   const mainBranchPRs = allPRs.filter(
     (pr) => pr.baseBranch === "main" || pr.baseBranch === "master"
   );
@@ -933,7 +933,7 @@ function assessPRQualityEffectiveness(allPRs: PRWithReviews[]): ControlEffective
   const unreviewedCount = mainBranchPRs.length - prsWithApproval.length;
   if (unreviewedCount > 0 && mainBranchPRs.length > 3) {
     findings.push(
-      `${unreviewedCount}/${mainBranchPRs.length} default-branch PRs merged without any approval — not consistent with CM-3`
+      `${unreviewedCount}/${mainBranchPRs.length} default-branch PRs merged without any approval. Not consistent with CM-3`
     );
   }
   if (substantiveCount > 0) {
@@ -942,7 +942,7 @@ function assessPRQualityEffectiveness(allPRs: PRWithReviews[]): ControlEffective
     );
   }
   if (operatingScore === 100 && rubberStampCount === 0) {
-    findings.push("All default-branch PRs reviewed — CM-3 operating objective fully met");
+    findings.push("All default-branch PRs reviewed. CM-3 operating objective fully met");
   }
 
   return {
@@ -1022,22 +1022,22 @@ function assessBranchProtectionEffectiveness(
   const unprotectedCount = repoCount - reposWithProtection.size;
   if (unprotectedCount > 0) {
     findings.push(
-      `${unprotectedCount} repository(ies) lack branch protection on default branch — direct push access not controlled (AC-3)`
+      `${unprotectedCount} repository(ies) lack branch protection on default branch. Direct push access not controlled (AC-3)`
     );
   }
   if (designScore < 57 && defaultProtections.length > 0) {
     findings.push(
-      `Average protection strength: ${avgStrength.toFixed(1)}/7 features configured — consider enabling dismiss-stale-reviews, enforce-admins, require-status-checks`
+      `Average protection strength: ${avgStrength.toFixed(1)}/7 features configured. Consider enabling dismiss-stale-reviews, enforce-admins, require-status-checks`
     );
   }
   if (strongRepos.size > 0) {
     findings.push(
-      `${strongRepos.size}/${repoCount} repositor${strongRepos.size === 1 ? "y has" : "ies have"} strong branch protection (≥4 controls) — SP 800-53A AC-3a examine objective met`
+      `${strongRepos.size}/${repoCount} repositor${strongRepos.size === 1 ? "y has" : "ies have"} strong branch protection (≥4 controls). SP 800-53A AC-3a examine objective met`
     );
   }
   if (operatingScore === 100 && designScore >= 57) {
     findings.push(
-      "All repositories have default-branch protection with adequate strength — AC-3 operating objective satisfied"
+      "All repositories have default-branch protection with adequate strength. AC-3 operating objective satisfied"
     );
   }
 
@@ -1060,7 +1060,7 @@ function assessBranchProtectionEffectiveness(
  *
  * Operating score: % of commits with descriptive messages (>5 words).
  * Design score: % of commits with GPG/SSH signatures (identity assurance).
- * Quality score: weighted — issue traceability (60%) + commit signing (40%).
+ * Quality score: weighted. Issue traceability (60%) + commit signing (40%).
  */
 function assessCommitQualityEffectiveness(
   allCommits: Array<{
@@ -1114,26 +1114,26 @@ function assessCommitQualityEffectiveness(
   const findings: string[] = [];
   if (signedCount === 0) {
     findings.push(
-      "No signed commits detected — GPG/SSH signing provides SP 800-53A IA-5 cryptographic authenticator evidence"
+      "No signed commits detected. GPG/SSH signing provides SP 800-53A IA-5 cryptographic authenticator evidence"
     );
   } else {
     findings.push(
-      `${signedCount}/${sample.length} commits signed — satisfies SP 800-53A IA-5 authenticator management (examine method)`
+      `${signedCount}/${sample.length} commits signed. Satisfies SP 800-53A IA-5 authenticator management (examine method)`
     );
   }
   if (issueRefCount > 0) {
     findings.push(
-      `${issueRefCount}/${sample.length} commits reference issues/tickets — CM-3 traceability objective partially met`
+      `${issueRefCount}/${sample.length} commits reference issues/tickets. CM-3 traceability objective partially met`
     );
   } else {
     findings.push(
-      "No commits reference issue trackers — change traceability to approved work items is not evidenced (CM-3)"
+      "No commits reference issue trackers. Change traceability to approved work items is not evidenced (CM-3)"
     );
   }
   const poorMessages = sample.length - descriptiveCount;
   if (poorMessages > sample.length * 0.3) {
     findings.push(
-      `${poorMessages}/${sample.length} commits have short/generic messages — reduces AU-3 audit record quality`
+      `${poorMessages}/${sample.length} commits have short/generic messages. Reduces AU-3 audit record quality`
     );
   }
 
@@ -1156,7 +1156,7 @@ function assessCommitQualityEffectiveness(
  *
  * Design score: presence of automated dependency management (Dependabot/Renovate).
  * Operating score: % of automated dependency PRs that were merged (not left open).
- * Quality score: time-to-patch velocity — SP 800-53A SI-2 benchmark is <7 days for critical.
+ * Quality score: time-to-patch velocity. SP 800-53A SI-2 benchmark is less than 7 days for critical.
  */
 function assessDependencyPatchingEffectiveness(allPRs: PRWithReviews[]): ControlEffectiveness {
   // Automated dependency update PRs (Dependabot, Renovate)
@@ -1206,7 +1206,7 @@ function assessDependencyPatchingEffectiveness(allPRs: PRWithReviews[]): Control
     const fastPatches = patchTimes.filter((d) => d <= 7).length;
     const slowPatches = patchTimes.filter((d) => d > 30).length;
 
-    // Reward fast patches, penalise slow ones — per SP 800-53A SI-2 time-bound remediation
+    // Reward fast patches, penalise slow ones. Per SP 800-53A SI-2 time-bound remediation
     qualityScore = Math.max(
       0,
       Math.min(
@@ -1220,12 +1220,12 @@ function assessDependencyPatchingEffectiveness(allPRs: PRWithReviews[]): Control
     );
     if (fastPatches > 0) {
       findings.push(
-        `${fastPatches}/${patchTimes.length} patches merged within 7 days — SI-2 time objective met`
+        `${fastPatches}/${patchTimes.length} patches merged within 7 days. SI-2 time objective met`
       );
     }
     if (slowPatches > 0) {
       findings.push(
-        `${slowPatches} patch(es) took >30 days to merge — review patch management process for SI-2 compliance`
+        `${slowPatches} patch(es) took >30 days to merge. Review patch management process for SI-2 compliance`
       );
     }
   }

@@ -1,5 +1,5 @@
 /**
- * Transparent Calculation Engine — Core Types
+ * Transparent Calculation Engine: Core Types
  *
  * Every calculated value in Audit Trail is wrapped in CalcResult<T>
  * to provide full transparency into inputs, weights, and methodology.

@@ -13,7 +13,7 @@ const faqs = [
   {
     question: "What does Audit Trail NOT cover?",
     answer:
-      "Audit Trail covers the technical SDLC controls that live in your GitHub repos: change management, access control, vulnerability management, and security testing. It does NOT cover HR controls (background checks, offboarding), physical security, vendor/third-party risk management, or written policies. For those, Audit Trail tells you exactly what's missing so you know where to focus. We're honest about scope — most compliance frameworks require more than GitHub can evidence, and we show you the gap clearly.",
+      "Audit Trail covers the technical SDLC controls that live in your GitHub repos: change management, access control, vulnerability management, and security testing. It does NOT cover HR controls (background checks, offboarding), physical security, vendor/third-party risk management, or written policies. For those, Audit Trail tells you exactly what's missing so you know where to focus. We're honest about scope. Most compliance frameworks require more than GitHub can evidence, and we show you the gap clearly.",
   },
   {
     question: "Which frameworks do you support?",
@@ -53,7 +53,7 @@ const faqs = [
   {
     question: "Can I use Audit Trail for partner or investor due diligence?",
     answer:
-      "Yes. Generate a shareable compliance package — a read-only view of your framework scores, evidence summary, and control coverage — and send it as a link. No back-and-forth questionnaires. Works for vendor security reviews, enterprise sales, and M&A due diligence.",
+      "Yes. Generate a shareable compliance package: your framework scores, evidence summary, and control coverage. Send it as a link. No back-and-forth questionnaires. Works for vendor security reviews, enterprise sales, and M&A due diligence.",
   },
   {
     question: "Do you offer enterprise plans?",

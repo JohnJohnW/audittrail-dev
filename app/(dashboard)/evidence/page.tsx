@@ -83,7 +83,7 @@ export default function EvidencePage() {
         }
       })
       .catch(() => {
-        // Non-critical — silently ignore
+        // Non-critical, silently ignore
       });
   }, []);
 
@@ -346,7 +346,7 @@ export default function EvidencePage() {
         </div>
       </FadeIn>
 
-      {/* Upgrade banner — only for non-Pro users, dismissible */}
+      {/* Upgrade banner, only for non-Pro users, dismissible */}
       <AnimatePresence>
         {canExport === false && !upgradeDismissed && (
           <motion.div
@@ -377,7 +377,7 @@ export default function EvidencePage() {
                   Unlock all 6 frameworks, PDF exports, and the auditor portal
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">
-                  You&apos;re on the free plan — upgrade to Pro ($5/mo) to access all frameworks and
+                  You&apos;re on the free plan. Upgrade to Pro ($5/mo) to access all frameworks and
                   export features.
                 </p>
                 <Link

@@ -2,14 +2,14 @@
  * Transparent Compliance Score Calculator
  *
  * Evidence coverage scoring (existing): weighted count of controls with evidence.
- * Methodology: NIST SP 800-53A Rev 5 §2.5 — determination of whether assessment
+ * Methodology: NIST SP 800-53A Rev 5 §2.5: determination of whether assessment
  * objectives are satisfied, partially satisfied, or not satisfied.
  *
  * Evidence tier → SP 800-53A determination language:
- *   has_evidence  → "Satisfied — control objective met (examine + test)"
- *   partial       → "Partially Satisfied — some assessment objectives met"
- *   limited       → "Other Than Satisfied — supplementary assessment required"
- *   no_evidence   → "Not Determined — no assessment evidence available"
+ *   has_evidence  → "Satisfied: control objective met (examine + test)"
+ *   partial       → "Partially Satisfied: some assessment objectives met"
+ *   limited       → "Other Than Satisfied: supplementary assessment required"
+ *   no_evidence   → "Not Determined: no assessment evidence available"
  *
  * Continuous monitoring approach per NIST SP 800-137 Rev 1:
  * Evidence is collected in real time via GitHub App webhooks + daily background sync,
@@ -123,7 +123,7 @@ export async function calculateTransparentComplianceScore(
         .length,
       notEffectiveCount: eff.filter((e) => e.overallEffectiveness === "not_effective").length,
       nistMethodology:
-        "SP 800-53A Rev 5 §2.5: design×0.3 + operating×0.5 + quality×0.2 — operating effectiveness is the primary indicator of control health",
+        "SP 800-53A Rev 5 §2.5: design×0.3 + operating×0.5 + quality×0.2. Operating effectiveness is the primary indicator of control health",
     };
 
     steps.push({
@@ -136,7 +136,7 @@ export async function calculateTransparentComplianceScore(
   return {
     value: { ...summary, score },
     methodology:
-      "NIST SP 800-53A Rev 5: evidence coverage weighted by satisfaction level — satisfied (1.0), partially satisfied (partialWeight), other-than-satisfied / not-determined (0). Continuous monitoring per NIST SP 800-137.",
+      "NIST SP 800-53A Rev 5: evidence coverage weighted by satisfaction level: satisfied (1.0), partially satisfied (partialWeight), other-than-satisfied / not-determined (0). Continuous monitoring per NIST SP 800-137.",
     formula: `(withEvidence + (partial + limited) × ${partialWeight}) / total × 100`,
     steps,
     inputs: { controls: controls.length, partialWeight },

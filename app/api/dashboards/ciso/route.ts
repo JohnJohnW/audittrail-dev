@@ -4,7 +4,7 @@
  * GET: posture trend (12-month), readiness score,
  * predicted audit outcome, critical risks panel.
  *
- * Simplified for $5/mo plan — breach cost modeling and AI summary removed.
+ * Simplified for $5/mo plan. breach cost modeling and AI summary removed.
  */
 
 import { NextResponse } from "next/server";

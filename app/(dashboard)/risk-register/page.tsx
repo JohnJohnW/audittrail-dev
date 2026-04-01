@@ -134,7 +134,7 @@ function ownerDisplay(t: RiskTreatment): string {
   if (t.owner) {
     return t.owner.name || t.owner.email;
   }
-  return "—";
+  return "N/A";
 }
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
@@ -479,7 +479,7 @@ export default function RiskRegisterPage() {
                             overdue ? "text-red-600 font-medium" : "text-gray-600"
                           )}
                         >
-                          {t.reviewDate ? new Date(t.reviewDate).toLocaleDateString() : "—"}
+                          {t.reviewDate ? new Date(t.reviewDate).toLocaleDateString() : "N/A"}
                           {overdue && <span className="ml-1 text-xs text-red-400">(overdue)</span>}
                         </td>
 

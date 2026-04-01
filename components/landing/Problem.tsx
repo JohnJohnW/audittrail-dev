@@ -36,7 +36,7 @@ export function Problem() {
                   x
                 </span>
                 <span className="text-gray-600">
-                  You&apos;re already doing the right things in GitHub — code reviews, branch
+                  You&apos;re already doing the right things in GitHub: code reviews, branch
                   protection, dependency updates. But none of it is captured as compliance evidence.
                 </span>
               </li>
@@ -54,9 +54,8 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Install once. Audit Trail watches everything — commits, PRs, reviews, Dependabot
-                  alerts, branch protection, deployments — and maps them to 39 controls across 6
-                  frameworks.
+                  Install once. Audit Trail watches commits, PRs, reviews, Dependabot alerts, branch
+                  protection, and deployments, mapping them to 39 controls across 6 frameworks.
                 </span>
               </li>
               <li className="flex gap-3 group">
@@ -64,7 +63,7 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Not just checkboxes — Audit Trail measures control effectiveness using NIST SP
+                  Not just checkboxes. Audit Trail measures control effectiveness using NIST SP
                   800-53A methodology. Are your PR reviews substantive or rubber-stamps? Are
                   dependency patches applied in days or weeks?
                 </span>
@@ -74,9 +73,9 @@ export function Problem() {
                   ✓
                 </span>
                 <span className="text-gray-600">
-                  Covers the technical SDLC controls that live in your repos. For everything else —
-                  HR policies, vendor risk, physical security — Audit Trail tells you exactly
-                  what&apos;s missing so you know where to focus.
+                  Covers the technical SDLC controls that live in your repos. For HR policies,
+                  vendor risk, and physical security, Audit Trail tells you exactly what&apos;s
+                  missing so you know where to focus.
                 </span>
               </li>
             </ul>
