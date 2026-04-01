@@ -515,56 +515,40 @@ function ReposStep({
 
 const FALLBACK_FRAMEWORKS: Framework[] = [
   {
+    id: "soc2",
+    name: "SOC 2",
+    version: "2022",
+    description: "Trust Services Criteria: change management, access control, monitoring",
+  },
+  {
     id: "iso27001-2022",
     name: "ISO 27001",
     version: "2022",
-    description: "Information security management",
+    description: "Annex A technological controls",
+  },
+  {
+    id: "nist-csf",
+    name: "NIST CSF",
+    version: "2.0",
+    description: "Govern, Protect, and Detect functions",
+  },
+  {
+    id: "nist-800-53",
+    name: "NIST SP 800-53",
+    version: "Rev 5",
+    description: "Selected SDLC controls: change management, monitoring, flaw remediation",
   },
   {
     id: "essential-eight-2023",
     name: "Essential Eight",
     version: "2023",
-    description: "Australian Cyber Security Centre strategies",
+    description: "ACSC strategies: patching, access control, application security",
   },
-  { id: "soc2", name: "SOC 2", version: null, description: "Service organization controls" },
-  { id: "nist-csf", name: "NIST CSF", version: null, description: "Cybersecurity framework" },
   {
     id: "pci-dss",
     name: "PCI DSS",
-    version: null,
-    description: "Payment card industry data security",
-  },
-  { id: "gdpr", name: "GDPR", version: null, description: "General data protection regulation" },
-  {
-    id: "hipaa",
-    name: "HIPAA",
-    version: null,
-    description: "Health information privacy and security",
-  },
-  {
-    id: "nist-800-53",
-    name: "NIST 800-53",
-    version: null,
-    description: "Security and privacy controls",
-  },
-  {
-    id: "cis-controls",
-    name: "CIS Controls",
-    version: null,
-    description: "Center for internet security controls",
-  },
-  {
-    id: "fedramp",
-    name: "FedRAMP",
-    version: null,
-    description: "Federal risk and authorization management",
-  },
-  { id: "ccpa", name: "CCPA", version: null, description: "California consumer privacy act" },
-  {
-    id: "framework_app",
-    name: "Australian Privacy Principles",
-    version: "2024",
-    description: "Privacy Act 1988 compliance",
+    version: "4.0",
+    description: "Requirements 6, 7, 8: secure development and access control",
   },
 ];
 
@@ -580,7 +564,7 @@ function FrameworksStep({
   const [frameworks, setFrameworks] = useState<Framework[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const FREE_LIMIT = 3;
+  const FREE_LIMIT = 2;
   const limit = isPro ? Infinity : FREE_LIMIT;
 
   useEffect(() => {

@@ -64,7 +64,7 @@ export function Problem() {
                 </span>
                 <span className="text-gray-600">
                   Not just checkboxes. Audit Trail measures control effectiveness using NIST SP
-                  800-53A methodology. Are your PR reviews substantive or rubber-stamps? Are
+                  800-53A methodology. Are your PR reviews substantive or rubber stamps? Are
                   dependency patches applied in days or weeks?
                 </span>
               </li>

@@ -13,17 +13,6 @@ const shieldIcon = (
   </svg>
 );
 
-const dbIcon = (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.5}
-      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-    />
-  </svg>
-);
-
 const lockIcon = (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path
@@ -35,91 +24,91 @@ const lockIcon = (
   </svg>
 );
 
-const globeIcon = (
+const dbIcon = (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={1.5}
-      d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
     />
   </svg>
 );
 
-const frameworks = [
-  {
-    name: "ISO 27001:2022",
-    controls: 19,
-    description: "Annex A secure development & access controls",
-    icon: shieldIcon,
-  },
-  {
-    name: "Essential Eight",
-    controls: 13,
-    description: "ACSC maturity model (November 2023)",
-    icon: dbIcon,
-  },
-  {
-    name: "NIST CSF 2.0",
-    controls: 7,
-    description: "NIST Cybersecurity Framework (2024)",
-    icon: shieldIcon,
-  },
-  {
-    name: "NIST SP 800-53",
-    controls: 7,
-    description: "Security & privacy controls for federal systems",
-    icon: lockIcon,
-  },
+const primaryFrameworks = [
   {
     name: "SOC 2",
+    version: "2022",
     controls: 5,
-    description: "Trust Services Criteria for service organisations",
+    description: "Trust Services Criteria: change management, access control, monitoring",
     icon: shieldIcon,
   },
   {
-    name: "GDPR",
-    controls: 3,
-    description: "EU General Data Protection Regulation",
-    icon: globeIcon,
+    name: "ISO 27001",
+    version: "2022",
+    controls: 10,
+    description: "Annex A technological controls: secure development and access management",
+    icon: shieldIcon,
   },
   {
-    name: "SOCI Act",
-    controls: 4,
-    description: "Australian critical infrastructure security obligations",
-    icon: dbIcon,
+    name: "NIST CSF",
+    version: "2.0",
+    controls: 7,
+    description: "Govern, Protect, and Detect functions: partial adoption is by design",
+    icon: lockIcon,
   },
+];
+
+const extendedFrameworks = [
   {
-    name: "PCI DSS 4.0",
-    controls: 5,
-    description: "Payment Card Industry Data Security Standard",
+    name: "NIST SP 800-53",
+    version: "Rev 5",
+    controls: 7,
+    description: "Selected SDLC controls: CM-3, SI-2, CA-7, SA-10, SA-11, AC-2, CM-4",
     icon: lockIcon,
   },
   {
-    name: "NIST SP 800-207",
-    controls: 10,
-    description: "Zero Trust Architecture: identity, device, network, visibility pillars",
-    icon: shieldIcon,
-  },
-  {
-    name: "ASD MDA Foundations",
-    controls: 10,
-    description: "Modern Defensible Architecture (October 2025)",
+    name: "ACSC Essential Eight",
+    version: "2023",
+    controls: 5,
+    description:
+      "5 of 8 strategies with GitHub-evidenceable activity. Evidence-based, not maturity-level assessed.",
     icon: dbIcon,
   },
   {
-    name: "NIST AI RMF",
-    controls: 8,
-    description: "AI Risk Management Framework: Govern, Map, Measure, Manage",
-    icon: shieldIcon,
-  },
-  {
-    name: "EU AI Act",
-    controls: 6,
-    description: "EU AI Act (2024): risk management, data governance, transparency",
-    icon: globeIcon,
+    name: "PCI DSS",
+    version: "4.0",
+    controls: 5,
+    description: "Requirements 6, 7, 8: secure development, access control, and authentication",
+    icon: lockIcon,
   },
 ];
+
+function FrameworkRow({ framework }: { framework: (typeof primaryFrameworks)[0] }) {
+  return (
+    <tr className="hover:bg-accent-light/50 transition-colors group">
+      <td className="py-3 px-4">
+        <div className="flex items-center gap-3">
+          <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-accent-light group-hover:text-accent transition-colors">
+            {framework.icon}
+          </span>
+          <div>
+            <span className="text-sm font-medium text-gray-900">{framework.name}</span>
+            <span className="ml-2 text-xs text-gray-400">{framework.version}</span>
+          </div>
+        </div>
+      </td>
+      <td className="py-3 px-4 text-sm text-gray-500 hidden sm:table-cell">
+        {framework.description}
+      </td>
+      <td className="py-3 px-4 text-right">
+        <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-gray-100 text-sm font-medium text-gray-700 group-hover:bg-accent group-hover:text-white transition-colors">
+          {framework.controls}
+        </span>
+      </td>
+    </tr>
+  );
+}
 
 export function Frameworks() {
   return (
@@ -130,12 +119,12 @@ export function Frameworks() {
             Compliance Frameworks
           </p>
           <h2 className="text-2xl font-semibold text-gray-900 mb-3">
-            Twelve frameworks. Zero manual work.
+            Six frameworks. Zero manual work.
           </h2>
           <p className="text-sm text-gray-500 max-w-lg mx-auto">
-            We&apos;ve done the control mapping for you. Twelve frameworks covering global and
-            regional standards - including AI governance (NIST AI RMF, EU AI Act), Zero Trust
-            Architecture, and ASD MDA Foundations. Connect once, evidence them all, invisibly.
+            We have done the control mapping for you. All 39 controls cover the technical SDLC
+            activity that lives in your GitHub repos: change management, access control,
+            vulnerability management, and security testing.
           </p>
         </FadeIn>
 
@@ -156,25 +145,29 @@ export function Frameworks() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {frameworks.map((framework, index) => (
-                  <tr key={index} className="hover:bg-accent-light/50 transition-colors group">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-accent-light group-hover:text-accent transition-colors">
-                          {framework.icon}
-                        </span>
-                        <span className="text-sm font-medium text-gray-900">{framework.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-500 hidden sm:table-cell">
-                      {framework.description}
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-gray-100 text-sm font-medium text-gray-700 group-hover:bg-accent group-hover:text-white transition-colors">
-                        {framework.controls}
-                      </span>
-                    </td>
-                  </tr>
+                <tr>
+                  <td colSpan={3} className="px-4 py-2 bg-accent-light/30">
+                    <span className="text-xs font-semibold text-accent uppercase tracking-wider">
+                      Primary
+                    </span>
+                    <span className="ml-2 text-xs text-gray-500">
+                      strongest GitHub evidence coverage, most auditor-accepted
+                    </span>
+                  </td>
+                </tr>
+                {primaryFrameworks.map((framework, index) => (
+                  <FrameworkRow key={index} framework={framework} />
+                ))}
+                <tr>
+                  <td colSpan={3} className="px-4 py-2 bg-gray-50/80 border-t border-gray-200">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Extended
+                    </span>
+                    <span className="ml-2 text-xs text-gray-400">specific regulatory contexts</span>
+                  </td>
+                </tr>
+                {extendedFrameworks.map((framework, index) => (
+                  <FrameworkRow key={index} framework={framework} />
                 ))}
               </tbody>
             </table>

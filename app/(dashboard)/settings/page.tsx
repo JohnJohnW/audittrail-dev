@@ -410,7 +410,7 @@ function SettingsContent() {
                   <p className="font-semibold text-gray-900 mb-4">Free</p>
                   <ul className="space-y-3 text-sm">
                     <FeatureItem included>Up to 2 repositories</FeatureItem>
-                    <FeatureItem included>3 compliance frameworks</FeatureItem>
+                    <FeatureItem included>2 compliance frameworks</FeatureItem>
                     <FeatureItem included>Evidence dashboard & gap analysis</FeatureItem>
                     <FeatureItem included>Basic compliance alerts</FeatureItem>
                     <FeatureItem included>Control notes & exceptions</FeatureItem>
