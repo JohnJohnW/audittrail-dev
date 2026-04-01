@@ -153,6 +153,17 @@ export async function GET(_request: NextRequest, { params }: { params: { token: 
 
     const filename = `audit-evidence-${now}.zip`;
 
+    // Log auditor export for audit trail
+    await db.export.create({
+      data: {
+        orgId: session.orgId,
+        type: "auditor_export",
+        fileName: filename,
+        status: "completed",
+        auditorEmail: session.auditorEmail,
+      },
+    });
+
     return new NextResponse(zipBuffer, {
       status: 200,
       headers: {

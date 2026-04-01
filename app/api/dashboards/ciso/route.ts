@@ -14,6 +14,11 @@ import {
   getEvidenceSummary,
   calculateFrameworkScores,
 } from "@/lib/compliance";
+import {
+  calculateTransparentBreachCost,
+  calculateTransparentReadinessScore,
+  calculateTransparentGapPriority,
+} from "@/lib/calc-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -47,23 +52,45 @@ export async function GET() {
     // Current state
     const evidence = await getComplianceEvidence(orgId);
     const summary = getEvidenceSummary(evidence.controls);
-
-    // Compliance Readiness Score - the single number that surfaces when you need it.
-    // Weighted average of per-framework scores: SOC 2 and ISO 27001 carry weight 1.5, all others 1.0.
-    const FRAMEWORK_WEIGHTS: Record<string, number> = {
-      "SOC 2": 1.5,
-      "ISO 27001": 1.5,
-      "ISO 27001:2022": 1.5,
-    };
     const frameworkScoreArray = calculateFrameworkScores(evidence);
-    let weightedSum = 0;
-    let totalWeight = 0;
-    for (const { framework, score } of frameworkScoreArray) {
-      const weight = FRAMEWORK_WEIGHTS[framework] ?? 1.0;
-      weightedSum += score * weight;
-      totalWeight += weight;
-    }
-    const readinessScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+
+    // Gap controls
+    const noEvidenceControls = evidence.controls.filter((c) => c.status === "no_evidence").length;
+    const gapControls = evidence.controls
+      .filter((c) => c.status === "no_evidence")
+      .map((c) => ({
+        controlCode: c.controlCode,
+        controlName: c.controlTitle,
+        frameworkName: c.frameworkName,
+      }));
+
+    // Benchmark: use org profile industry if available
+    const orgProfile = await db.orgProfile.findUnique({
+      where: { orgId },
+      select: { industry: true, companySize: true },
+    });
+
+    // --- Transparent Calculations via Calc Engine ---
+    const [breachCalc, readinessCalc, gapCalc] = await Promise.all([
+      calculateTransparentBreachCost(orgId, {
+        noEvidenceControls,
+        companySize: orgProfile?.companySize,
+        industry: orgProfile?.industry,
+      }),
+      calculateTransparentReadinessScore(orgId, frameworkScoreArray, noEvidenceControls),
+      calculateTransparentGapPriority(orgId, gapControls),
+    ]);
+
+    const { readinessScore, dealBlockerRisk, daysToAuditReady, predictedOutcome } =
+      readinessCalc.value;
+    const {
+      estimate: breachCostEstimate,
+      sizeMultiplier: sizeMult,
+      industryMultiplier: industryMult,
+      gapMultiplier: gapSeverityMultiplier,
+      sizeKey,
+      industryKey,
+    } = breachCalc.value;
 
     // Critical risks: open risk treatments with no evidence
     const criticalRisks = await db.riskTreatment.findMany({
@@ -84,72 +111,12 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // Predict audit outcome: weighted gap score
-    const noEvidenceControls = evidence.controls.filter((c) => c.status === "no_evidence").length;
-    const predictedOutcome =
-      noEvidenceControls === 0
-        ? "likely_pass"
-        : noEvidenceControls <= 3
-          ? "pass_with_findings"
-          : "at_risk";
-
-    // Benchmark: use org profile industry if available
-    const orgProfile = await db.orgProfile.findUnique({
-      where: { orgId },
-      select: { industry: true, companySize: true },
-    });
-
-    // --- Business Impact Calculations ---
-    // Primary source: IBM Cost of a Data Breach Report 2024 (Australian cohort)
-    //   AUD $4.26M average total breach cost — Australian-specific, Ponemon methodology.
-    //   Published July/August 2024. Most rigorous methodology: covers detection,
-    //   escalation, notification, lost business, and post-breach response costs.
-    // Secondary source: ASD Annual Cyber Threat Report 2024-25 (October 2025)
-    //   AUD $202,700 avg self-reported loss for large business (ReportCyber data).
-    //   Note: self-reported losses, not total breach cost — used for trend context only.
-    // Notification volume: 1,113 breaches notified in Australia in 2024 (OAIC NDB Scheme).
-
-    const companySizeMultipliers: Record<string, number> = {
-      // Derived from IBM AU 2024: SMBs (<500 employees) avg 40% below the mean;
-      // large enterprises (>1000) avg 60% above. Interpolated for intermediate bands.
-      "1-10": 0.28,
-      "11-50": 0.45,
-      "51-200": 0.75,
-      "201-500": 1.0,
-      "501-1000": 1.35,
-      "1001+": 1.65,
-    };
-    const industryMultipliers: Record<string, number> = {
-      // Source: IBM Cost of a Data Breach 2024 Australian cohort industry breakdown.
-      // Technology: AUD $5.81M (x1.36), Financial: AUD $5.61M (x1.32), Health: highest globally.
-      healthcare: 1.8,
-      financial: 1.32,
-      technology: 1.36,
-      retail: 0.95,
-      government: 1.15,
-      education: 0.82,
-      other: 1.0,
-    };
-    const sizeKey = orgProfile?.companySize || "51-200";
-    const industryKey = (orgProfile?.industry || "technology").toLowerCase();
-    const sizeMult = companySizeMultipliers[sizeKey] ?? 1.0;
-    const industryMult = industryMultipliers[industryKey] ?? 1.0;
-
-    // Breach cost: AUD $4.26M baseline (IBM 2024, Australian cohort)
-    // Each control with no evidence adds 4% — unmitigated gaps directly extend
-    // breach lifecycle (IBM: orgs with AI/automation save AUD $1.74M on average).
-    const BREACH_BASE_AUD = 4_260_000;
-    const gapSeverityMultiplier = 1 + noEvidenceControls * 0.04;
-    const breachCostEstimate = Math.round(
-      BREACH_BASE_AUD * sizeMult * industryMult * gapSeverityMultiplier
-    );
-
     // Regulatory fine exposure: based on active frameworks
     const activeFrameworkNames = frameworkScoreArray.map((f) => f.framework);
     let maxFineEstimate = 0;
     const fineBreakdown: { framework: string; maxFine: string; basis: string }[] = [];
     if (activeFrameworkNames.some((f) => f.includes("GDPR"))) {
-      const gdprFine = Math.round(BREACH_BASE_AUD * 0.4 * industryMult);
+      const gdprFine = Math.round(breachCalc.value.baseline * 0.4 * industryMult);
       maxFineEstimate = Math.max(maxFineEstimate, gdprFine);
       fineBreakdown.push({
         framework: "GDPR",
@@ -188,24 +155,6 @@ export async function GET() {
         basis: "No direct regulatory fine for active frameworks",
       });
     }
-
-    // Deal-blocker risk
-    const dealBlockerRisk =
-      readinessScore < 50 || noEvidenceControls > 5
-        ? "high"
-        : readinessScore < 75 || noEvidenceControls > 2
-          ? "medium"
-          : "low";
-
-    // Days to audit-ready estimate
-    const daysToAuditReady =
-      readinessScore >= 80
-        ? { min: 0, max: 14, label: "7-14 days" }
-        : readinessScore >= 65
-          ? { min: 21, max: 45, label: "3-6 weeks" }
-          : readinessScore >= 50
-            ? { min: 45, max: 90, label: "6-12 weeks" }
-            : { min: 90, max: 180, label: "3-6 months" };
 
     const businessImpact = {
       breachCostEstimate,
@@ -257,6 +206,11 @@ export async function GET() {
       industry: orgProfile?.industry || null,
       companySize: orgProfile?.companySize || null,
       businessImpact,
+      _calc: {
+        breachCost: breachCalc,
+        readinessScore: readinessCalc,
+        gapPriority: gapCalc,
+      },
     });
   } catch (error) {
     return handleApiError(error);

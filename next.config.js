@@ -37,6 +37,12 @@ const nextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
           },
+          // Content Security Policy (report-only to identify violations before enforcing)
+          {
+            key: "Content-Security-Policy-Report-Only",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.posthog.com https://*.sentry.io https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com;",
+          },
           // Disable DNS prefetching (minor privacy improvement)
           { key: "X-DNS-Prefetch-Control", value: "on" },
         ],

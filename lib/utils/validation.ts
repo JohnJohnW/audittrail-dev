@@ -12,7 +12,7 @@
  * @returns true if the string is a valid CUID
  */
 export function isValidCuid(id: string): boolean {
-  return /^c[a-z0-9]{20,}$/i.test(id);
+  return /^c[a-z0-9]{20,}$/.test(id);
 }
 
 /**

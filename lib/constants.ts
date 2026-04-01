@@ -112,8 +112,6 @@ export const MEMBERSHIP_ROLE = {
 export const EXPORT_CONFIG = {
   /** Maximum exports to return per page in list */
   MAX_EXPORTS_PER_PAGE: 20,
-  /** Maximum concurrent export operations */
-  MAX_CONCURRENT: 3,
 } as const;
 
 // Health check configuration

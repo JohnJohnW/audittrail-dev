@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { requireAuth, requireSubscription } from "@/lib/api";
-import { db } from "@/lib/db";
+import { db, isInTrial, canUseTrialAuditorSession } from "@/lib/db";
 import { handleApiError, AppError } from "@/lib/error-handler";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +47,19 @@ export async function POST(request: NextRequest) {
     const { orgId } = await requireAuth();
     await requireSubscription(orgId, "pro");
 
+    // Check trial auditor session limit (max 1 during trial)
+    const inTrial = await isInTrial(orgId);
+    if (inTrial) {
+      const canCreate = await canUseTrialAuditorSession(orgId);
+      if (!canCreate) {
+        throw new AppError(
+          "Trial auditor session limit reached (1 session). Upgrade to Pro for unlimited sessions.",
+          403,
+          "TRIAL_LIMIT_REACHED"
+        );
+      }
+    }
+
     const body = (await request.json()) as {
       auditorEmail?: string;
       auditorName?: string;
@@ -76,6 +89,14 @@ export async function POST(request: NextRequest) {
         expiresAt,
       },
     });
+
+    // Increment trial auditor session counter if in trial
+    if (inTrial) {
+      await db.subscription.update({
+        where: { orgId },
+        data: { trialAuditorSessionsUsed: { increment: 1 } },
+      });
+    }
 
     const origin = request.headers.get("origin") ?? "";
     const portalLink = `${origin}/auditor/${token}`;

@@ -53,30 +53,32 @@ export async function POST(request: Request) {
       throw new AppError("Key name must be 100 characters or less", 400, "NAME_TOO_LONG");
     }
 
-    // Check key limit
-    const existingCount = await db.apiKey.count({
-      where: { orgId, revokedAt: null },
-    });
-
-    const MAX_KEYS_PER_ORG = 10;
-    if (existingCount >= MAX_KEYS_PER_ORG) {
-      throw new AppError(
-        `Maximum of ${MAX_KEYS_PER_ORG} active API keys per organization`,
-        400,
-        "KEY_LIMIT_REACHED"
-      );
-    }
-
     const { rawKey, hash, prefix } = generateApiKey();
 
-    const apiKey = await db.apiKey.create({
-      data: {
-        orgId,
-        name: name.trim(),
-        keyHash: hash,
-        keyPrefix: prefix,
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
-      },
+    // Use a transaction to prevent race condition on key limit check
+    const MAX_KEYS_PER_ORG = 10;
+    const apiKey = await db.$transaction(async (tx) => {
+      const existingCount = await tx.apiKey.count({
+        where: { orgId, revokedAt: null },
+      });
+
+      if (existingCount >= MAX_KEYS_PER_ORG) {
+        throw new AppError(
+          `Maximum of ${MAX_KEYS_PER_ORG} active API keys per organization`,
+          400,
+          "KEY_LIMIT_REACHED"
+        );
+      }
+
+      return tx.apiKey.create({
+        data: {
+          orgId,
+          name: name.trim(),
+          keyHash: hash,
+          keyPrefix: prefix,
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
+        },
+      });
     });
 
     return NextResponse.json(

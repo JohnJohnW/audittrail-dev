@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { requireAuth, canExport as checkCanExport, parseJsonBody } from "@/lib/api";
-import { db } from "@/lib/db";
+import { db, isInTrial, canUseTrialExport } from "@/lib/db";
 import { getComplianceEvidence, getEvidenceSummary } from "@/lib/compliance";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { ExportPDF } from "@/lib/pdf";
@@ -36,7 +36,7 @@ interface ExportBody {
 
 export async function POST(request: NextRequest) {
   try {
-    const { orgId, userId } = await requireAuth();
+    const { orgId, userId, session } = await requireAuth();
 
     // Rate-limit exports per org (10/hour - enforced after auth so we use orgId as key)
     const { success: withinLimit } = await checkRateLimit(orgId, "export");
@@ -44,11 +44,24 @@ export async function POST(request: NextRequest) {
       throw new AppError("Export rate limit reached - try again later", 429, "RATE_LIMITED");
     }
 
-    // Check subscription
+    // Check subscription (paid or trial)
     const canExport = await checkCanExport(orgId);
+    const inTrial = await isInTrial(orgId);
 
     if (!canExport) {
       throw new AppError("Upgrade to Pro to export reports", 403, "SUBSCRIPTION_REQUIRED");
+    }
+
+    // If in trial, check usage limits (max 3 exports)
+    if (inTrial) {
+      const trialCanExport = await canUseTrialExport(orgId);
+      if (!trialCanExport) {
+        throw new AppError(
+          "Trial export limit reached (3 exports). Upgrade to Pro for unlimited exports.",
+          403,
+          "TRIAL_LIMIT_REACHED"
+        );
+      }
     }
 
     const body = await parseJsonBody<ExportBody>(request);
@@ -177,6 +190,7 @@ export async function POST(request: NextRequest) {
               to: dateTo ? new Date(dateTo) : undefined,
             }}
             repositories={selectedRepoNames}
+            exportedBy={session.user?.email || undefined}
           />
         );
         contentType = "application/pdf";
@@ -254,6 +268,14 @@ export async function POST(request: NextRequest) {
         where: { id: exportRecord.id },
         data: { status: "completed" },
       });
+
+      // Increment trial export counter if in trial
+      if (inTrial) {
+        await db.subscription.update({
+          where: { orgId },
+          data: { trialExportsUsed: { increment: 1 } },
+        });
+      }
 
       return new NextResponse(new Uint8Array(buffer), {
         headers: {

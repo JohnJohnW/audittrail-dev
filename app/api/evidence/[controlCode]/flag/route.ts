@@ -31,6 +31,18 @@ export async function POST(
       throw new AppError("feedbackType must be flag, confirm, or annotate", 400, "INVALID_TYPE");
     }
 
+    if (reason && typeof reason === "string" && reason.length > 5000) {
+      throw new AppError("Reason must be 5000 characters or less", 400, "INVALID_REQUEST");
+    }
+
+    if (note && typeof note === "string" && note.length > 10000) {
+      throw new AppError("Note must be 10000 characters or less", 400, "INVALID_REQUEST");
+    }
+
+    if (!/^[A-Za-z0-9._-]{1,50}$/.test(controlCode)) {
+      throw new AppError("Invalid control code format", 400, "INVALID_CONTROL_CODE");
+    }
+
     const { randomUUID } = await import("crypto");
     const supabase = getSupabaseClient();
 

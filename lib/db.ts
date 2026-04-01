@@ -252,14 +252,62 @@ export async function getOrgSubscription(orgId: string) {
 }
 
 /**
- * Check if an organization has a pro subscription.
+ * Check if an organization has a pro subscription (paid or active trial).
  */
 export async function hasProSubscription(orgId: string): Promise<boolean> {
   const subscription = await getOrgSubscription(orgId);
-  return (
-    subscription?.plan === "pro" &&
-    (subscription?.status === "active" || subscription?.status === "free")
-  );
+  if (!subscription) return false;
+
+  // Paid pro subscription
+  if (
+    subscription.plan === "pro" &&
+    (subscription.status === "active" || subscription.status === "free")
+  ) {
+    return true;
+  }
+
+  // Active trial
+  if (subscription.trialEndsAt && subscription.trialEndsAt > new Date()) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Check if an organization is currently in a trial period.
+ */
+export async function isInTrial(orgId: string): Promise<boolean> {
+  const subscription = await getOrgSubscription(orgId);
+  if (!subscription) return false;
+  if (subscription.plan === "pro" && subscription.status === "active") return false;
+  return !!(subscription.trialEndsAt && subscription.trialEndsAt > new Date());
+}
+
+/**
+ * Check if a trial org can still use export (max 3 during trial).
+ */
+export async function canUseTrialExport(orgId: string): Promise<boolean> {
+  const subscription = await getOrgSubscription(orgId);
+  if (!subscription) return false;
+  if (subscription.plan === "pro" && subscription.status === "active") return true;
+  if (subscription.trialEndsAt && subscription.trialEndsAt > new Date()) {
+    return subscription.trialExportsUsed < 3;
+  }
+  return false;
+}
+
+/**
+ * Check if a trial org can create another auditor session (max 1 during trial).
+ */
+export async function canUseTrialAuditorSession(orgId: string): Promise<boolean> {
+  const subscription = await getOrgSubscription(orgId);
+  if (!subscription) return false;
+  if (subscription.plan === "pro" && subscription.status === "active") return true;
+  if (subscription.trialEndsAt && subscription.trialEndsAt > new Date()) {
+    return subscription.trialAuditorSessionsUsed < 1;
+  }
+  return false;
 }
 
 // =============================================================================

@@ -104,6 +104,7 @@ model Organization {
   auditorComments      AuditorComment[]
   controlSignoffs      ControlSignoff[]
   orgProfile           OrgProfile?
+  calcConfig           OrgCalcConfig?
   controlStatusSnapshots ControlStatusSnapshot[]
   remediationEvents      RemediationEvent[]
   evidenceFeedback       EvidenceFeedback[]
@@ -326,6 +327,11 @@ model Subscription {
   plan                 String    @default("free")
   currentPeriodEnd     DateTime? @map("current_period_end")
   cancelAtPeriodEnd    Boolean   @default(false) @map("cancel_at_period_end")
+  trialStartedAt            DateTime? @map("trial_started_at")
+  trialEndsAt               DateTime? @map("trial_ends_at")
+  trialUsed                 Boolean   @default(false) @map("trial_used")
+  trialExportsUsed          Int       @default(0) @map("trial_exports_used")
+  trialAuditorSessionsUsed  Int       @default(0) @map("trial_auditor_sessions_used")
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
@@ -334,19 +340,31 @@ model Subscription {
   @@map("subscriptions")
 }
 
+model OrgCalcConfig {
+  id        String   @id @default(cuid())
+  orgId     String   @unique @map("org_id")
+  config    Json     @default("{}")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("org_calc_configs")
+}
+
 model Export {
   id          String   @id @default(cuid())
   orgId       String   @map("org_id")
-  userId      String   @map("user_id")
+  userId      String?  @map("user_id")
   type        String
   frameworkId String?  @map("framework_id")
   fileName    String   @map("file_name")
   fileUrl     String?  @map("file_url")
   status      String   @default("pending")
   createdAt   DateTime @default(now()) @map("created_at")
+  auditorEmail String? @map("auditor_email")
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("exports")
 }

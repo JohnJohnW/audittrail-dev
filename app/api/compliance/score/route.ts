@@ -9,6 +9,7 @@ import {
 import { handleApiError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
 import { getCached, getCacheKey } from "@/lib/cache";
+import { calculateTransparentComplianceScore } from "@/lib/calc-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,9 @@ export async function GET(request: NextRequest) {
     const summary = getEvidenceSummary(evidence.controls);
     logger.info("Summary calculated", { summary });
 
+    // Transparent score calculation (same result, adds full audit trail)
+    const calcResult = await calculateTransparentComplianceScore(orgId, evidence.controls);
+
     // Per-framework scores (shared helper - O(n) grouping)
     const byFramework = calculateFrameworkScores(evidence);
 
@@ -74,6 +78,7 @@ export async function GET(request: NextRequest) {
       },
       byFramework,
       byCategory,
+      _calc: calcResult,
     });
   } catch (error) {
     logger.error("Compliance score API error", error);

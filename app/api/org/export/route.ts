@@ -9,7 +9,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { handleApiError, AppError } from "@/lib/error-handler";
-import { hasProSubscription } from "@/lib/db";
+import { db, hasProSubscription } from "@/lib/db";
 import { generateFullExport } from "@/lib/full-export";
 import { getSupabaseClient } from "@/lib/supabase";
 import { logger } from "@/lib/logger";
@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST() {
   try {
-    const { orgId } = await requireAuth();
+    const { orgId, userId } = await requireAuth();
     const isPro = await hasProSubscription(orgId);
     if (!isPro) {
       throw new AppError("Data export requires a Pro subscription", 403, "PRO_REQUIRED");
@@ -31,6 +31,17 @@ export async function POST() {
     const { data: signedUrl } = await supabase.storage
       .from("evidence-uploads")
       .createSignedUrl(storagePath, 3600);
+
+    // Log the export for audit trail
+    await db.export.create({
+      data: {
+        orgId,
+        userId,
+        type: "full_export",
+        fileName: storagePath.split("/").pop() || "export.zip",
+        status: "completed",
+      },
+    });
 
     return NextResponse.json({
       status: "complete",

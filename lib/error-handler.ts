@@ -37,7 +37,7 @@ export function handleApiError(error: unknown): NextResponse {
   try {
     requestId = crypto.randomUUID();
   } catch {
-    requestId = `err-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+    requestId = `err-${Date.now().toString(36)}-${process.pid.toString(36)}`;
   }
 
   if (error instanceof AppError) {

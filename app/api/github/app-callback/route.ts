@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   const installationIdInt = parseInt(installationId, 10);
   if (isNaN(installationIdInt)) {
-    logger.warn(`GitHub App callback: invalid installation_id: ${installationId}`);
+    logger.warn("GitHub App callback: invalid installation_id format");
     return NextResponse.redirect(errorUrl);
   }
 

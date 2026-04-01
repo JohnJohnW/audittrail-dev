@@ -55,11 +55,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
 
-        // Store GitHub access token in JWT for repo access
-        if (account?.provider === "github" && account.access_token) {
-          token.githubAccessToken = account.access_token;
-        }
-
         // Fetch organization info once during sign-in
         try {
           const membership = await db.orgMembership.findFirst({
@@ -121,8 +116,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.orgId = token.orgId as string | undefined;
         session.orgSlug = token.orgSlug as string | undefined;
         session.orgRole = token.orgRole as string | undefined;
-        // Include GitHub connection status
-        session.hasGitHubConnection = !!token.githubAccessToken;
+        // Check GitHub connection from database (token no longer stored in JWT)
+        if (token.orgId) {
+          const ghConn = await db.gitHubConnection.findUnique({
+            where: { orgId: token.orgId as string },
+            select: { id: true },
+          });
+          session.hasGitHubConnection = !!ghConn;
+        } else {
+          session.hasGitHubConnection = false;
+        }
       }
       return session;
     },
@@ -157,12 +160,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
           });
 
-          // Create a free subscription
+          // Create subscription with 14-day Pro trial
           await db.subscription.create({
             data: {
               orgId: org.id,
               status: "free",
               plan: "free",
+              trialStartedAt: new Date(),
+              trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+              trialUsed: true,
             },
           });
         } catch (error) {
@@ -173,7 +179,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 14 * 24 * 60 * 60, // 14 days
   },
   trustHost: true,
 });
