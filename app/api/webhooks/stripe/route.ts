@@ -121,9 +121,22 @@ export async function POST(request: NextRequest) {
                   status: "past_due",
                 },
               });
+
+              // Surface payment failures to ops — log at ERROR so Sentry captures them.
+              logger.error("Payment failed for subscription", undefined, {
+                orgId,
+                subscriptionId,
+                invoiceId: invoice.id,
+                attemptCount: invoice.attempt_count ?? 1,
+                amountDue: invoice.amount_due,
+                currency: invoice.currency,
+                nextPaymentAttempt: invoice.next_payment_attempt
+                  ? new Date(invoice.next_payment_attempt * 1000).toISOString()
+                  : null,
+              });
             }
           } catch (retrieveError) {
-            logger.error("Failed to retrieve subscription", retrieveError);
+            logger.error("Failed to retrieve subscription for payment_failed event", retrieveError);
           }
         }
         break;

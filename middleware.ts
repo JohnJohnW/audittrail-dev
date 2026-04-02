@@ -2,9 +2,11 @@
  * Next.js Edge Middleware. API Gateway layer
  *
  * Runs at the Vercel Edge Network before any serverless function:
- *   1. Upload size gate  . rejects oversized bodies on /api/evidence/upload before compute
- *   2. API rate limiting . sliding-window per IP across all /api/* routes (Upstash Redis)
- *   3. Dashboard auth    . redirects unauthenticated users to sign-in
+ *   1. CORS                . origin whitelist + OPTIONS preflight for /api/* routes
+ *   2. Request ID          . generates X-Request-Id on every response for tracing
+ *   3. Upload size gate    . rejects oversized bodies on /api/evidence/upload before compute
+ *   4. API rate limiting   . sliding-window per user (session cookie) or IP (Upstash Redis)
+ *   5. Dashboard auth      . redirects unauthenticated users to sign-in
  *
  * GitHub IP allowlisting for /api/webhooks/github is handled inside the route
  * itself (needs the raw body for HMAC). see app/api/webhooks/github/route.ts.
@@ -57,6 +59,16 @@ const RATE_LIMIT_SKIP_PREFIXES = [
   "/api/webhooks/github", // GitHub IPs + HMAC signature verified inside route
 ];
 
+// Allowed CORS origins. Requests from other origins are served without
+// Access-Control-Allow-Origin so browser cross-origin reads are blocked.
+const ALLOWED_ORIGINS: string[] = [
+  "https://audit-trail.net",
+  "https://www.audit-trail.net",
+  ...(process.env.NODE_ENV !== "production"
+    ? ["http://localhost:3000", "http://localhost:3001"]
+    : []),
+];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function getClientIP(request: NextRequest): string {
   return (
@@ -70,19 +82,83 @@ function shouldSkipRateLimit(pathname: string): boolean {
   return RATE_LIMIT_SKIP_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
+/**
+ * Hash the session cookie to use as a per-user rate limit key.
+ * Uses Web Crypto (available in edge runtime). Falls back to IP.
+ */
+async function getRateLimitKey(request: NextRequest): Promise<string> {
+  const sessionToken =
+    request.cookies.get("authjs.session-token")?.value ||
+    request.cookies.get("__Secure-authjs.session-token")?.value;
+
+  if (sessionToken) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(sessionToken);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return `u:${hex.slice(0, 24)}`; // short prefix avoids Redis key bloat
+  }
+
+  return `ip:${getClientIP(request)}`;
+}
+
+/**
+ * Build CORS headers for a given Origin value.
+ * Returns an empty object if the origin is not in the allow-list.
+ */
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    return {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Request-Id",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Max-Age": "86400",
+      Vary: "Origin",
+    };
+  }
+  return {};
+}
+
 // ── Middleware ────────────────────────────────────────────────────────────────
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const origin = request.headers.get("origin");
+
+  // Generate a unique request ID for tracing across logs / Sentry breadcrumbs.
+  const requestId = crypto.randomUUID();
+
+  // Helper: stamp standard headers onto any outgoing response.
+  function withStandardHeaders(res: NextResponse): NextResponse {
+    res.headers.set("X-Request-Id", requestId);
+    const cors = getCorsHeaders(origin);
+    for (const [k, v] of Object.entries(cors)) {
+      res.headers.set(k, v);
+    }
+    return res;
+  }
+
+  // 0. CORS preflight ── answer OPTIONS early so the browser doesn't stall.
+  if (request.method === "OPTIONS" && pathname.startsWith("/api/")) {
+    const cors = getCorsHeaders(origin);
+    return new NextResponse(null, {
+      status: 204,
+      headers: { ...cors, "X-Request-Id": requestId },
+    });
+  }
 
   // 1. Upload size gate ── checked via Content-Length header before the body
   //    is buffered, so oversized requests are rejected before hitting compute.
   if (pathname === "/api/evidence/upload") {
     const contentLength = request.headers.get("content-length");
     if (contentLength && parseInt(contentLength, 10) > UPLOAD_MAX_BYTES) {
-      return new NextResponse("Payload Too Large", {
-        status: 413,
-        headers: { "Content-Type": "text/plain" },
-      });
+      return withStandardHeaders(
+        new NextResponse("Payload Too Large", {
+          status: 413,
+          headers: { "Content-Type": "text/plain" },
+        })
+      );
     }
   }
 
@@ -91,27 +167,29 @@ export async function middleware(request: NextRequest) {
     const limiter = pathname.startsWith("/api/auth/") ? authLimiter : apiLimiter;
 
     if (limiter) {
-      const ip = getClientIP(request);
-      const { success, limit, remaining, reset } = await limiter.limit(ip);
+      const key = await getRateLimitKey(request);
+      const { success, limit, remaining, reset } = await limiter.limit(key);
 
       if (!success) {
-        return new NextResponse("Too Many Requests", {
-          status: 429,
-          headers: {
-            "Content-Type": "text/plain",
-            "X-RateLimit-Limit": String(limit),
-            "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": String(reset),
-            "Retry-After": String(Math.max(1, Math.ceil((reset - Date.now()) / 1000))),
-          },
-        });
+        return withStandardHeaders(
+          new NextResponse("Too Many Requests", {
+            status: 429,
+            headers: {
+              "Content-Type": "text/plain",
+              "X-RateLimit-Limit": String(limit),
+              "X-RateLimit-Remaining": "0",
+              "X-RateLimit-Reset": String(reset),
+              "Retry-After": String(Math.max(1, Math.ceil((reset - Date.now()) / 1000))),
+            },
+          })
+        );
       }
 
-      // Forward quota headers to the route for downstream inspection if needed
+      // Forward quota headers + standard headers to the route.
       const response = NextResponse.next();
       response.headers.set("X-RateLimit-Limit", String(limit));
       response.headers.set("X-RateLimit-Remaining", String(remaining));
-      return response;
+      return withStandardHeaders(response);
     }
   }
 
@@ -138,16 +216,16 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/audits");
 
   if (isLoggedIn && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return withStandardHeaders(NextResponse.redirect(new URL("/dashboard", request.url)));
   }
 
   if (!isLoggedIn && isDashboardPage) {
     const signInUrl = new URL("/auth/signin", request.url);
     signInUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(signInUrl);
+    return withStandardHeaders(NextResponse.redirect(signInUrl));
   }
 
-  return NextResponse.next();
+  return withStandardHeaders(NextResponse.next());
 }
 
 export const config = {

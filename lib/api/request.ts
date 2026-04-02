@@ -4,6 +4,7 @@
  * Utilities for parsing and validating API request data.
  */
 
+import type { z } from "zod";
 import { AppError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
 
@@ -30,6 +31,40 @@ export async function parseJsonBody<T>(request: Request): Promise<T> {
   } catch {
     throw new AppError("Invalid JSON body", 400, "INVALID_JSON");
   }
+}
+
+/**
+ * Parse JSON body and validate against a Zod schema.
+ * Returns the typed, validated data or throws a 400 AppError listing all issues.
+ *
+ * @param request - The incoming request
+ * @param schema  - Zod schema to validate against
+ * @throws AppError with 400 if JSON is invalid or schema validation fails
+ * @returns Validated, typed body
+ *
+ * @example
+ * ```typescript
+ * const CreateKeySchema = z.object({
+ *   name: z.string().min(1).max(100),
+ *   expiresAt: z.string().datetime().optional().nullable(),
+ * });
+ *
+ * const { name, expiresAt } = await parseBodyWithSchema(request, CreateKeySchema);
+ * ```
+ */
+export async function parseBodyWithSchema<T extends z.ZodTypeAny>(
+  request: Request,
+  schema: T
+): Promise<z.infer<T>> {
+  const body = await parseJsonBody<unknown>(request);
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((i) => `${i.path.length > 0 ? i.path.join(".") + ": " : ""}${i.message}`)
+      .join("; ");
+    throw new AppError(`Validation error: ${issues}`, 400, "VALIDATION_ERROR");
+  }
+  return result.data;
 }
 
 /**

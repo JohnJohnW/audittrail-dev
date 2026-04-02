@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api/auth";
+import { requireAuth, requireAdminOrOwner } from "@/lib/api/auth";
 import { handleApiError, AppError } from "@/lib/error-handler";
 import { db } from "@/lib/db";
 
@@ -7,10 +7,13 @@ export const dynamic = "force-dynamic";
 
 /**
  * DELETE /api/keys/[id] - Revoke an API key
+ * Requires admin or owner role.
  */
 export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
   try {
-    const { orgId } = await requireAuth();
+    const ctx = await requireAuth();
+    requireAdminOrOwner(ctx);
+    const { orgId } = ctx;
     const { id } = params;
 
     const apiKey = await db.apiKey.findFirst({

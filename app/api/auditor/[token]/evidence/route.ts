@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -8,8 +9,9 @@ export const dynamic = "force-dynamic";
 
 /** Validates token, checks expiry, updates lastActiveAt. Returns the session. */
 async function validateAuditorToken(token: string) {
-  const session = await db.auditorSession.findUnique({
-    where: { token },
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const session = await db.auditorSession.findFirst({
+    where: { tokenHash },
     select: {
       id: true,
       orgId: true,
@@ -26,7 +28,7 @@ async function validateAuditorToken(token: string) {
   // Update lastActiveAt non-blocking
   db.auditorSession
     .update({
-      where: { token },
+      where: { id: session.id },
       data: { lastActiveAt: new Date() },
     })
     .catch(() => {

@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
@@ -20,8 +21,9 @@ export async function PATCH(
     const { orgId } = await requireAuth();
 
     // Validate the token belongs to this org
-    const session = await db.auditorSession.findUnique({
-      where: { token: params.token },
+    const tokenHash = createHash("sha256").update(params.token).digest("hex");
+    const session = await db.auditorSession.findFirst({
+      where: { tokenHash },
       select: { id: true, orgId: true },
     });
     if (!session || session.orgId !== orgId) {

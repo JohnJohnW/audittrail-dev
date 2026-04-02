@@ -103,6 +103,27 @@ export async function requireSubscription(orgId: string, requiredPlan: "pro" | "
 }
 
 /**
+ * Require admin or owner role within the organization.
+ * Call this after requireAuth() to enforce write-sensitive endpoints.
+ *
+ * @param context - AuthContext returned by requireAuth()
+ * @throws AppError with 403 if the user's role is not "admin" or "owner"
+ *
+ * @example
+ * ```typescript
+ * const ctx = await requireAuth();
+ * requireAdminOrOwner(ctx);
+ * const { orgId } = ctx;
+ * ```
+ */
+export function requireAdminOrOwner(context: AuthContext): void {
+  const role = context.orgRole;
+  if (role !== "admin" && role !== "owner") {
+    throw new AppError("Admin or owner role required for this action", 403, "INSUFFICIENT_ROLE");
+  }
+}
+
+/**
  * Check if user can export (has active pro subscription).
  * Convenience wrapper for common export permission check.
  *

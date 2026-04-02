@@ -9,6 +9,50 @@ interface LogContext {
   [key: string]: unknown;
 }
 
+// Keys whose values are replaced with "[REDACTED]" before logging.
+// Checked case-insensitively so "Token", "TOKEN", "token" all match.
+const SENSITIVE_KEYS = new Set([
+  "password",
+  "token",
+  "tokenhash",
+  "token_hash",
+  "secret",
+  "apikey",
+  "api_key",
+  "keyhash",
+  "key_hash",
+  "authorization",
+  "cookie",
+  "sessiontoken",
+  "session_token",
+  "privatekey",
+  "private_key",
+  "accesstoken",
+  "access_token",
+  "refreshtoken",
+  "refresh_token",
+  "clientsecret",
+  "client_secret",
+  "webhooksecret",
+  "webhook_secret",
+  "stripekey",
+  "stripe_key",
+]);
+
+function redactSensitive(obj: LogContext): LogContext {
+  const result: LogContext = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (SENSITIVE_KEYS.has(key.toLowerCase())) {
+      result[key] = "[REDACTED]";
+    } else if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      result[key] = redactSensitive(value as LogContext);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 class Logger {
   private requestId?: string;
 
@@ -17,12 +61,13 @@ class Logger {
   }
 
   private log(level: LogLevel, message: string, context?: LogContext, error?: unknown) {
+    const safeContext = context ? redactSensitive(context) : undefined;
     const logEntry = {
       timestamp: new Date().toISOString(),
       level,
       message,
       requestId: this.requestId,
-      ...context,
+      ...safeContext,
     };
 
     const consoleMethod =

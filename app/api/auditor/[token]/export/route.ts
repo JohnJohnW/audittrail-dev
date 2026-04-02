@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { strToU8, zipSync } from "fflate";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -8,8 +9,9 @@ import { handleApiError, AppError } from "@/lib/error-handler";
 export const dynamic = "force-dynamic";
 
 async function getValidSession(token: string) {
-  const session = await db.auditorSession.findUnique({
-    where: { token },
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const session = await db.auditorSession.findFirst({
+    where: { tokenHash },
     select: {
       id: true,
       orgId: true,

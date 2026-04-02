@@ -47,7 +47,8 @@
     "recharts": "^3.6.0",
     "resend": "^4.1.2",
     "stripe": "^17.5.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.6"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

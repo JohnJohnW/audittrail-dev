@@ -1,7 +1,7 @@
-import { randomBytes } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { requireAuth, requireSubscription } from "@/lib/api";
+import { requireAuth, requireAdminOrOwner, requireSubscription } from "@/lib/api";
 import { db, isInTrial, canUseTrialAuditorSession } from "@/lib/db";
 import { handleApiError, AppError } from "@/lib/error-handler";
 
@@ -41,10 +41,13 @@ export async function GET(_request: NextRequest) {
  * POST /api/auditor/sessions
  * Create a new auditor session.
  * Body: { auditorEmail, auditorName?, frameworkFilter?, expiresInDays }
+ * Requires admin or owner role.
  */
 export async function POST(request: NextRequest) {
   try {
-    const { orgId } = await requireAuth();
+    const ctx = await requireAuth();
+    requireAdminOrOwner(ctx);
+    const { orgId } = ctx;
     await requireSubscription(orgId, "pro");
 
     // Check trial auditor session limit (max 1 during trial)
@@ -77,6 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const token = randomBytes(32).toString("hex");
+    const tokenHash = createHash("sha256").update(token).digest("hex");
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
     const session = await db.auditorSession.create({
@@ -86,6 +90,7 @@ export async function POST(request: NextRequest) {
         auditorName: body.auditorName ?? null,
         frameworkFilter: body.frameworkFilter ?? null,
         token,
+        tokenHash,
         expiresAt,
       },
     });
