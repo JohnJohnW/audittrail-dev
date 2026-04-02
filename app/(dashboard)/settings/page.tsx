@@ -332,6 +332,34 @@ function SettingsContent() {
         </Card>
       </FadeIn>
 
+      {/* Connected Repositories */}
+      <FadeIn delay={0.15}>
+        <Card variant="elevated" className="mb-6">
+          <CardHeader>
+            <CardTitle>Connected Repositories</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 mb-4">
+              Add or remove GitHub repositories tracked for compliance evidence.
+            </p>
+            <a
+              href="/repositories"
+              className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent/80 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
+              Manage repositories →
+            </a>
+          </CardContent>
+        </Card>
+      </FadeIn>
+
       {/* Subscription Settings */}
       <FadeIn delay={0.2}>
         <Card variant="elevated">

@@ -238,10 +238,10 @@ export function DashboardContent({
                   subtitle="PDF or CSV"
                 />
                 <QuickActionLink
-                  href="/compliance"
+                  href="/ciso"
                   icon={<ChartIcon />}
-                  title="Compliance Score"
-                  subtitle="Coverage breakdown"
+                  title="Security Posture"
+                  subtitle="Readiness & trends"
                 />
               </CardContent>
             </Card>

@@ -8,11 +8,8 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   HomeIcon,
-  RepoIcon,
   ShieldIcon,
-  CheckIcon,
   ExportIcon,
-  GrcIcon,
   RiskIcon,
   AuditIcon,
   CisoIcon,
@@ -58,10 +55,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
   const navigation: NavItem[] = useMemo(
     () => [
       { name: "Overview", href: "/dashboard", icon: HomeIcon },
-      { name: "Repositories", href: "/repositories", icon: RepoIcon },
       { name: "Evidence", href: "/evidence", icon: ShieldIcon },
-      { name: "Compliance", href: "/compliance", icon: CheckIcon },
-      { name: "GRC", href: "/grc", icon: GrcIcon },
       { name: "Risk Register", href: "/risk-register", icon: RiskIcon },
       { name: "Audits", href: "/audits", icon: AuditIcon },
       { name: "Posture", href: "/ciso", icon: CisoIcon },

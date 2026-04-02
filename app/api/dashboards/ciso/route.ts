@@ -16,7 +16,10 @@ import {
   getEvidenceSummary,
   calculateFrameworkScores,
 } from "@/lib/compliance";
-import { calculateTransparentReadinessScore } from "@/lib/calc-engine";
+import {
+  calculateTransparentReadinessScore,
+  calculateTransparentBreachCost,
+} from "@/lib/calc-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +61,9 @@ export async function GET() {
 
     const noEvidenceControls = evidence.controls.filter((c) => c.status === "no_evidence").length;
 
+    // Org profile for breach cost segmentation
+    const orgProfile = await db.orgProfile.findUnique({ where: { orgId } }).catch(() => null);
+
     // Transparent readiness calculation
     const readinessCalc = await calculateTransparentReadinessScore(
       orgId,
@@ -66,6 +72,13 @@ export async function GET() {
     );
 
     const { readinessScore, predictedOutcome } = readinessCalc.value;
+
+    // Breach cost estimate
+    const breachCostCalc = await calculateTransparentBreachCost(orgId, {
+      noEvidenceControls,
+      companySize: orgProfile?.companySize ?? null,
+      industry: orgProfile?.industry ?? null,
+    }).catch(() => null);
 
     // Critical risks: open risk treatments
     const criticalRisks = await db.riskTreatment.findMany({
@@ -102,8 +115,10 @@ export async function GET() {
           }
         : null,
       predictedOutcome,
+      breachCost: breachCostCalc ? breachCostCalc.value : null,
       _calc: {
         readinessScore: readinessCalc,
+        breachCost: breachCostCalc,
       },
     });
   } catch (error) {

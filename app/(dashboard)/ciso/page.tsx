@@ -23,14 +23,14 @@ interface PostureTrendPoint {
   overallScore: number;
 }
 
-interface CriticalRisk {
-  id: string;
-  controlCode: string;
-  frameworkName: string;
-  treatmentType: string;
-  status: string;
-  rationale: string;
-  reviewDate: string | null;
+interface BreachCost {
+  estimate: number;
+  baseline: number;
+  sizeMultiplier: number;
+  industryMultiplier: number;
+  gapMultiplier: number;
+  sizeKey: string;
+  industryKey: string;
 }
 
 interface ActiveAudit {
@@ -45,12 +45,9 @@ interface CISOData {
   currentScore: number;
   readinessScore: number;
   postureTrend: PostureTrendPoint[];
-  summary: string;
-  criticalRisks: CriticalRisk[];
   activeAudit: ActiveAudit | null;
   predictedOutcome: "likely_pass" | "pass_with_findings" | "at_risk";
-  industry: string;
-  companySize: string;
+  breachCost: BreachCost | null;
 }
 
 function predictedOutcomeVariant(outcome: string): "success" | "warning" | "error" | "default" {
@@ -76,21 +73,6 @@ function predictedOutcomeLabel(outcome: string): string {
       return "At Risk";
     default:
       return outcome;
-  }
-}
-
-function riskStatusVariant(status: string): "default" | "success" | "warning" | "error" | "info" {
-  switch (status.toLowerCase()) {
-    case "open":
-      return "error";
-    case "closed":
-      return "success";
-    case "in_progress":
-      return "warning";
-    case "accepted":
-      return "info";
-    default:
-      return "default";
   }
 }
 
@@ -197,7 +179,7 @@ export default function CISODashboardPage() {
     );
   }
 
-  const { readinessScore, postureTrend, criticalRisks, activeAudit, predictedOutcome } = data;
+  const { readinessScore, postureTrend, activeAudit, predictedOutcome, breachCost } = data;
 
   const trendData = postureTrend.map((pt) => ({
     date: new Date(pt.snapshotDate).toLocaleDateString("en-AU", {
@@ -216,14 +198,14 @@ export default function CISODashboardPage() {
             Security Posture
           </h1>
           <p className="text-sm sm:text-base text-gray-500 mt-1">
-            Compliance readiness and posture trends
+            Audit readiness, posture trends, and business risk exposure
           </p>
         </div>
       </FadeIn>
 
       {/* Top Row Stat Cards */}
       <FadeIn delay={0.1}>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-8">
           <CISOStatCard
             label="Readiness Score"
             value={`${readinessScore}%`}
@@ -241,12 +223,6 @@ export default function CISODashboardPage() {
               {predictedOutcomeLabel(predictedOutcome)}
             </Badge>
           </div>
-          <CISOStatCard
-            label="Critical Risks"
-            value={String(criticalRisks.length)}
-            subtitle="requiring review"
-            danger={criticalRisks.length > 0}
-          />
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4 sm:p-5 flex flex-col">
             <p className="text-sm text-gray-600 mb-2">Active Audit</p>
             {activeAudit ? (
@@ -327,68 +303,55 @@ export default function CISODashboardPage() {
         </Card>
       </FadeIn>
 
-      {/* Critical Risks Table */}
-      <FadeIn delay={0.2}>
-        <Card variant="elevated" padding="none" className="mb-6">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Critical Risks</h2>
-          </div>
-          {criticalRisks.length === 0 ? (
-            <div className="p-10 text-center">
-              <p className="text-sm text-gray-500">No critical risks identified.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="text-left px-6 py-3 font-medium text-gray-600">Control</th>
-                    <th className="text-left px-6 py-3 font-medium text-gray-600">Framework</th>
-                    <th className="text-left px-6 py-3 font-medium text-gray-600">Type</th>
-                    <th className="text-left px-6 py-3 font-medium text-gray-600">Status</th>
-                    <th className="text-left px-6 py-3 font-medium text-gray-600">Review Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {criticalRisks.map((risk, i) => {
-                    const isOverdue = risk.reviewDate && new Date(risk.reviewDate) < new Date();
-                    return (
-                      <motion.tr
-                        key={risk.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.04 }}
-                        className="hover:bg-gray-50/50 transition-colors"
-                      >
-                        <td className="px-6 py-3 font-mono text-xs font-medium text-gray-900">
-                          {risk.controlCode}
-                        </td>
-                        <td className="px-6 py-3 text-gray-700">{risk.frameworkName}</td>
-                        <td className="px-6 py-3 capitalize text-gray-700">{risk.treatmentType}</td>
-                        <td className="px-6 py-3">
-                          <Badge variant={riskStatusVariant(risk.status)} dot>
-                            {risk.status.replace("_", " ")}
-                          </Badge>
-                        </td>
-                        <td
-                          className={cn(
-                            "px-6 py-3",
-                            isOverdue && risk.status !== "closed"
-                              ? "text-red-600 font-medium"
-                              : "text-gray-700"
-                          )}
-                        >
-                          {risk.reviewDate ? new Date(risk.reviewDate).toLocaleDateString() : "-"}
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-      </FadeIn>
+      {/* Breach Cost Exposure */}
+      {breachCost && (
+        <FadeIn delay={0.2}>
+          <Card variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle>Estimated Breach Cost Exposure</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatCurrency(breachCost.estimate)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Estimated AUD exposure based on current compliance gaps
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs text-gray-400">IBM Cost of Data Breach 2024</p>
+                  <p className="text-xs text-gray-400">Australian cohort baseline</p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                <div>
+                  <p className="text-xs text-gray-500">Baseline</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatCurrency(breachCost.baseline)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Size factor</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {breachCost.sizeMultiplier.toFixed(2)}×
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Gap multiplier</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {breachCost.gapMultiplier.toFixed(2)}×
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 mt-3">
+                Reduce exposure by closing compliance gaps in the Evidence tab.
+              </p>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      )}
 
       {/* Active Audit Panel */}
       {activeAudit && (
@@ -425,6 +388,16 @@ export default function CISODashboardPage() {
       )}
     </div>
   );
+}
+
+function formatCurrency(value: number): string {
+  if (value >= 1_000_000) {
+    return `A$${(value / 1_000_000).toFixed(2)}M`;
+  }
+  if (value >= 1_000) {
+    return `A$${(value / 1_000).toFixed(0)}K`;
+  }
+  return `A$${value.toFixed(0)}`;
 }
 
 function CISOStatCard({
