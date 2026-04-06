@@ -34,14 +34,26 @@ export const GITHUB_CONFIG = {
 export const PLAN_LIMITS = {
   /** Maximum repositories for free plan */
   FREE_REPO_LIMIT: 2,
-  /** Maximum repositories for pro plan (unlimited) */
+  /** Maximum repositories for starter plan */
+  STARTER_REPO_LIMIT: 5,
+  /** Maximum repositories for pro plan (grandfathered, treated as growth) */
   PRO_REPO_LIMIT: Infinity,
+  /** Maximum repositories for growth plan (unlimited) */
+  GROWTH_REPO_LIMIT: Infinity,
   /**
    * Maximum compliance frameworks accessible on the free plan.
    * Free users may track any 2 of the 6 supported frameworks.
    * Enforcement is applied in the evidence API and compliance engine.
    */
   FREE_FRAMEWORK_LIMIT: 2,
+  /** AI agent runs per month on Starter plan */
+  STARTER_AGENT_RUNS: 2,
+  /** AI agent runs per month on Growth plan (effectively unlimited) */
+  GROWTH_AGENT_RUNS: Infinity,
+  /** Policy drafts per month on Starter plan */
+  STARTER_POLICY_DRAFTS: 5,
+  /** Policy drafts per month on Growth plan (effectively unlimited) */
+  GROWTH_POLICY_DRAFTS: Infinity,
 } as const;
 
 // Data limits
@@ -98,8 +110,17 @@ export const EVIDENCE_STATUS = {
 // Subscription plans
 export const SUBSCRIPTION_PLAN = {
   FREE: "free",
-  PRO: "pro",
+  STARTER: "starter",
+  GROWTH: "growth",
+  PRO: "pro", // Grandfathered — treated as Growth for feature access
+  ENTERPRISE: "enterprise",
 } as const;
+
+/** Plans that have agent access */
+export const AGENT_PLANS = ["starter", "growth", "pro", "enterprise"] as const;
+
+/** Plans that have full feature access (exports, auditor portal, etc.) */
+export const PAID_PLANS = ["starter", "growth", "pro", "enterprise"] as const;
 
 // Membership roles
 export const MEMBERSHIP_ROLE = {

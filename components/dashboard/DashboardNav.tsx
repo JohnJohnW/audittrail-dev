@@ -8,6 +8,8 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   HomeIcon,
+  AgentIcon,
+  TaskIcon,
   ShieldIcon,
   ExportIcon,
   RiskIcon,
@@ -55,6 +57,8 @@ export function DashboardNav({ user }: DashboardNavProps) {
   const navigation: NavItem[] = useMemo(
     () => [
       { name: "Overview", href: "/dashboard", icon: HomeIcon },
+      { name: "AI Agent", href: "/agent", icon: AgentIcon },
+      { name: "Tasks", href: "/tasks", icon: TaskIcon },
       { name: "Evidence", href: "/evidence", icon: ShieldIcon },
       { name: "Risk Register", href: "/risk-register", icon: RiskIcon },
       { name: "Audits", href: "/audits", icon: AuditIcon },

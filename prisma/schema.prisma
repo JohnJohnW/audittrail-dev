@@ -32,7 +32,10 @@ model User {
   assignedGaps       GapAssignment[] @relation("GapAssignee")
   assignedByGaps     GapAssignment[] @relation("GapAssigner")
   createdAuditCycles AuditCycle[]
-  assignedRequests   AuditorRequest[]
+  assignedRequests      AuditorRequest[]
+  reviewedAssessments   ControlAssessment[] @relation("AssessmentReviewer")
+  assignedHumanTasks    HumanTask[]         @relation("TaskAssignee")
+  approvedPolicies      GeneratedPolicy[]   @relation("PolicyApprover")
 
   @@map("users")
 }
@@ -117,6 +120,11 @@ model Organization {
   auditCycles            AuditCycle[]
   auditFindings          AuditFinding[]
   auditorRequests        AuditorRequest[]
+  agentRuns              AgentRun[]
+  controlAssessments     ControlAssessment[]
+  humanTasks             HumanTask[]
+  aiUsageLogs            AIUsageLog[]
+  generatedPolicies      GeneratedPolicy[]
 
   @@map("organizations")
 }
@@ -332,6 +340,10 @@ model Subscription {
   trialUsed                 Boolean   @default(false) @map("trial_used")
   trialExportsUsed          Int       @default(0) @map("trial_exports_used")
   trialAuditorSessionsUsed  Int       @default(0) @map("trial_auditor_sessions_used")
+  agentRunsThisMonth        Int       @default(0) @map("agent_runs_this_month")
+  agentRunsResetAt          DateTime? @map("agent_runs_reset_at")
+  policyDraftsThisMonth     Int       @default(0) @map("policy_drafts_this_month")
+  policyDraftsResetAt       DateTime? @map("policy_drafts_reset_at")
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
@@ -856,4 +868,135 @@ model AuditorRequest {
   @@index([auditCycleId])
   @@index([orgId, status])
   @@map("auditor_requests")
+}
+
+// ============================================
+// AI COMPLIANCE AGENT
+// ============================================
+
+model AgentRun {
+  id                   String    @id @default(cuid())
+  orgId                String    @map("org_id")
+  triggeredBy          String    @map("triggered_by") // 'scheduled' | 'user' | 'webhook'
+  triggerEvent         String?   @map("trigger_event")
+  status               String    @default("pending") // 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
+  frameworks           String[]
+  controlsAssessed     Int       @default(0) @map("controls_assessed")
+  controlsSufficient   Int       @default(0) @map("controls_sufficient")
+  controlsPartial      Int       @default(0) @map("controls_partial")
+  controlsInsufficient Int       @default(0) @map("controls_insufficient")
+  modelUsed            String    @default("claude-opus-4-20250514") @map("model_used")
+  tokensUsed           Int       @default(0) @map("tokens_used")
+  costCents            Int       @default(0) @map("cost_cents")
+  errorMessage         String?   @db.Text @map("error_message")
+  startedAt            DateTime? @map("started_at")
+  completedAt          DateTime? @map("completed_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  organization         Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  controlAssessments   ControlAssessment[]
+  humanTasks           HumanTask[]
+  aiUsageLogs          AIUsageLog[]
+
+  @@index([orgId, status])
+  @@index([orgId, createdAt])
+  @@map("agent_runs")
+}
+
+model ControlAssessment {
+  id                 String    @id @default(cuid())
+  agentRunId         String    @map("agent_run_id")
+  orgId              String    @map("org_id")
+  controlCode        String    @map("control_code")
+  frameworkName      String    @map("framework_name")
+  controlName        String    @map("control_name")
+  sufficiencyRating  String    @map("sufficiency_rating") // 'sufficient' | 'partial' | 'insufficient' | 'not_evidenced'
+  confidenceScore    Float?    @map("confidence_score") // 0.00 to 1.00
+  evidenceRecords    Json?     @map("evidence_records")
+  agentReasoning     String?   @db.Text @map("agent_reasoning")
+  auditNarrative     String?   @db.Text @map("audit_narrative")
+  remediationPlan    String?   @db.Text @map("remediation_plan")
+  remediationType    String?   @map("remediation_type") // 'pr' | 'ticket' | 'manual' | 'none'
+  remediationArtifact Json?    @map("remediation_artifact")
+  assessedAt         DateTime  @default(now()) @map("assessed_at")
+  humanReviewed      Boolean   @default(false) @map("human_reviewed")
+  humanReviewedAt    DateTime? @map("human_reviewed_at")
+  humanReviewerId    String?   @map("human_reviewer_id")
+  humanNotes         String?   @db.Text @map("human_notes")
+
+  agentRun           AgentRun     @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+  organization       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  humanReviewer      User?        @relation("AssessmentReviewer", fields: [humanReviewerId], references: [id])
+
+  @@unique([agentRunId, controlCode])
+  @@index([orgId, controlCode, frameworkName])
+  @@index([agentRunId])
+  @@map("control_assessments")
+}
+
+model HumanTask {
+  id                   String    @id @default(cuid())
+  orgId                String    @map("org_id")
+  controlCode          String    @map("control_code")
+  controlName          String    @map("control_name")
+  frameworkName         String    @map("framework_name")
+  taskType             String    @map("task_type") // 'access_review' | 'vendor_assessment' | 'training' | 'policy_approval' | 'board_review' | 'dr_test'
+  title                String
+  description          String    @db.Text
+  prePopulatedTemplate Json?     @map("pre_populated_template")
+  dueDate              DateTime? @map("due_date")
+  status               String    @default("pending") // 'pending' | 'in_progress' | 'complete' | 'overdue'
+  assignedToId         String?   @map("assigned_to_id")
+  completedAt          DateTime? @map("completed_at")
+  evidenceUrl          String?   @map("evidence_url")
+  agentRunId           String?   @map("agent_run_id")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignedTo   User?        @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  agentRun     AgentRun?    @relation(fields: [agentRunId], references: [id])
+
+  @@index([orgId, status])
+  @@index([assignedToId, status])
+  @@map("human_tasks")
+}
+
+model AIUsageLog {
+  id            String    @id @default(cuid())
+  orgId         String    @map("org_id")
+  agentRunId    String?   @map("agent_run_id")
+  feature       String    // 'control_assessment' | 'policy_generation' | 'executive_summary' | 'audit_package'
+  model         String    @default("claude-opus-4-20250514")
+  tokensInput   Int       @default(0) @map("tokens_input")
+  tokensOutput  Int       @default(0) @map("tokens_output")
+  costCents     Int       @default(0) @map("cost_cents")
+  durationMs    Int?      @map("duration_ms")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  agentRun     AgentRun?    @relation(fields: [agentRunId], references: [id])
+
+  @@index([orgId, createdAt])
+  @@map("ai_usage_logs")
+}
+
+model GeneratedPolicy {
+  id            String    @id @default(cuid())
+  orgId         String    @map("org_id")
+  frameworkName String    @map("framework_name")
+  policyType    String    @map("policy_type") // 'information_security' | 'access_control' | 'incident_response' | 'change_management' | 'risk_management' | 'data_protection'
+  title         String
+  content       String    @db.Text
+  status        String    @default("draft") // 'draft' | 'review' | 'approved'
+  modelUsed     String    @default("claude-opus-4-20250514") @map("model_used")
+  tokensUsed    Int       @default(0) @map("tokens_used")
+  approvedById  String?   @map("approved_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  approvedBy   User?        @relation("PolicyApprover", fields: [approvedById], references: [id])
+
+  @@index([orgId, frameworkName])
+  @@map("generated_policies")
 }

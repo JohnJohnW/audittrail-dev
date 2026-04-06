@@ -6,9 +6,9 @@ export function HowItWorks() {
   const steps = [
     {
       number: "1",
-      title: "Connects once. Watches everything.",
+      title: "Connect once",
       description:
-        "One-click install. Audit Trail gets read-only access to your repos. No code ever stored. Webhooks activate immediately and never need touching again.",
+        "Install the GitHub App. Read-only access. Your source code never leaves GitHub.",
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path
@@ -21,9 +21,9 @@ export function HowItWorks() {
     },
     {
       number: "2",
-      title: "Evidence builds itself, automatically.",
+      title: "Agent investigates",
       description:
-        "Every push, PR, review, Dependabot alert, and deployment approval is mapped to compliance controls the moment it happens. No manual tagging, no spreadsheets.",
+        "Our AI agent runs through every compliance control \u2014 analysing your PR reviews, branch protection, deployment approvals, and vulnerability patch rates. It reasons about whether your evidence is sufficient or just present.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -37,9 +37,9 @@ export function HowItWorks() {
     },
     {
       number: "3",
-      title: "Only surfaces what matters.",
+      title: "Narratives and drafts generated",
       description:
-        "Security alerts, unreviewed PRs, and weakened branch protection trigger compliance alerts so you can fix them before audit day. Everything else runs silently.",
+        "For each control, the agent writes an auditor-ready narrative grounded in your actual evidence. For policy gaps, it drafts your Information Security Policy, Access Control Policy, and Incident Response Plan. For technical gaps, it opens a draft remediation PR.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -53,9 +53,9 @@ export function HowItWorks() {
     },
     {
       number: "4",
-      title: "Audit-ready and deal-ready.",
+      title: "Human review and export",
       description:
-        "Generate audit packages, partner due diligence reports, and shareable compliance packages with timestamped evidence and control mappings. The GitHub-evidenceable controls are already documented.",
+        "You review what the agent produced, sign off on the narratives, complete the controls that require human action (access reviews, vendor assessments), and export the audit package. Your auditor gets a professionally documented, timestamped evidence package.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -75,7 +75,7 @@ export function HowItWorks() {
         <FadeIn direction="up" className="text-center mb-14">
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">How it works</p>
           <h2 className="text-2xl font-semibold text-gray-900">
-            Compliance as infrastructure. Invisible until you need it.
+            From GitHub App install to audit-ready package. Four steps.
           </h2>
         </FadeIn>
 
@@ -104,11 +104,16 @@ export function HowItWorks() {
           </StaggerChildren>
         </div>
 
-        <FadeIn direction="up" delay={0.5} className="mt-12 text-center">
-          <p className="text-sm text-gray-500">
-            Average time from signup to first compliance score:{" "}
-            <span className="font-medium text-accent">under 5 minutes</span>
-          </p>
+        <FadeIn direction="up" delay={0.5} className="mt-14">
+          <div className="max-w-2xl mx-auto bg-white border border-gray-200 rounded-lg p-6">
+            <p className="text-sm text-gray-600 leading-relaxed">
+              The AI handles everything that lives in your code and configuration. Controls that
+              require human judgment — quarterly access reviews, vendor risk assessments, security
+              awareness training, board sign-off — are structured and scheduled by the agent,
+              completed by your team. This is the correct design for a compliance program auditors
+              will trust.
+            </p>
+          </div>
         </FadeIn>
       </div>
     </section>

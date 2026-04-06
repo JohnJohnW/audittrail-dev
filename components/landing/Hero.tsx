@@ -18,10 +18,10 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.1}>
           <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 tracking-tight leading-[1.15] mb-6">
-            Ship code.
+            Your AI compliance team.
             <br />
             <span className="relative">
-              Build compliance.
+              Always on.
               <svg
                 className="absolute -bottom-2 left-0 w-full h-3 text-accent/30"
                 viewBox="0 0 200 12"
@@ -41,10 +41,9 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.2}>
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
-            Built for SaaS teams. Connect your GitHub repos once and Audit Trail maps your GitHub
-            activity to six compliance frameworks, automatically and continuously. When your
-            enterprise prospect asks for SOC 2 or ISO 27001, the technical controls are already
-            documented.
+            Audit Trail&apos;s AI agent continuously investigates your compliance posture, writes
+            audit-ready control narratives, drafts your information security policies, and creates
+            remediation PRs — the work a GRC consultant charges $15,000 to do.
           </p>
         </FadeInOnLoad>
 
@@ -54,7 +53,7 @@ export function Hero() {
               href="/auth/signin"
               className="bg-accent text-white px-6 py-2.5 text-sm font-medium hover:bg-accent-hover transition-all duration-200 rounded-md hover:shadow-lg hover:shadow-accent/20 hover:-translate-y-0.5"
             >
-              Start free
+              Run your first AI compliance scan — free
             </Link>
             <a
               href="#how-it-works"
@@ -67,9 +66,17 @@ export function Hero() {
 
         <FadeInOnLoad delay={0.4}>
           <p className="text-xs text-gray-400">
-            No credit card required · Read-only GitHub access · Setup in 2 minutes · $5/mo after
-            trial
+            No credit card required · First scan in under 10 minutes · Audit narratives written by
+            AI, reviewed by you
           </p>
+        </FadeInOnLoad>
+
+        <FadeInOnLoad delay={0.5}>
+          <div className="mt-10 py-3 px-5 bg-gray-50 border border-gray-200 rounded-md inline-block">
+            <p className="text-sm text-gray-600 font-medium">
+              Vanta automates evidence collection. Audit Trail automates the thinking.
+            </p>
+          </div>
         </FadeInOnLoad>
       </div>
     </section>

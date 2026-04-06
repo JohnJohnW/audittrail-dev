@@ -77,7 +77,13 @@ export async function requireAuth(): Promise<AuthContext> {
  * const subscription = await requireSubscription(orgId, "pro");
  * ```
  */
-export async function requireSubscription(orgId: string, requiredPlan: "pro" | "free" = "pro") {
+/** Plans that count as paid for feature gating */
+const PAID_PLANS = new Set(["starter", "growth", "pro", "enterprise"]);
+
+export async function requireSubscription(
+  orgId: string,
+  requiredPlan: "pro" | "free" | "paid" = "pro"
+) {
   const subscription = await db.subscription.findFirst({
     where: { orgId },
   });
@@ -86,8 +92,15 @@ export async function requireSubscription(orgId: string, requiredPlan: "pro" | "
     throw new AppError("No subscription found", 403, "NO_SUBSCRIPTION");
   }
 
-  if (requiredPlan === "pro" && subscription.plan !== "pro") {
-    throw new AppError("Pro subscription required", 403, "SUBSCRIPTION_REQUIRED", {
+  if (requiredPlan === "paid" && !PAID_PLANS.has(subscription.plan)) {
+    throw new AppError("A paid subscription is required", 403, "SUBSCRIPTION_REQUIRED", {
+      currentPlan: subscription.plan,
+      requiredPlan,
+    });
+  }
+
+  if (requiredPlan === "pro" && !PAID_PLANS.has(subscription.plan)) {
+    throw new AppError("A paid subscription is required", 403, "SUBSCRIPTION_REQUIRED", {
       currentPlan: subscription.plan,
       requiredPlan,
     });
@@ -136,7 +149,7 @@ export async function canExport(orgId: string): Promise<boolean> {
   });
 
   return (
-    subscription?.plan === "pro" &&
+    PAID_PLANS.has(subscription?.plan ?? "free") &&
     (subscription?.status === "active" || subscription?.status === "free")
   );
 }

@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import type Stripe from "stripe";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, getPlanFromPriceId } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { isValidCuid } from "@/lib/utils";
 import { logger } from "@/lib/logger";
@@ -57,13 +57,15 @@ export async function POST(request: NextRequest) {
         const orgId = validateOrgId(session.metadata?.orgId);
 
         if (orgId && session.subscription && session.customer) {
+          // Determine plan from metadata or fall back to "starter"
+          const plan = session.metadata?.plan ?? "starter";
           await db.subscription.update({
             where: { orgId },
             data: {
               stripeCustomerId: session.customer as string,
               stripeSubscriptionId: session.subscription as string,
               status: "active",
-              plan: "pro",
+              plan,
             },
           });
         }
@@ -75,11 +77,16 @@ export async function POST(request: NextRequest) {
         const orgId = validateOrgId(subscription.metadata?.orgId);
 
         if (orgId) {
+          // Determine plan from subscription items price ID
+          const priceId = subscription.items.data[0]?.price?.id;
+          const plan = priceId
+            ? getPlanFromPriceId(priceId)
+            : (subscription.metadata?.plan ?? "starter");
           await db.subscription.update({
             where: { orgId },
             data: {
               status: subscription.status === "active" ? "active" : subscription.status,
-              plan: subscription.status === "active" ? "pro" : "free",
+              plan: subscription.status === "active" ? plan : "free",
               currentPeriodEnd: new Date(subscription.current_period_end * 1000),
               cancelAtPeriodEnd: subscription.cancel_at_period_end,
             },

@@ -27,6 +27,7 @@
     "e2e",
     "tests",
     "packages",
+    "wynter_labs",
     "playwright.config.ts",
     "vitest.config.ts",
     "vitest.setup.ts"

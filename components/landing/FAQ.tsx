@@ -60,6 +60,26 @@ const faqs = [
     answer:
       "Yes. Enterprise includes SSO, custom framework mappings (IRAP, HIPAA, custom frameworks), dedicated support, and SLAs. Contact us to discuss.",
   },
+  {
+    question: "How is this different from Vanta?",
+    answer:
+      "Vanta automates evidence collection. Their AI layer fills out vendor questionnaires and generates policy templates. The actual compliance analysis \u2014 deciding whether your evidence is sufficient, writing control narratives, reasoning about gaps \u2014 still requires your GRC team or a consultant. Audit Trail\u2019s agent does that analysis. It reads your PR reviews and reasons about whether they\u2019re substantive. It calculates your Dependabot patch lag and compares it to framework SLAs. It writes the audit narrative grounded in your actual data. That\u2019s a different product.",
+  },
+  {
+    question: "Will auditors accept AI-generated narratives?",
+    answer:
+      "The agent generates the draft. You review, edit if needed, and sign off. The audit package reflects your organisation\u2019s controls \u2014 the AI does the writing work, you take accountability for the content. This is the same model as AI-assisted legal drafting: the lawyer is still responsible, but the AI eliminates 80% of the writing time.",
+  },
+  {
+    question: "What happens to controls that need human action?",
+    answer:
+      "The agent creates a structured task for each one: what needs to happen, a pre-populated template to make it faster, and a due date based on framework requirements. For example, for a quarterly access review, the agent generates the access review spreadsheet pre-populated with your current GitHub users, sets a due date, and notifies your assigned owner.",
+  },
+  {
+    question: "Which AI model does Audit Trail use?",
+    answer:
+      "Claude Opus by Anthropic \u2014 the most capable reasoning model available. We use extended thinking for complex control assessments, which means the agent doesn\u2019t just pattern-match; it reasons about whether your evidence actually demonstrates the control is operating effectively.",
+  },
 ];
 
 export function FAQ() {

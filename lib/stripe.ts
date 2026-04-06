@@ -47,20 +47,63 @@ function handleStripeError(error: unknown, operation: string): never {
   throw new AppError(`Failed to ${operation}`, 500, "STRIPE_ERROR");
 }
 
+/**
+ * Map of plan names to their Stripe price environment variable names.
+ * Supports both the legacy Pro plan and the new Starter/Growth tiers.
+ */
+function getPriceIdForPlan(plan: string): string {
+  const priceMap: Record<string, string | undefined> = {
+    pro: process.env.STRIPE_PRO_PRICE_ID,
+    starter: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID ?? process.env.STRIPE_PRO_PRICE_ID,
+    "starter-annual": process.env.STRIPE_STARTER_ANNUAL_PRICE_ID,
+    growth: process.env.STRIPE_GROWTH_MONTHLY_PRICE_ID ?? process.env.STRIPE_PRO_PRICE_ID,
+    "growth-annual": process.env.STRIPE_GROWTH_ANNUAL_PRICE_ID,
+  };
+
+  const priceId = priceMap[plan];
+  if (!priceId) {
+    throw new AppError(
+      `No Stripe price configured for plan: ${plan}. Set the corresponding environment variable.`,
+      500,
+      "STRIPE_CONFIG_ERROR"
+    );
+  }
+  return priceId;
+}
+
+/**
+ * Map a Stripe price ID back to a plan name (for webhook handling).
+ */
+export function getPlanFromPriceId(priceId: string): string {
+  const priceToPlan: Record<string, string> = {};
+
+  if (process.env.STRIPE_PRO_PRICE_ID) priceToPlan[process.env.STRIPE_PRO_PRICE_ID] = "pro";
+  if (process.env.STRIPE_STARTER_MONTHLY_PRICE_ID)
+    priceToPlan[process.env.STRIPE_STARTER_MONTHLY_PRICE_ID] = "starter";
+  if (process.env.STRIPE_STARTER_ANNUAL_PRICE_ID)
+    priceToPlan[process.env.STRIPE_STARTER_ANNUAL_PRICE_ID] = "starter";
+  if (process.env.STRIPE_GROWTH_MONTHLY_PRICE_ID)
+    priceToPlan[process.env.STRIPE_GROWTH_MONTHLY_PRICE_ID] = "growth";
+  if (process.env.STRIPE_GROWTH_ANNUAL_PRICE_ID)
+    priceToPlan[process.env.STRIPE_GROWTH_ANNUAL_PRICE_ID] = "growth";
+
+  return priceToPlan[priceId] ?? "pro";
+}
+
 export async function createCheckoutSession({
   orgId,
   userEmail,
   successUrl,
   cancelUrl,
+  plan = "starter",
 }: {
   orgId: string;
   userEmail: string;
   successUrl: string;
   cancelUrl: string;
+  plan?: string;
 }) {
-  if (!process.env.STRIPE_PRO_PRICE_ID) {
-    throw new AppError("STRIPE_PRO_PRICE_ID is not configured", 500, "STRIPE_CONFIG_ERROR");
-  }
+  const priceId = getPriceIdForPlan(plan);
 
   try {
     const stripe = getStripe();
@@ -70,7 +113,7 @@ export async function createCheckoutSession({
       customer_email: userEmail,
       line_items: [
         {
-          price: process.env.STRIPE_PRO_PRICE_ID,
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -78,11 +121,13 @@ export async function createCheckoutSession({
       cancel_url: cancelUrl,
       metadata: {
         orgId,
+        plan,
       },
       subscription_data: {
         trial_period_days: 14,
         metadata: {
           orgId,
+          plan,
         },
       },
     });
