@@ -185,7 +185,7 @@ export function Pricing() {
           <div className="mt-12 max-w-2xl mx-auto bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-sm font-medium text-gray-900 mb-2">Built for Australian teams</h3>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Essential Eight is a first-class framework in Audit Trail - not an afterthought. We
+              Essential Eight is a first-class framework in Audit Trail, not an afterthought. We
               map to the ACSC 2023 maturity model and include Australian regulatory crosswalk
               analysis (Privacy Act 1988, APRA CPS 234) on the Growth plan.
             </p>

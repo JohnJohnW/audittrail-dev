@@ -75,7 +75,7 @@ export async function generatePolicy({
     risk_management: "Risk Management Policy",
     data_protection: "Data Protection Policy",
   };
-  const title = `${titleMap[policyType] ?? policyType} - ${frameworkName}`;
+  const title = `${titleMap[policyType] ?? policyType}, ${frameworkName}`;
 
   // Save to database
   const policy = await db.generatedPolicy.create({

@@ -112,7 +112,7 @@ Keep the current free + Pro model with no trial.
 
 ---
 
-## Recommendation: Option A - 14-Day Pro Trial
+## Recommendation: Option A, 14-Day Pro Trial
 
 ### Conversion Rate Analysis
 

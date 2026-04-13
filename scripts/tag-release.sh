@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tag-release.sh - Create an annotated Git release tag and push it.
+# tag-release.sh, create an annotated Git release tag and push it.
 #
 # Usage:
 #   ./scripts/tag-release.sh                   # auto-increments patch (v1.2.3 → v1.2.4)
@@ -42,7 +42,7 @@ else
     IFS='.' read -r major minor patch <<< "${latest#v}"
     TAG="v${major}.${minor}.$((patch + 1))"
   fi
-  yellow "No tag specified - auto-incrementing to $TAG"
+  yellow "No tag specified, auto-incrementing to $TAG"
 fi
 
 # Validate semver format
@@ -69,7 +69,7 @@ else
 Changes since $prev_tag:
 $(git log --oneline "${prev_tag}..HEAD" | head -20)"
   else
-    MSG="Release $TAG - initial release"
+    MSG="Release $TAG, initial release"
   fi
 fi
 

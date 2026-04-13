@@ -6,7 +6,7 @@
  * Control catalog: NIST SP 800-53 Rev 5.
  */
 
-// Evidence status levels - mapped to NIST SP 800-53A determination language
+// Evidence status levels, mapped to NIST SP 800-53A determination language
 export type EvidenceStatus = "has_evidence" | "partial" | "no_evidence" | "limited";
 
 // Evidence type categories
@@ -17,8 +17,8 @@ export type EvidenceRelevance = "high" | "medium" | "low";
 
 /**
  * NIST SP 800-53A assessment method for an evidence item.
- * - examine: Review artifacts (configs, docs, logs) - SP 800-53A §2.4.1
- * - test: Verify mechanism functions as intended - SP 800-53A §2.4.3
+ * - examine: Review artifacts (configs, docs, logs), SP 800-53A §2.4.1
+ * - test: Verify mechanism functions as intended, SP 800-53A §2.4.3
  * - examine_and_test: Both methods applied
  */
 export type NistAssessmentMethod = "examine" | "test" | "examine_and_test";

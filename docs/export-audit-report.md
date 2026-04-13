@@ -21,24 +21,24 @@ Audit Trail has three export pathways: PDF/CSV report exports, full org data exp
 
 ---
 
-## 1. Access Control - Low Risk
+## 1. Access Control, Low Risk
 
 ### Current State
 
-**PDF/CSV Exports (`/api/exports` - `app/api/exports/route.tsx`)**
+**PDF/CSV Exports (`/api/exports`, `app/api/exports/route.tsx`)**
 
 - Authentication: `requireAuth()` enforces valid session + org membership
 - Subscription: `canExport(orgId)` checks `subscription.plan === "pro"` and active status
-- Rate limiting: `checkRateLimit(orgId, "export")` - 10 exports per hour per org
+- Rate limiting: `checkRateLimit(orgId, "export")`, 10 exports per hour per org
 - Error: Returns 403 `SUBSCRIPTION_REQUIRED` for free users, 429 `RATE_LIMITED` for excess
 
-**Full Org Export (`/api/org/export` - `app/api/org/export/route.ts`)**
+**Full Org Export (`/api/org/export`, `app/api/org/export/route.ts`)**
 
 - Authentication: `requireAuth()` enforces valid session + org membership
 - Subscription: `hasProSubscription(orgId)` check
 - Error: Returns 403 `PRO_REQUIRED` for free users
 
-**Auditor Portal Export (`/api/auditor/[token]/export` - `app/api/auditor/[token]/export/route.ts`)**
+**Auditor Portal Export (`/api/auditor/[token]/export`, `app/api/auditor/[token]/export/route.ts`)**
 
 - Authentication: Token-based (32-byte random hex, not OAuth)
 - Validation: Token existence check + expiry timestamp check (`session.expiresAt < new Date()`)
@@ -62,7 +62,7 @@ Audit Trail has three export pathways: PDF/CSV report exports, full org data exp
 
 ---
 
-## 2. Data Scope - Medium Risk
+## 2. Data Scope, Medium Risk
 
 ### Current State
 
@@ -110,7 +110,7 @@ Audit Trail has three export pathways: PDF/CSV report exports, full org data exp
 
 ---
 
-## 3. Data Freshness - Medium Risk
+## 3. Data Freshness, Medium Risk
 
 ### Current State
 
@@ -139,7 +139,7 @@ Audit Trail has three export pathways: PDF/CSV report exports, full org data exp
 
 ---
 
-## 4. Performance & Reliability - Medium Risk
+## 4. Performance & Reliability, Medium Risk
 
 ### Current State
 
@@ -173,7 +173,7 @@ Audit Trail has three export pathways: PDF/CSV report exports, full org data exp
 
 ---
 
-## 5. Audit Logging - Low Risk
+## 5. Audit Logging, Low Risk
 
 ### Current State
 
@@ -216,7 +216,7 @@ Audit Trail has three export pathways: PDF/CSV report exports, full org data exp
 
 ---
 
-## 6. Post-Export Risk - High Risk
+## 6. Post-Export Risk, High Risk
 
 ### Current State
 

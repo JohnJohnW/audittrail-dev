@@ -43,7 +43,7 @@ export function Hero() {
           <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto leading-relaxed">
             Audit Trail&apos;s AI agent continuously investigates your compliance posture, writes
             audit-ready control narratives, drafts your information security policies, and creates
-            remediation PRs - the work that typically costs thousands in GRC consulting fees.
+            remediation PRs, the work that typically costs thousands in GRC consulting fees.
           </p>
         </FadeInOnLoad>
 
@@ -53,7 +53,7 @@ export function Hero() {
               href="/auth/signin"
               className="bg-accent text-white px-6 py-2.5 text-sm font-medium hover:bg-accent-hover transition-all duration-200 rounded-md hover:shadow-lg hover:shadow-accent/20 hover:-translate-y-0.5"
             >
-              Run your first AI compliance scan - free
+              Run your first AI compliance scan, free
             </Link>
             <a
               href="#how-it-works"
