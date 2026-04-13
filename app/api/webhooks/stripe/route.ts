@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
                 },
               });
 
-              // Surface payment failures to ops — log at ERROR so Sentry captures them.
+              // Surface payment failures to ops - log at ERROR so Sentry captures them.
               logger.error("Payment failed for subscription", undefined, {
                 orgId,
                 subscriptionId,

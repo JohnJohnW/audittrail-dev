@@ -5,7 +5,7 @@ import type { AgentRunConfig, ControlDefinition } from "./types";
 
 /**
  * Create a new agent run and return the controls to assess.
- * Does NOT execute assessments — those are triggered per-control via the API.
+ * Does NOT execute assessments - those are triggered per-control via the API.
  */
 export async function createAgentRun(config: AgentRunConfig) {
   const model = config.model ?? MODELS.OPUS;

@@ -13,7 +13,7 @@ export interface ControlDefinition {
   frameworkName: string;
   /** Control title */
   name: string;
-  /** What this control requires — given to the agent as context */
+  /** What this control requires - given to the agent as context */
   description: string;
   /** Which agent tools are relevant for assessing this control */
   relevantTools: AgentToolName[];

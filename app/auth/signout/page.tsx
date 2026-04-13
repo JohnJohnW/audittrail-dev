@@ -29,7 +29,7 @@ export default function SignOutPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-8">
             <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
-              <Image src="/icon.svg" alt="" width={32} height={32} />
+              <Image src="/icon.svg" alt="Audit Trail" width={32} height={32} />
             </div>
             <span className="text-lg font-semibold text-gray-900">
               Audit <span className="text-accent">Trail</span>

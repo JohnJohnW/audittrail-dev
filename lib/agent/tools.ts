@@ -172,7 +172,7 @@ export const complianceAgentTools: Anthropic.Tool[] = [
         confidence_score: {
           type: "number",
           description:
-            "Your confidence in this assessment from 0.0 to 1.0. Be conservative — if evidence is sparse, score lower.",
+            "Your confidence in this assessment from 0.0 to 1.0. Be conservative - if evidence is sparse, score lower.",
         },
         evidence_records: {
           type: "array",
@@ -187,7 +187,7 @@ export const complianceAgentTools: Anthropic.Tool[] = [
         agent_reasoning: {
           type: "string",
           description:
-            "Your internal reasoning about this assessment — for debugging, not shown to auditors.",
+            "Your internal reasoning about this assessment - for debugging, not shown to auditors.",
         },
         remediation_plan: {
           type: "string",

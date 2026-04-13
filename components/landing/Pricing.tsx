@@ -84,10 +84,10 @@ export function Pricing() {
         <FadeIn direction="up" className="text-center mb-12">
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Pricing</p>
           <h2 className="text-2xl font-semibold text-gray-900">
-            Transparent pricing. The market leaders won&apos;t show you theirs.
+            Transparent pricing. No sales call required.
           </h2>
           <p className="mt-3 text-sm text-gray-500 max-w-2xl mx-auto">
-            Vanta starts at ~$10,000/year. Drata starts at ~$7,500/year. Both require a sales call
+            Traditional compliance platforms start at $7,500-10,000/year and require a sales call
             before you see a number. Audit Trail is $99/month, self-serve, cancel anytime.
           </p>
         </FadeIn>
@@ -175,8 +175,8 @@ export function Pricing() {
         <FadeIn direction="up" delay={0.4}>
           <div className="text-center mt-8">
             <p className="text-sm text-gray-500">
-              For context: one hour with a compliance consultant costs more than a month of Audit
-              Trail Growth.
+              Compliance consulting typically costs hundreds per hour. Audit Trail Growth covers
+              what used to require expensive manual work.
             </p>
           </div>
         </FadeIn>
@@ -185,7 +185,7 @@ export function Pricing() {
           <div className="mt-12 max-w-2xl mx-auto bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-sm font-medium text-gray-900 mb-2">Built for Australian teams</h3>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Essential Eight is a first-class framework in Audit Trail — not an afterthought. We
+              Essential Eight is a first-class framework in Audit Trail - not an afterthought. We
               map to the ACSC 2023 maturity model and include Australian regulatory crosswalk
               analysis (Privacy Act 1988, APRA CPS 234) on the Growth plan.
             </p>

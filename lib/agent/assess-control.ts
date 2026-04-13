@@ -11,7 +11,7 @@ const MAX_TOOL_ITERATIONS = 8;
 
 /**
  * Assess a single compliance control using the AI agent.
- * This is the core agentic loop — it calls Claude with tools,
+ * This is the core agentic loop - it calls Claude with tools,
  * processes tool_use responses, and loops until the agent finishes.
  */
 export async function assessSingleControl({
@@ -145,7 +145,7 @@ export async function assessSingleControl({
   });
 
   if (!savedAssessment) {
-    // Agent didn't call save_control_assessment — save a fallback
+    // Agent didn't call save_control_assessment - save a fallback
     const fallback = await db.controlAssessment.create({
       data: {
         agentRunId,

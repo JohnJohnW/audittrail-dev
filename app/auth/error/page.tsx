@@ -71,9 +71,7 @@ function ErrorContent() {
 
         <div className="mt-6">
           <a
-            href="https://github.com/JohnJohnW/audittrail-dev/issues"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/contact"
             className="text-xs text-gray-400 hover:text-gray-600"
           >
             Contact support

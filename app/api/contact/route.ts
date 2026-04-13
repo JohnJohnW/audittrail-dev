@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     await resend.emails.send({
       from: process.env.EMAIL_FROM || "Audit Trail <noreply@audit-trail.net>",
-      to: ["hello@audit-trail.net"],
+      to: [process.env.CONTACT_EMAIL || "hello@audit-trail.net"],
       replyTo: email,
       subject: subjectLine,
       html: htmlBody,

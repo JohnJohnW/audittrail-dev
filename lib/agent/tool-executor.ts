@@ -5,13 +5,13 @@ import type { GetEvidenceInput, CreateHumanTaskInput, SaveAssessmentInput } from
 /**
  * Execute a tool call from the Compliance Agent.
  * Maps tool names to database queries and returns structured results.
- * The input comes directly from Claude's tool_use block — all fields are strings from the JSON schema.
+ * The input comes directly from Claude's tool_use block - all fields are strings from the JSON schema.
  */
 export async function executeToolCall(
   toolName: string,
   input: Record<string, unknown>
 ): Promise<unknown> {
-  // The agent passes org_id in most tool calls — extract it for convenience
+  // The agent passes org_id in most tool calls - extract it for convenience
   const orgId = (input.org_id as string) ?? "";
 
   switch (toolName) {

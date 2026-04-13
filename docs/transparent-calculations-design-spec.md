@@ -1,4 +1,4 @@
-# Transparent Calculations & Adjustable Determinations — Design Spec
+# Transparent Calculations & Adjustable Determinations - Design Spec
 
 **Date:** 2026-04-01
 **Status:** Design specification (pre-implementation)

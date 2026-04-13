@@ -112,7 +112,7 @@ export const SUBSCRIPTION_PLAN = {
   FREE: "free",
   STARTER: "starter",
   GROWTH: "growth",
-  PRO: "pro", // Grandfathered — treated as Growth for feature access
+  PRO: "pro", // Grandfathered - treated as Growth for feature access
   ENTERPRISE: "enterprise",
 } as const;
 

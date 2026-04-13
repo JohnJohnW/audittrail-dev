@@ -11,7 +11,7 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="relative w-5 h-5 rounded overflow-hidden flex-shrink-0">
-              <Image src="/icon.svg" alt="" width={20} height={20} />
+              <Image src="/icon.svg" alt="Audit Trail" width={20} height={20} />
             </div>
             <span className="text-sm font-medium text-gray-900">
               Audit <span className="text-accent">Trail</span>

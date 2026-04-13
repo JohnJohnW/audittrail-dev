@@ -12,7 +12,7 @@
 
 ## 1. Key Takeaways
 
-### Article 1 — Compliance Automation as a Threat to Cyber Resilience
+### Article 1 - Compliance Automation as a Threat to Cyber Resilience
 
 **Core thesis:** Compliance automation platforms have engineered "Commoditized Trust" -- a systemic pattern where organizations optimize for passing audits rather than building genuine security resilience.
 
@@ -22,7 +22,7 @@
 - **Subsidized audits create confirmation bias.** Vendors partner with preferred audit firms who use the vendor's own software to conduct audits. This creates a closed-loop system where the tool that generates compliance evidence is also the tool that validates it. The audit becomes a sales convenience, not an independent verification.
 - **A passed audit report is not resilience.** Yip's framing: cybersecurity is "a survival problem to be commanded," not a workflow to be optimized. The industry needs "Defensible Resilience" -- tools built by practitioners who understand operational crises, with governance that bridges technical signals and boardroom decision-making.
 
-### Article 2 — The Collapse of Commoditized Trust
+### Article 2 - The Collapse of Commoditized Trust
 
 **Core thesis:** The compliance automation industry's incentive structure has reached a breaking point, illustrated by a real-world catastrophe at an AI-driven compliance platform.
 

@@ -23,7 +23,7 @@ export function HowItWorks() {
       number: "2",
       title: "Agent investigates",
       description:
-        "Our AI agent runs through every compliance control \u2014 analysing your PR reviews, branch protection, deployment approvals, and vulnerability patch rates. It reasons about whether your evidence is sufficient or just present.",
+        "Our AI agent runs through every compliance control - analysing your PR reviews, branch protection, deployment approvals, and vulnerability patch rates. It reasons about whether your evidence is sufficient or just present.",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -108,8 +108,8 @@ export function HowItWorks() {
           <div className="max-w-2xl mx-auto bg-white border border-gray-200 rounded-lg p-6">
             <p className="text-sm text-gray-600 leading-relaxed">
               The AI handles everything that lives in your code and configuration. Controls that
-              require human judgment — quarterly access reviews, vendor risk assessments, security
-              awareness training, board sign-off — are structured and scheduled by the agent,
+              require human judgment - quarterly access reviews, vendor risk assessments, security
+              awareness training, board sign-off - are structured and scheduled by the agent,
               completed by your team. This is the correct design for a compliance program auditors
               will trust.
             </p>

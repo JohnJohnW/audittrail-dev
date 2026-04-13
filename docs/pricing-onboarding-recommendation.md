@@ -112,7 +112,7 @@ Keep the current free + Pro model with no trial.
 
 ---
 
-## Recommendation: Option A — 14-Day Pro Trial
+## Recommendation: Option A - 14-Day Pro Trial
 
 ### Conversion Rate Analysis
 
@@ -162,16 +162,16 @@ After the 14-day trial expires:
 
 ### Competitor Precedents
 
-| Competitor      | Model                    | Detail                                                                           |
-| --------------- | ------------------------ | -------------------------------------------------------------------------------- |
-| **Vanta**       | Demo-gated, no free tier | Enterprise sales motion. Product access only after sales call.                   |
-| **Drata**       | 14-day trial             | Guided onboarding during trial. Self-serve to start, sales-assisted to convert.  |
-| **Secureframe** | Free assessment          | Free compliance gap assessment. Paid for continuous monitoring and automation.   |
-| **Sprinto**     | Free compliance check    | Free initial compliance check. Paid for ongoing automation and audit management. |
-| **Thoropass**   | Demo only                | No self-serve. Sales-gated.                                                      |
-| **Scytale**     | Demo only                | No self-serve. Sales-gated.                                                      |
+| Competitor Type               | Model                    | Detail                                                                           |
+| ----------------------------- | ------------------------ | -------------------------------------------------------------------------------- |
+| **Enterprise platform A**     | Demo-gated, no free tier | Enterprise sales motion. Product access only after sales call.                   |
+| **Mid-market platform B**     | 14-day trial             | Guided onboarding during trial. Self-serve to start, sales-assisted to convert.  |
+| **Mid-market platform C**     | Free assessment          | Free compliance gap assessment. Paid for continuous monitoring and automation.   |
+| **Mid-market platform D**     | Free compliance check    | Free initial compliance check. Paid for ongoing automation and audit management. |
+| **Enterprise platform E**     | Demo only                | No self-serve. Sales-gated.                                                      |
+| **Enterprise platform F**     | Demo only                | No self-serve. Sales-gated.                                                      |
 
-**Pattern:** Self-serve compliance tools (Drata, Secureframe, Sprinto) all offer some form of free evaluation that demonstrates value before payment. Enterprise tools (Vanta, Thoropass) gate access behind sales. Audit Trail's self-serve model aligns with the trial approach.
+**Pattern:** Self-serve compliance tools offer some form of free evaluation that demonstrates value before payment. Enterprise-focused tools gate access behind sales. Audit Trail's self-serve model aligns with the trial approach.
 
 ---
 

@@ -146,9 +146,7 @@ export default function PrivacyPage() {
             <p>
               For privacy-related questions,{" "}
               <a
-                href="https://github.com/JohnJohnW/audittrail-dev/issues"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/contact"
                 className="text-gray-900 hover:underline"
               >
                 open an issue on GitHub

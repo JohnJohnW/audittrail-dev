@@ -2,17 +2,17 @@
 
 **The AI compliance agent for SaaS teams.**
 
-Audit Trail's AI agent continuously investigates your compliance posture, writes auditor-ready control narratives, drafts your information security policies, and creates remediation PRs — replacing thousands of dollars in GRC consultant fees.
+Audit Trail's AI agent continuously investigates your compliance posture, writes auditor-ready control narratives, drafts your information security policies, and creates remediation PRs - replacing thousands of dollars in GRC consultant fees.
 
 ## What it does
 
-- **Agentic compliance assessment** — Claude Opus with extended thinking investigates each control, analyses evidence quality (not just presence), and produces a sufficiency rating with confidence score
-- **AI audit narratives** — 200-400 word, auditor-ready control narratives grounded in your actual GitHub evidence
-- **AI policy drafting** — Complete information security policies scoped for SaaS companies, with Australian regulatory context
-- **Remediation PRs** — Draft GitHub PRs for technical control gaps, ready for your team to review and merge
-- **Human task management** — Structured tasks with pre-populated templates for controls requiring human action (access reviews, vendor assessments, training)
-- **Audit package assembly** — Full audit evidence package with cover letter, control narratives, gap register, and evidence inventory
-- **Australian regulatory mapping** — Essential Eight, Privacy Act 1988, APRA CPS 234 (Growth plan)
+- **Agentic compliance assessment** - Claude Opus with extended thinking investigates each control, analyses evidence quality (not just presence), and produces a sufficiency rating with confidence score
+- **AI audit narratives** - 200-400 word, auditor-ready control narratives grounded in your actual GitHub evidence
+- **AI policy drafting** - Complete information security policies scoped for SaaS companies, with Australian regulatory context
+- **Remediation PRs** - Draft GitHub PRs for technical control gaps, ready for your team to review and merge
+- **Human task management** - Structured tasks with pre-populated templates for controls requiring human action (access reviews, vendor assessments, training)
+- **Audit package assembly** - Full audit evidence package with cover letter, control narratives, gap register, and evidence inventory
+- **Australian regulatory mapping** - Essential Eight, Privacy Act 1988, APRA CPS 234 (Growth plan)
 
 ## Supported frameworks
 
@@ -99,11 +99,11 @@ npm run dev
 
 See `.env.example` for all required variables. Key additions for the AI agent:
 
-- `ANTHROPIC_API_KEY` — Required for AI agent and policy generation
-- `STRIPE_STARTER_MONTHLY_PRICE_ID` — Stripe price for Starter monthly
-- `STRIPE_STARTER_ANNUAL_PRICE_ID` — Stripe price for Starter annual
-- `STRIPE_GROWTH_MONTHLY_PRICE_ID` — Stripe price for Growth monthly
-- `STRIPE_GROWTH_ANNUAL_PRICE_ID` — Stripe price for Growth annual
+- `ANTHROPIC_API_KEY` - Required for AI agent and policy generation
+- `STRIPE_STARTER_MONTHLY_PRICE_ID` - Stripe price for Starter monthly
+- `STRIPE_STARTER_ANNUAL_PRICE_ID` - Stripe price for Starter annual
+- `STRIPE_GROWTH_MONTHLY_PRICE_ID` - Stripe price for Growth monthly
+- `STRIPE_GROWTH_ANNUAL_PRICE_ID` - Stripe price for Growth annual
 
 ## License
 
